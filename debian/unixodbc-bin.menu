@@ -1,0 +1,18 @@
+?package(unixodbc-bin):\
+	needs="x11"\
+	section="Apps/Databases"\
+	title="DataManager"\
+	command="DataManager"
+
+?package(unixodbc-bin):\
+        needs="x11"\
+        section="Apps/Databases"\
+        title="ODBCConfig"\
+        command="ODBCConfig"
+
+?package(unixodbc-bin):\
+        needs="x11"\
+        section="Apps/Databases"\
+        title="odbctest"\
+        command="odbctest"
+

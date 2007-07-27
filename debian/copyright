@@ -1,0 +1,19 @@
+This package was debianized by Ivan E. Moore II <rkrusty@debian.org> on
+Sat, 26 Aug 2000 02:53:23 -0600.
+
+It was downloaded from http://www.unixodbc.org/
+
+Upstream Authors: Please see AUTHORS file for full list
+
+Copyright:
+
+***************************************************************
+* All programs are GPL.                                       *
+* All libs are LGPL (except nn which is GPL?).                *
+*                                                             *
+* unixODBC is considered to be a single piece of software     *
+* made from many components.                                  *
+*                                                             *
+***************************************************************  
+
+Please see /usr/share/common-licenses/* for full licenses
