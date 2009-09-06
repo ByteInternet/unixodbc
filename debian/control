@@ -1,15 +1,17 @@
 Source: unixodbc
-Build-Depends: debhelper (>> 2.0.0), flex-old, bison, libqt3-mt-dev, libreadline5-dev, autotools-dev, libltdl3-dev
+Build-Depends: debhelper (>= 7.0.50), flex-old, bison, libqt3-mt-dev,
+	libreadline5-dev, autotools-dev, libltdl-dev
 Section: libs
 Priority: optional
 Maintainer: Steve Langasek <vorlon@debian.org>
-Standards-Version: 3.5.2
+Standards-Version: 3.8.3
+Homepage: http://www.unixodbc.org/
 
 Package: unixodbc
 Architecture: any
 Section: libs
-Depends: ${shlibs:Depends}
-Suggests: libmyodbc, odbc-postgresql, libct1
+Depends: ${shlibs:Depends}, ${misc:Depends}
+Suggests: libmyodbc, odbc-postgresql, tdsodbc, unixodbc-bin
 Conflicts: unixodbc-bin (<< 2.2.4-1)
 Description: ODBC tools libraries 
  Binaries and libraries from the unixODBC package.
@@ -17,14 +19,16 @@ Description: ODBC tools libraries
  .
   libodbc.so.1        (ODBC Driver Manager)
   libodbctxt.so       (driver for Text files)
-  dltest              (simple cmd line tool)
   isql                (cmd line tool... batch & interactive SQL)
 
 Package: unixodbc-dev
 Architecture: any
 Section: devel
 Priority: extra
-Depends: unixodbc (= ${binary:Version}), odbcinst1debian1 (= ${binary:Version}), libodbcinstq1c2 (= ${binary:Version}), libltdl3-dev
+Depends: unixodbc (= ${binary:Version}),
+	odbcinst1debian1 (= ${binary:Version}),
+	libodbcinstq1c2 (= ${binary:Version}),
+	libltdl3-dev, ${misc:Depends}
 Suggests: libqt3-mt-dev
 Conflicts: libiodbc2-dev, remembrance-agent (<< 2.11-4)
 Description: ODBC libraries for UNIX (development files)
@@ -37,7 +41,7 @@ Description: ODBC libraries for UNIX (development files)
 Package: unixodbc-bin
 Architecture: any
 Section: x11
-Depends: ${shlibs:Depends}, libodbcinstq1c2
+Depends: ${shlibs:Depends}, libodbcinstq1c2, ${misc:Depends}
 Description: Graphical tools for ODBC management and browsing
  This package contains three graphical applications for use with
  unixODBC, the Open DataBase Connectivity suite: ODBCConfig, a graphical
@@ -48,7 +52,7 @@ Description: Graphical tools for ODBC management and browsing
 Package: libodbcinstq1c2
 Architecture: any
 Section: libs
-Depends: ${shlibs:Depends}
+Depends: ${shlibs:Depends}, ${misc:Depends}
 Conflicts: unixodbc (<< 2.2.4-1), libodbcinstq1
 Replaces: unixodbc (<< 2.2.4-1), libodbcinstq1
 Description: Qt-based ODBC configuration library
@@ -58,18 +62,26 @@ Description: Qt-based ODBC configuration library
 Package: odbcinst1debian1
 Architecture: any
 Section: libs
-Depends: ${shlibs:Depends}
+Depends: ${shlibs:Depends}, ${misc:Depends}, odbcinst
 Replaces: unixodbc (<< 2.1.1-2)
 Conflicts: odbcinst1
 Description: Support library and helper program for accessing odbc ini files
  This package contains the libodbcinst library from unixodbc, a library
  used by ODBC drivers for reading their configuration settings from
- /etc/odbc.ini and ~/.odbc.ini.  It is useful to provide this in
- a stand-alone package, so that all ODBC drivers in Debian can use a 
- consistent ini library, regardless of whether applications are built 
+ /etc/odbc.ini and ~/.odbc.ini.  It is useful to provide this in a
+ stand-alone package, so that all ODBC drivers in Debian can use a
+ consistent ini library, regardless of whether applications are built
  with iodbc or unixodbc.
  .
- Also contained in this package is the odbcinst helper tool, which 
- allows ODBC driver packages to install their own driver settings, and 
- the driver setup plugins, which describe the features supported by 
- individual ODBC drivers.
+ Also contained in this package are the driver setup plugins, which
+ describe the features supported by individual ODBC drivers.
+
+Package: odbcinst
+Architecture: any
+Section: libs
+Depends: ${shlibs:Depends}, ${misc:Depends}
+Replaces: unixodbc (<< 2.1.1-2), odbcinst1debian1 (<< 2.2.11-20), odbcinst1
+Conflicts: odbcinst1
+Description: Helper program for accessing odbc ini files
+ This package contains the odbcinst helper tool, which allows ODBC driver
+ packages to install their own driver settings.

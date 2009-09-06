@@ -1,3 +1,61 @@
+unixodbc (2.2.11-20) unstable; urgency=low
+
+  * Split binaries out of odbcinst1debian1 into a new odbcinst package, so
+    that we aren't in the situation of trying to clean up config files in
+    the purge target of a shared library package.
+
+ -- Steve Langasek <vorlon@debian.org>  Sun, 06 Sep 2009 13:50:40 -0700
+
+unixodbc (2.2.11-19) unstable; urgency=low
+
+  * /etc/odbcinst.ini should not be a conffile.  Create it in the postinst
+    on upgrade instead if it doesn't exist, and remove in postrm purge.
+    (As a side effect, this means we'll need to split this package for
+    multiarch, but we already have to do that due to /usr/bin/odbcinst; we
+    just need to do it sooner rather than later, to avoid purging config
+    files on library purge...)  Closes: #376368.
+
+ -- Steve Langasek <vorlon@debian.org>  Fri, 04 Sep 2009 20:56:00 -0700
+
+unixodbc (2.2.11-18) unstable; urgency=low
+
+  * Put the headers back in unixodbc-dev; those are kind of important.
+    Closes: #544438.
+
+ -- Steve Langasek <vorlon@debian.org>  Mon, 31 Aug 2009 10:20:58 -0700
+
+unixodbc (2.2.11-17) unstable; urgency=low
+
+  * Drop dltest from the package description, because it was dropped from the
+    package two years ago; thanks to Pete Boyd for pointing this out.
+    Closes: #448610.
+  * Build-Depend on libltdl-dev instead of libltdl3-dev. Closes: #476452.
+  * Have unixodbc Suggest: unixodbc-bin, per user request.  Closes: #240035.
+  * Suggest tdsodbc, not libct1.
+  * Update debhelper compat to 7, adding ${misc:Depends} where needed
+  * Drop debian/dh_makeshlibs and the .manifest files in favor of the
+    now-standard dpkg-gensymbols .symbols files
+  * Rename lintian files to *.lintian-overrides so dh_lintian will take care
+    of them
+  * Migrate from dh_movefiles to dh_install
+  * Switch debian/rules to use dh
+  * Clean up debian/copyright to be more accurate (and approximate DEP5)
+  * Fix up menu files for the current section names (Apps->Applications;
+    Databases->Data Management)
+  * Neuter the .la files to not net dependency_libs, so that we can
+    eventually get rid of them entirely
+  * Drop unused debian/odbcinst_psql.ini file
+  * Drop unneeded entries in debian/dirs
+  * Set LDFLAGS=-Wl,-z,defs in debian/rules, to guard against all undefined
+    symbols
+  * Fix libodbcinstq1c2's missing dep on libltdl, picked up by the above
+    change
+  * Fix libodbctxt to not use undefined "stricmp" function
+  * Add Homepage field
+  * Standards-Version to 3.8.3.
+
+ -- Steve Langasek <vorlon@debian.org>  Sun, 30 Aug 2009 18:47:57 -0700
+
 unixodbc (2.2.11-16) unstable; urgency=low
 
   * The "libtool loves me, yes I know, because my upstream tells me so"

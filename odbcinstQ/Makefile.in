@@ -267,6 +267,7 @@ libodbcinstQ_la_LDFLAGS = \
 @QT_TRUE@	@QT_LDFLAGS@ \
 @QT_TRUE@	@USER_LDFLAGS@ \
 @QT_TRUE@	@LIB_QT@ \
+@QT_TRUE@	@LIBLTDL@ \
 @QT_TRUE@	../odbcinst/libodbcinst.la \
 @QT_TRUE@	../extras/libodbcextraslc.la \
 @QT_TRUE@	../DriverManager/libodbc.la 

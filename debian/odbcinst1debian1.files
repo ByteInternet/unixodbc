@@ -1,5 +1,0 @@
-usr/lib/libodbcinst.so.*
-usr/lib/odbc/*S.so
-usr/bin/odbcinst
-etc/odbc.ini
-etc/odbcinst.ini

@@ -15,6 +15,7 @@ libodbcinstQ_la_LIBADD = @X_LDFLAGS@ \
 	@QT_LDFLAGS@ \
 	@USER_LDFLAGS@ \
 	@LIB_QT@ \
+	@LIBLTDL@ \
 	../odbcinst/libodbcinst.la \
 	../extras/libodbcextraslc.la \
 	../DriverManager/libodbc.la 

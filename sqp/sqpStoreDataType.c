@@ -45,43 +45,43 @@ short sqpStringTypeToSQLTYPE (char * pszType)
 {
 
 
-	if (stricmp( pszType, "CHAR") == 0)
+	if (strcmp( pszType, "CHAR") == 0)
 		return SQL_CHAR;
-	if (stricmp( pszType, "VARCHAR") == 0)
+	if (strcmp( pszType, "VARCHAR") == 0)
 		return SQL_VARCHAR;
-	if (stricmp( pszType, "LONG VARCHAR") == 0)
+	if (strcmp( pszType, "LONG VARCHAR") == 0)
 		return SQL_LONGVARCHAR;
-	if (stricmp( pszType, "NUMERIC") == 0)
+	if (strcmp( pszType, "NUMERIC") == 0)
 		return SQL_NUMERIC;
-	if (stricmp( pszType, "DECIMAL") == 0)
+	if (strcmp( pszType, "DECIMAL") == 0)
 		return SQL_DECIMAL;
-	if (stricmp( pszType, "SMALLINT") == 0)
+	if (strcmp( pszType, "SMALLINT") == 0)
 		return SQL_SMALLINT;
-	if (stricmp( pszType, "INTEGER") == 0)
+	if (strcmp( pszType, "INTEGER") == 0)
 		return SQL_INTEGER;
-	if (stricmp( pszType, "REAL") == 0)
+	if (strcmp( pszType, "REAL") == 0)
 		return SQL_REAL;
-	if (stricmp( pszType, "FLOAT") == 0)
+	if (strcmp( pszType, "FLOAT") == 0)
 		return SQL_DOUBLE;
-	if (stricmp( pszType, "DOUBLE PRECISION") == 0)
+	if (strcmp( pszType, "DOUBLE PRECISION") == 0)
 		return SQL_DOUBLE;
-	if (stricmp( pszType, "BIT") == 0)
+	if (strcmp( pszType, "BIT") == 0)
 		return SQL_BIT;
-	if (stricmp( pszType, "TINYINT") == 0)
+	if (strcmp( pszType, "TINYINT") == 0)
 		return SQL_TINYINT;
-	if (stricmp( pszType, "BIGINT") == 0)
+	if (strcmp( pszType, "BIGINT") == 0)
 		return SQL_BIGINT;
-	if (stricmp( pszType, "BINARY") == 0)
+	if (strcmp( pszType, "BINARY") == 0)
 		return SQL_BINARY;
-	if (stricmp( pszType, "VARBINARY") == 0)
+	if (strcmp( pszType, "VARBINARY") == 0)
 		return SQL_VARBINARY;
-	if (stricmp( pszType, "LONG VARBINARY") == 0)
+	if (strcmp( pszType, "LONG VARBINARY") == 0)
 		return SQL_LONGVARBINARY;
-	if (stricmp( pszType, "DATE") == 0)
+	if (strcmp( pszType, "DATE") == 0)
 		return SQL_DATE;
-	if (stricmp( pszType, "TIME") == 0)
+	if (strcmp( pszType, "TIME") == 0)
 		return SQL_TIME;
-	if (stricmp( pszType, "TIMESTAMP") == 0)
+	if (strcmp( pszType, "TIMESTAMP") == 0)
 		return SQL_TIMESTAMP;
 	return SQL_CHAR;
 
