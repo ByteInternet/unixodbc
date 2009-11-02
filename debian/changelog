@@ -1,3 +1,15 @@
+unixodbc (2.2.11-21) unstable; urgency=low
+
+  * Fix short description of odbcinst1debian1 to not refer to the bits that
+    have been moved to odbcinst.
+  * Build-depend on libreadline-dev instead of libreadline5-dev, for the
+    readline6 transition; doesn't interfere with backports, since
+    libreadline5-dev already provided libreadline-dev.  Closes: #553870.
+  * Copy in the setup libraries correctly, so we don't wind up with dangling
+    symlinks in the package.  Closes: #552161.
+
+ -- Steve Langasek <vorlon@debian.org>  Mon, 02 Nov 2009 03:59:14 -0800
+
 unixodbc (2.2.11-20) unstable; urgency=low
 
   * Split binaries out of odbcinst1debian1 into a new odbcinst package, so

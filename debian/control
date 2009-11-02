@@ -1,6 +1,6 @@
 Source: unixodbc
 Build-Depends: debhelper (>= 7.0.50), flex-old, bison, libqt3-mt-dev,
-	libreadline5-dev, autotools-dev, libltdl-dev
+	libreadline-dev, autotools-dev, libltdl-dev
 Section: libs
 Priority: optional
 Maintainer: Steve Langasek <vorlon@debian.org>
@@ -65,7 +65,7 @@ Section: libs
 Depends: ${shlibs:Depends}, ${misc:Depends}, odbcinst
 Replaces: unixodbc (<< 2.1.1-2)
 Conflicts: odbcinst1
-Description: Support library and helper program for accessing odbc ini files
+Description: Support library for accessing odbc ini files
  This package contains the libodbcinst library from unixodbc, a library
  used by ODBC drivers for reading their configuration settings from
  /etc/odbc.ini and ~/.odbc.ini.  It is useful to provide this in a
