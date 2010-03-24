@@ -27,9 +27,18 @@
  *
  **********************************************************************
  *
- * $Id: SQLColAttributes.c,v 1.11 2004/11/22 17:02:48 lurcher Exp $
+ * $Id: SQLColAttributes.c,v 1.14 2008/09/29 14:02:43 lurcher Exp $
  *
  * $Log: SQLColAttributes.c,v $
+ * Revision 1.14  2008/09/29 14:02:43  lurcher
+ * Fix missing dlfcn group option
+ *
+ * Revision 1.13  2006/03/08 09:18:41  lurcher
+ * fix silly typo that was using sizeof( SQL_WCHAR ) instead of SQLWCHAR
+ *
+ * Revision 1.12  2006/01/06 18:44:35  lurcher
+ * Couple of unicode fixes
+ *
  * Revision 1.11  2004/11/22 17:02:48  lurcher
  * Fix unicode/ansi conversion in the SQLGet functions
  *
@@ -157,7 +166,7 @@
 
 #include "drivermanager.h"
 
-static char const rcsid[]= "$RCSfile: SQLColAttributes.c,v $ $Revision: 1.11 $";
+static char const rcsid[]= "$RCSfile: SQLColAttributes.c,v $ $Revision: 1.14 $";
 
 SQLINTEGER  map_ca_odbc2_to_3( SQLINTEGER field_identifier )
 {
@@ -410,7 +419,7 @@ SQLRETURN SQLColAttributes( SQLHSTMT statement_handle,
 
                 if ( character_attribute && buffer_length > 0 )
                 {
-                    s1 = malloc( sizeof( SQLWCHAR ) * ( buffer_length + 1 ));
+                    s1 = calloc( sizeof( SQLWCHAR ) * ( buffer_length + 1 ), 1);
                 }
 
                 ret = SQLCOLATTRIBUTEW( statement -> connection,
@@ -424,11 +433,11 @@ SQLRETURN SQLColAttributes( SQLHSTMT statement_handle,
 
                 if ( SQL_SUCCEEDED( ret ) && character_attribute && s1 )
                 {
-                    unicode_to_ansi_copy( character_attribute, s1, SQL_NTS, statement -> connection );
+                    unicode_to_ansi_copy( character_attribute, buffer_length, s1, SQL_NTS, statement -> connection );
                 }
 				if ( SQL_SUCCEEDED( ret ) && string_length && character_attribute ) 
 				{
-					*string_length /= sizeof( SQL_WCHAR );	
+					*string_length = strlen(character_attribute);
 				}
 
                 if ( s1 )
@@ -457,7 +466,7 @@ SQLRETURN SQLColAttributes( SQLHSTMT statement_handle,
 
             if ( character_attribute && buffer_length > 0 )
             {
-                s1 = malloc( sizeof( SQLWCHAR ) * ( buffer_length + 1 ));
+                s1 = calloc( sizeof( SQLWCHAR ) * ( buffer_length + 1 ), 1);
             }
 
             ret = SQLCOLATTRIBUTESW( statement -> connection,
@@ -471,11 +480,11 @@ SQLRETURN SQLColAttributes( SQLHSTMT statement_handle,
 
             if ( SQL_SUCCEEDED( ret ) && character_attribute )
             {
-                unicode_to_ansi_copy( character_attribute, s1, SQL_NTS, statement -> connection );
+                unicode_to_ansi_copy( character_attribute, buffer_length, s1, SQL_NTS, statement -> connection );
 			}
 			if ( SQL_SUCCEEDED( ret ) && string_length && character_attribute ) 
 			{
-				*string_length /= sizeof( SQL_WCHAR );	
+				*string_length /= sizeof( SQLWCHAR );	
 			}
 
             if ( s1 )

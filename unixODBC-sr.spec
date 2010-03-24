@@ -3,7 +3,7 @@
 #
 
 Name:		unixODBC
-Version:	2.2.11
+Version:	2.2.1pre
 Release:	1sr
 Summary: 	ODBC Driver Manager
 License:	LGPL

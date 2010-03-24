@@ -27,9 +27,30 @@
  *
  **********************************************************************
  *
- * $Id: SQLGetDiagRec.c,v 1.11 2003/02/27 12:19:39 lurcher Exp $
+ * $Id: SQLGetDiagRec.c,v 1.18 2008/09/29 14:02:45 lurcher Exp $
  *
  * $Log: SQLGetDiagRec.c,v $
+ * Revision 1.18  2008/09/29 14:02:45  lurcher
+ * Fix missing dlfcn group option
+ *
+ * Revision 1.17  2008/05/20 13:43:47  lurcher
+ * Vms fixes
+ *
+ * Revision 1.16  2007/02/12 11:49:34  lurcher
+ * Add QT4 support to existing GUI parts
+ *
+ * Revision 1.15  2006/11/27 14:08:34  lurcher
+ * Sync up dirs
+ *
+ * Revision 1.14  2006/05/31 17:35:34  lurcher
+ * Add unicode ODBCINST entry points
+ *
+ * Revision 1.13  2006/04/24 08:42:10  lurcher
+ * Handle resetting statement descriptors to implicit values, by passing in NULL or the implicit descrptor  to SQLSetStmtAttr with the attribute SQL_ATTR_APP_PARAM_DESC or SQL_ATTR_APP_ROW_DESC. Also catch trying to call SQLGetDescField on a closed connection
+ *
+ * Revision 1.12  2005/12/19 18:43:26  lurcher
+ * Add new parts to contrib and alter how the errors are returned from the driver
+ *
  * Revision 1.11  2003/02/27 12:19:39  lurcher
  *
  * Add the A functions as well as the W
@@ -152,7 +173,16 @@
 
 #include "drivermanager.h"
 
-static char const rcsid[]= "$RCSfile: SQLGetDiagRec.c,v $ $Revision: 1.11 $";
+static char const rcsid[]= "$RCSfile: SQLGetDiagRec.c,v $ $Revision: 1.18 $";
+
+int __is_env( EHEAD * head )
+{
+    int type;
+
+    memcpy( &type, head -> owning_handle, sizeof( type ));
+
+    return type == HENV_MAGIC;
+}
 
 DMHDBC __get_connection( EHEAD * head )
 {
@@ -226,7 +256,7 @@ int __get_version( EHEAD * head )
 }
     
 
-SQLHANDLE __get_driver_handle( EHEAD * head )
+DRV_SQLHANDLE __get_driver_handle( EHEAD * head )
 {
     int type;
 
@@ -287,7 +317,7 @@ static SQLRETURN extract_sql_error_rec( EHEAD *head,
 
         if ( sqlstate )
         {
-            unicode_to_ansi_copy((char*) sqlstate, ptr -> sqlstate, SQL_NTS, __get_connection( head ));
+            unicode_to_ansi_copy((char*) sqlstate, 6, ptr -> sqlstate, SQL_NTS, __get_connection( head ));
         }
         if ( buffer_length < strlen((char*) as1 ) + 1 )
         {
@@ -334,14 +364,13 @@ static SQLRETURN extract_sql_error_rec( EHEAD *head,
         }
         return ret;
     }
-    else if ( rec_number <= head -> sql_diag_head.internal_count + 
-            head -> sql_diag_head.error_count )
+    else if ( !__is_env( head ) && __get_connection( head ) -> state != STATE_C2 )
     {
         ERROR *ptr;
         SQLCHAR *as1 = NULL;
         SQLWCHAR *s1 = NULL, *s2 = NULL;
 
-        rec_number -= head -> sql_diag_head.internal_count;
+		rec_number -= head -> sql_diag_head.internal_count;
 
         s1 = malloc( sizeof( SQLWCHAR ) * ( 6 + 1 ));
 
@@ -371,12 +400,12 @@ static SQLRETURN extract_sql_error_rec( EHEAD *head,
             {
                 if ( sqlstate )
                 {
-                    unicode_to_ansi_copy((char*) sqlstate, s1, SQL_NTS, __get_connection( head ));
+                    unicode_to_ansi_copy((char*) sqlstate, 6, s1, SQL_NTS, __get_connection( head ));
                     __map_error_state((char*) sqlstate, __get_version( head ));
                 }
                 if ( message_text )
                 {
-                    unicode_to_ansi_copy((char*) message_text, s2, SQL_NTS, __get_connection( head ));
+                    unicode_to_ansi_copy((char*) message_text, buffer_length, s2, SQL_NTS, __get_connection( head ));
                 }
             }
 
@@ -416,7 +445,7 @@ static SQLRETURN extract_sql_error_rec( EHEAD *head,
 
             if ( sqlstate )
             {
-                unicode_to_ansi_copy((char*) sqlstate, ptr -> sqlstate, SQL_NTS, __get_connection( head ));
+                unicode_to_ansi_copy((char*) sqlstate, 6, ptr -> sqlstate, SQL_NTS, __get_connection( head ));
             }
             if ( as1 && buffer_length < strlen((char*) as1 ) + 1 )
             {
@@ -471,9 +500,9 @@ static SQLRETURN extract_sql_error_rec( EHEAD *head,
 
         return ret;
     }
-    else
+    else 
     {
-        return SQL_NO_DATA;
+	    return SQL_NO_DATA;
     }
 }
 
@@ -576,7 +605,7 @@ SQLRETURN SQLGetDiagRec( SQLSMALLINT handle_type,
                     \n\t\t\tMessage Text = %s",
                         __get_return_status( ret, s2 ),
                         sqlstate,
-                        __ptr_as_string( s0, native ),
+                        __iptr_as_string( s0, native ),
                         __sdata_as_string( s1, SQL_CHAR, 
                             text_length_ptr, message_text ));
             }
@@ -654,7 +683,7 @@ SQLRETURN SQLGetDiagRec( SQLSMALLINT handle_type,
                     \n\t\t\tMessage Text = %s",
                         __get_return_status( ret, s2 ),
                         sqlstate,
-                        __ptr_as_string( s0, native ),
+                        __iptr_as_string( s0, native ),
                         __sdata_as_string( s1, SQL_CHAR, 
                             text_length_ptr, message_text ));
             }
@@ -732,7 +761,7 @@ SQLRETURN SQLGetDiagRec( SQLSMALLINT handle_type,
                     \n\t\t\tMessage Text = %s",
                         __get_return_status( ret, s2 ),
                         sqlstate,
-                        __ptr_as_string( s0, native ),
+                        __iptr_as_string( s0, native ),
                         __sdata_as_string( s1, SQL_CHAR, 
                             text_length_ptr, message_text ));
             }
@@ -810,7 +839,7 @@ SQLRETURN SQLGetDiagRec( SQLSMALLINT handle_type,
                     \n\t\t\tMessage Text = %s",
                         __get_return_status( ret, s2 ),
                         sqlstate,
-                        __ptr_as_string( s0, native ),
+                        __iptr_as_string( s0, native ),
                         __sdata_as_string( s1, SQL_CHAR, 
                             text_length_ptr, message_text ));
             }

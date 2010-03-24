@@ -27,13 +27,13 @@ typedef struct bound_column
 {
     struct bound_column     *next;
     int                     column_number;
-    SQLINTEGER              len_ind;
+    SQLLEN                  len_ind;
     SQLPOINTER              local_buffer;   /* buffer that the CL binds in */
                                             /* the driver (malloc'd) */
     SQLPOINTER              bound_buffer;   /* buffer that the app binds */
     SQLINTEGER              bound_type;     /* data type of binding */
-    SQLINTEGER              bound_length;   /* length of binding */
-    SQLINTEGER              *bound_ind;     /* ind ptr bound */
+    SQLLEN              	bound_length;   /* length of binding */
+    SQLLEN              	*bound_ind;     /* ind ptr bound */
     int                     rs_buffer_offset;
     int                     rs_ind_offset;  /* offset onto the current rowset */
                                             /* buffer */
@@ -43,7 +43,7 @@ typedef struct cl_connection
 {
     struct driver_func *functions;      /* entry points, from the original */
                                         /* driver */
-    SQLHANDLE           driver_dbc;     /* HDBC of the driver */
+    DRV_SQLHANDLE       driver_dbc;     /* HDBC of the driver */
     DMHDBC              dm_connection;  /* driver manager connection str */ 
     DMHSTMT             cl_handle;      /* dummy to make the macro valid */
     SQLUSMALLINT        active_statement_allowed;
@@ -60,7 +60,7 @@ typedef struct cl_connection
 
 typedef struct cl_statement
 {
-    SQLHANDLE           driver_stmt;    /* driver sattement handle */
+    DRV_SQLHANDLE       driver_stmt;    /* driver statement handle */
     CLHDBC              cl_connection;  /* parent cursor lib connection */
     DMHSTMT             dm_statement;   /* Driver manager statement */
     DMHSTMT             fetch_statement;   /* Driver manager statement */
@@ -72,6 +72,7 @@ typedef struct cl_statement
     SQLPOINTER          row_bind_offset_ptr;
     SQLUINTEGER         row_bind_type;
     SQLUINTEGER         rowset_array_size;
+    SQLUINTEGER         rowset_size;
     SQLUINTEGER         simulate_cursor;
     SQLUINTEGER         use_bookmarks;
     SQLUINTEGER         *rows_fetched_ptr;
@@ -82,7 +83,7 @@ typedef struct cl_statement
     char                *sql_text;      /* text of current statement */
     char                **column_names; /* names of each column */
     SQLSMALLINT         *data_type;
-    SQLINTEGER          *column_size;
+    SQLLEN              *column_size;
     SQLSMALLINT         *decimal_digits;
     int                 driver_stmt_closed;
     int                 not_from_select;
@@ -126,17 +127,17 @@ SQLRETURN SQL_API CLBindCol( SQLHSTMT statement_handle,
 		   SQLUSMALLINT column_number,
            SQLSMALLINT target_type,
 		   SQLPOINTER target_value,
-           SQLINTEGER buffer_length,
-	   	   SQLINTEGER *strlen_or_ind );
+           SQLLEN buffer_length,
+	   	   SQLLEN *strlen_or_ind );
 
 SQLRETURN SQL_API CLBindParam( SQLHSTMT statement_handle,
            SQLUSMALLINT parameter_number,
            SQLSMALLINT value_type,
            SQLSMALLINT parameter_type,
-           SQLUINTEGER length_precision,
+           SQLULEN length_precision,
            SQLSMALLINT parameter_scale,
            SQLPOINTER parameter_value,
-           SQLINTEGER *strlen_or_ind );
+           SQLLEN *strlen_or_ind );
 
 SQLRETURN SQL_API CLBindParameter(
            SQLHSTMT           statement_handle,
@@ -144,11 +145,11 @@ SQLRETURN SQL_API CLBindParameter(
            SQLSMALLINT        f_param_type,
            SQLSMALLINT        f_c_type,
            SQLSMALLINT        f_sql_type,
-           SQLUINTEGER        cb_col_def,
+           SQLULEN        	  cb_col_def,
            SQLSMALLINT        ib_scale,
            SQLPOINTER         rgb_value,
-           SQLINTEGER         cb_value_max,
-           SQLINTEGER         *pcb_value );
+           SQLLEN             cb_value_max,
+           SQLLEN             *pcb_value );
        
 SQLRETURN SQL_API CLBulkOperations(
            SQLHSTMT        statement_handle,
@@ -164,7 +165,7 @@ SQLRETURN SQL_API CLColAttribute ( SQLHSTMT statement_handle,
            SQLPOINTER character_attribute,
            SQLSMALLINT buffer_length,
            SQLSMALLINT *string_length,
-           SQLPOINTER numeric_attribute );
+           SQLLEN *numeric_attribute );
 
 SQLRETURN SQL_API CLColAttributes( SQLHSTMT statement_handle,
            SQLUSMALLINT column_number,
@@ -172,7 +173,7 @@ SQLRETURN SQL_API CLColAttributes( SQLHSTMT statement_handle,
            SQLPOINTER   character_attribute,
            SQLSMALLINT  buffer_length,
            SQLSMALLINT  *string_length,
-           SQLINTEGER   *numeric_attribute );
+           SQLLEN       *numeric_attribute );
 
 SQLRETURN SQL_API CLColumnPrivileges(
            SQLHSTMT            statement_handle,
@@ -204,7 +205,7 @@ SQLRETURN SQL_API CLDescribeCol( SQLHSTMT statement_handle,
            SQLSMALLINT buffer_length,
            SQLSMALLINT *name_length,
            SQLSMALLINT *data_type,
-           SQLUINTEGER *column_size,
+           SQLULEN     *column_size,
            SQLSMALLINT *decimal_digits,
            SQLSMALLINT *nullable );
 
@@ -212,7 +213,7 @@ SQLRETURN SQL_API CLDescribeParam(
            SQLHSTMT           statement_handle,
            SQLUSMALLINT       ipar,
            SQLSMALLINT        *pf_sql_type,
-           SQLUINTEGER        *pcb_param_def,
+           SQLULEN            *pcb_param_def,
            SQLSMALLINT        *pib_scale,
            SQLSMALLINT        *pf_nullable );
 
@@ -240,15 +241,15 @@ SQLRETURN SQL_API CLExecute( SQLHSTMT statement_handle );
 SQLRETURN SQL_API CLExtendedFetch(
            SQLHSTMT           statement_handle,
            SQLUSMALLINT       f_fetch_type,
-           SQLINTEGER         irow,
-           SQLUINTEGER        *pcrow,
+           SQLLEN             irow,
+           SQLULEN            *pcrow,
            SQLUSMALLINT       *rgf_row_status );
 
 SQLRETURN SQL_API CLFetch( SQLHSTMT statement_handle );
 
 SQLRETURN SQL_API CLFetchScroll( SQLHSTMT statement_handle,
            SQLSMALLINT fetch_orientation,
-           SQLINTEGER fetch_offset );
+           SQLLEN fetch_offset );
 
 SQLRETURN SQL_API CLForeignKeys(
            SQLHSTMT           statement_handle,
@@ -290,8 +291,8 @@ SQLRETURN SQL_API CLGetData( SQLHSTMT statement_handle,
            SQLUSMALLINT column_number,
            SQLSMALLINT target_type,
            SQLPOINTER target_value,
-           SQLINTEGER buffer_length,
-           SQLINTEGER *strlen_or_ind );
+           SQLLEN buffer_length,
+           SQLLEN *strlen_or_ind );
 
 SQLRETURN SQL_API CLGetDescField( SQLHDESC descriptor_handle,
            SQLSMALLINT rec_number, 
@@ -370,8 +371,8 @@ SQLRETURN SQL_API CLParamData( SQLHSTMT statement_handle,
 
 SQLRETURN SQL_API CLParamOptions(
            SQLHSTMT           statement_handle,
-           SQLUINTEGER        crow,
-           SQLUINTEGER        *pirow );
+           SQLULEN        	  crow,
+           SQLULEN        	  *pirow );
 
 SQLRETURN SQL_API CLPrepare( SQLHSTMT statement_handle,
            SQLCHAR *statement_text,
@@ -411,7 +412,7 @@ SQLRETURN SQL_API CLPutData( SQLHSTMT statement_handle,
            SQLINTEGER strlen_or_ind );
 
 SQLRETURN SQL_API CLRowCount( SQLHSTMT statement_handle,
-           SQLINTEGER *rowcount );
+           SQLLEN *rowcount );
 
 SQLRETURN SQL_API CLSetConnectAttr( SQLHDBC connection_handle,
            SQLINTEGER attribute,
@@ -436,32 +437,32 @@ SQLRETURN SQL_API CLSetDescRec( SQLHDESC descriptor_handle,
            SQLSMALLINT rec_number, 
            SQLSMALLINT type,
            SQLSMALLINT subtype, 
-           SQLINTEGER length,
+           SQLLEN length,
            SQLSMALLINT precision, 
            SQLSMALLINT scale,
            SQLPOINTER data, 
-           SQLINTEGER *string_length,
-           SQLINTEGER *indicator );
+           SQLLEN *string_length,
+           SQLLEN *indicator );
 
 SQLRETURN SQL_API CLSetParam( SQLHSTMT statement_handle,
            SQLUSMALLINT parameter_number,
            SQLSMALLINT value_type,
            SQLSMALLINT parameter_type,
-           SQLUINTEGER length_precision,
+           SQLULEN length_precision,
            SQLSMALLINT parameter_scale,
            SQLPOINTER parameter_value,
-           SQLINTEGER *strlen_or_ind );
+           SQLLEN *strlen_or_ind );
 
 SQLRETURN SQL_API CLSetPos(
            SQLHSTMT           statement_handle,
-           SQLUSMALLINT       irow,
+           SQLSETPOSIROW      irow,
            SQLUSMALLINT       foption,
            SQLUSMALLINT       flock );
 
 SQLRETURN SQL_API CLSetScrollOptions(
            SQLHSTMT           statement_handle,
            SQLUSMALLINT       f_concurrency,
-           SQLINTEGER         crow_keyset,
+           SQLLEN             crow_keyset,
            SQLUSMALLINT       crow_rowset );
 
 SQLRETURN SQL_API CLSetStmtAttr( SQLHSTMT statement_handle,
@@ -526,7 +527,8 @@ int calculate_buffers( CLHSTMT cl_statement, int column_count );
 int free_bound_columns( CLHSTMT cl_statement );
 SQLRETURN do_fetch_scroll( CLHSTMT cl_statement,
             int fetch_orientation, 
-            int fetch_offset,
+            SQLLEN fetch_offset,
             SQLUSMALLINT *row_status_ptr,
-            SQLUINTEGER *rows_fetched_ptr );
+            SQLULEN *rows_fetched_ptr,
+			int ext_fetch );
 #endif

@@ -36,9 +36,11 @@ char *szSyntax =
 "*      -u         uninstall                  *\n" \
 "*      -q         query                      *\n" \
 "*      -j         print config info          *\n" \
+"*      -c         call SQLCreateDataSource   *\n" \
+"*      -m         call SQLManageDataSources  *\n" \
 "*      --version  version                    *\n" \
 "*                                            *\n" \
-"* Objects:                                   *\n" \
+"* Object:                                    *\n" \
 "*                                            *\n" \
 "*      -d driver                             *\n" \
 "*      -s data source                        *\n" \
@@ -72,6 +74,68 @@ char    cVerbose;
 int from_stdin = 0;
 int system_dsn = 0;
 int user_dsn = 0;
+
+/*!
+ * \brief   Invoke UI to Create Data Source wizard.
+ *
+ *          This exists so we can test calling SQLCreateDataSource from an
+ *          app which does not provide the UI used by SQLCreateDataSource.
+ *
+ *          At the moment we have "odbcinstQ4" (the Qt4 based UI) requested
+ *          explicitly but this could be changed to simply request the default
+ *          or to use a ncurses based UI when that becomes available.
+ *
+ *          There are at least 3 ways to invoke SQLCreateDataSource;
+ *
+ *          \li ODBCCreateDataSourceQ4 at the command-line
+ *          \li a custom application
+ *          \li "odbcinst -c [-nMyDsn]" at the command-line
+ *
+ * \sa      ManageDataSources
+ */
+int CreateDataSource( char *pszDataSourceName )
+{
+    ODBCINSTWND odbcinstwnd;
+
+    odbcinstwnd.hWnd = 0;
+    strcpy( odbcinstwnd.szUI, "odbcinstQ4" );
+
+    if ( SQLCreateDataSource( (HWND)&(odbcinstwnd), ( (pszDataSourceName && *pszDataSourceName) ? pszDataSourceName : 0 ) ) == FALSE )
+        return 1;
+
+    return 0;
+}
+
+/*!
+ * \brief   Invoke UI to Manage Data Sources.
+ *
+ *          This exists so we can test calling SQLManageDataSources from an
+ *          app which does not provide the UI used by SQLManageDataSources.
+ *
+ *          At the moment we have "odbcinstQ4" (the Qt4 based UI) requested
+ *          explicitly but this could be changed to simply request the default
+ *          or to use a ncurses based UI when that becomes available.
+ *
+ *          There are at least 3 ways to invoke SQLManageDataSources;
+ *
+ *          \li ODBCManageDataSourcesQ4 at the command-line
+ *          \li a custom application
+ *          \li "odbcinst -m" at the command-line
+ *
+ * \sa      CreateDataSource
+ */
+int ManageDataSources()
+{
+    ODBCINSTWND odbcinstwnd;
+
+    odbcinstwnd.hWnd = 0;
+    strcpy( odbcinstwnd.szUI, "odbcinstQ4" );
+
+    if ( SQLManageDataSources( (HWND)&(odbcinstwnd) ) == FALSE )
+        return 1;
+
+    return 0;
+}
 
 int DriverInstall( char *pszTemplate )
 {
@@ -159,7 +223,7 @@ int DriverQuery( char *pszDriver )
     char    szValue[501];
     char *ptr;
 
-    if ( pszDriver && (*pszDriver) ) 
+    if ( pszDriver && (*pszDriver) )
     {
         /* list Driver details */
         if ( SQLGetPrivateProfileString( pszDriver, NULL, NULL, szResults, sizeof( szResults ) - 1, "ODBCINST.INI" ) < 1 )
@@ -301,17 +365,17 @@ int DSNUninstall( char *pszDSN )
 
     switch ( nConfigMode )
     {
-    case ODBC_SYSTEM_DSN:
-        pMode = "ODBC_SYSTEM_DSN";
-        break;
-    case ODBC_USER_DSN:
-        pMode = "ODBC_USER_DSN";
-        break;
-    case ODBC_BOTH_DSN:
-        pMode = "ODBC_BOTH_DSN";
-        break;
-    default:
-        pMode = "Unknown mode";
+        case ODBC_SYSTEM_DSN:
+            pMode = "ODBC_SYSTEM_DSN";
+            break;
+        case ODBC_USER_DSN:
+            pMode = "ODBC_USER_DSN";
+            break;
+        case ODBC_BOTH_DSN:
+            pMode = "ODBC_BOTH_DSN";
+            break;
+        default:
+            pMode = "Unknown mode";
     }
     if ( cVerbose == 0 ) printf( "odbcinst: DSN removed (if it existed at all). %s was used as the search path.\n", pMode );
 
@@ -343,7 +407,7 @@ int DSNQuery( char *pszDSN )
         }
         printf( "[%s]\n", pszDSN );
         ptr = szResults;
-        while( *ptr )
+        while ( *ptr )
         {
             printf( "%s=", ptr );
             if ( SQLGetPrivateProfileString( pszDSN, ptr, "", szValue, sizeof( szValue ) - 1, "ODBC.INI" ) > 0 )
@@ -364,7 +428,7 @@ int DSNQuery( char *pszDSN )
             return 1;
         }
         ptr = szResults;
-        while( *ptr )
+        while ( *ptr )
         {
             printf( "[%s]\n", ptr );
             ptr += strlen( ptr ) + 1;
@@ -387,11 +451,12 @@ void Syntax()
 void PrintConfigInfo()
 {
     char szFileName[ODBC_FILENAME_MAX+1];
+	char b1[ 256 ], b2[ 256 ];
 
     printf( "unixODBC " VERSION "\n" );
 
     *szFileName = '\0';
-    sprintf( szFileName, "%s/odbcinst.ini", odbcinst_system_file_path() );
+    sprintf( szFileName, "%s/odbcinst.ini", odbcinst_system_file_path( b1 ), odbcinst_system_file_name( b2 ));
     printf( "DRIVERS............: %s\n", szFileName ); 
 
     *szFileName = '\0';
@@ -399,8 +464,16 @@ void PrintConfigInfo()
     printf( "SYSTEM DATA SOURCES: %s\n", szFileName ); 
 
     *szFileName = '\0';
+    _odbcinst_FileINI( szFileName );
+    printf( "FILE DATA SOURCES..: %s\n", szFileName ); 
+
+    *szFileName = '\0';
     _odbcinst_UserINI( szFileName, FALSE );
     printf( "USER DATA SOURCES..: %s\n", szFileName ); 
+
+	printf( "SQLULEN Size.......: %d\n", sizeof( SQLULEN )); 
+	printf( "SQLLEN Size........: %d\n", sizeof( SQLLEN )); 
+	printf( "SQLSETPOSIROW Size.: %d\n", sizeof( SQLSETPOSIROW )); 
 }
 
 int main( int argc, char *argv[] )
@@ -428,57 +501,59 @@ int main( int argc, char *argv[] )
         {
             switch ( argv[nArg][1] )
             {
-            /* Action */
-            case 'i':
-            case 'u':
-            case 'q':
-                cAction = argv[nArg][1];
-                break;
-            case 'j':
-                PrintConfigInfo();
-                exit(0);
-            case '-':
-                printf( "unixODBC " VERSION "\n" );
-                exit(0);
-                /* Object */
-            case 'd':
-            case 's':
-                cObject = argv[nArg][1];
-                break;
-                /* Options */
-            case 'n':
-                if ( nArg < argc-1 )
-                    strncpy( szObjectName, argv[nArg+1], INI_MAX_OBJECT_NAME );
-                break;
-            case 'f':
-                if ( nArg < argc-1 )
-                    strncpy( szTemplateINI, argv[nArg+1], ODBC_FILENAME_MAX );
-                break;
-            case 'r':
-                from_stdin = 1;
-                break;
-            case 'v':
-                cVerbose = argv[nArg][1];
-                break;
-            case 'l':
-                system_dsn = 1;
-                if ( user_dsn )
-                {
-                    if ( cVerbose == 0 ) printf( "odbcinst: cannot install both user and system dsn at the same time");
-                    exit( -2 );
-                }
-                break;
-            case 'h':
-                user_dsn = 1;
-                if ( system_dsn )
-                {
-                    if ( cVerbose == 0 ) printf( "odbcinst: cannot install both user and system dsn at the same time");
-                    exit( -2 );
-                }
-                break;
-            default:
-                if ( cVerbose == 0 ) printf( "odbcinst: Unknown option %c\n", argv[nArg][1] );
-                exit( -1 );
+                /* Action */
+                case 'i':
+                case 'u':
+                case 'q':
+                    cAction = argv[nArg][1];
+                    break;
+                case 'j':
+                    PrintConfigInfo();
+                    exit(0);
+                case '-':
+                    printf( "unixODBC " VERSION "\n" );
+                    exit(0);
+                    /* Object */
+                case 'c':
+                case 'd':
+                case 's':
+                case 'm':
+                    cObject = argv[nArg][1];
+                    break;
+                    /* Options */
+                case 'n':
+                    if ( nArg < argc-1 )
+                        strncpy( szObjectName, argv[nArg+1], INI_MAX_OBJECT_NAME );
+                    break;
+                case 'f':
+                    if ( nArg < argc-1 )
+                        strncpy( szTemplateINI, argv[nArg+1], ODBC_FILENAME_MAX );
+                    break;
+                case 'r':
+                    from_stdin = 1;
+                    break;
+                case 'v':
+                    cVerbose = argv[nArg][1];
+                    break;
+                case 'l':
+                    system_dsn = 1;
+                    if ( user_dsn )
+                    {
+                        if ( cVerbose == 0 ) printf( "odbcinst: cannot install both user and system dsn at the same time");
+                        exit( -2 );
+                    }
+                    break;
+                case 'h':
+                    user_dsn = 1;
+                    if ( system_dsn )
+                    {
+                        if ( cVerbose == 0 ) printf( "odbcinst: cannot install both user and system dsn at the same time");
+                        exit( -2 );
+                    }
+                    break;
+                default:
+                    if ( cVerbose == 0 ) printf( "odbcinst: Unknown option %c\n", argv[nArg][1] );
+                    exit( -1 );
             }
         }
     }
@@ -495,7 +570,7 @@ int main( int argc, char *argv[] )
                 nReturn = DriverInstall( STDINFILE );
             else
             {
-                if ( cVerbose == 0 ) printf( "odbcinst: Please supply -f template.ini \n" );
+                if ( cVerbose == 0 ) printf( "odbcinst: Please supply -f template.ini (The fileformat of template.ini is identical to odbcinst.ini and odbc.ini, respectively)\n" );
                 Syntax();
                 exit( 1 );
             }
@@ -562,6 +637,14 @@ int main( int argc, char *argv[] )
             exit( 1 );
         }
 
+    }
+    else if ( cObject == 'c' )
+    {
+        nReturn = CreateDataSource( szObjectName );
+    }
+    else if ( cObject == 'm' )
+    {
+        nReturn = ManageDataSources();
     }
     else
     {

@@ -21,9 +21,16 @@
  *
  **********************************************************************
  *
- * $Id: conn.cpp,v 1.4 2004/11/20 13:21:39 lurcher Exp $
+ * $Id: conn.cpp,v 1.6 2007/02/12 11:49:37 lurcher Exp $
  *
  * $Log: conn.cpp,v $
+ * Revision 1.6  2007/02/12 11:49:37  lurcher
+ * Add QT4 support to existing GUI parts
+ *
+ * Revision 1.5  2005/04/18 15:00:56  lurcher
+ *
+ * Use SQLDriverConnect in odbctest Full Connect
+ *
  * Revision 1.4  2004/11/20 13:21:39  lurcher
  * Fix unicode bug in SQLGetInfoW
  *
@@ -93,6 +100,17 @@
  **********************************************************************/
 
 #include <stdlib.h>
+#ifdef QT_V4LAYOUT
+#include <Qt/qapplication.h>
+#include <Qt/qmessagebox.h>
+#include <Qt/qpushbutton.h>
+#include <Qt/qcombobox.h>
+#include <Qt/qcheckbox.h>
+#include <Qt/qlabel.h>
+#include <Qt/qlineedit.h>
+#include <Qt/qbuttongroup.h>
+#include <Qt/qradiobutton.h>
+#else
 #include <qapplication.h>
 #include <qmessagebox.h>
 #include <qpushbutton.h>
@@ -100,10 +118,11 @@
 #include <qcheckbox.h>
 #include <qlabel.h>
 #include <qlineedit.h>
-#include <sql.h>
-#include <sqlext.h>
 #include <qbuttongroup.h>
 #include <qradiobutton.h>
+#endif
+#include <sql.h>
+#include <sqlext.h>
 #include "conn.h"
 #include "odbctest.h"
 
@@ -3330,38 +3349,58 @@ void dFullConnect::Ok()
 	 * connect
 	 */
 
+	char cstr[ 1024 ], tmp[ 1024 ];
+
 	QString qdsn = dsn -> text();
 	QString quid = usr -> text();
 	QString qpwd = pwd -> text();
-	const char *sdsn;
-	const char *suid;
-	const char *spwd;
+
+	cstr[ 0 ] = '\0';
 
 	if ( qdsn.isEmpty())
-		sdsn = "";
+		strcpy( tmp, "DSN=" );
 	else if ( qdsn.isNull())
-		sdsn = NULL;
+		strcpy( tmp, "" );
 	else 
-		sdsn = qdsn.ascii();
+		sprintf( tmp, "DSN=%s", qdsn.ascii());
+
+	strcpy( cstr, tmp );
 
 	if ( quid.isEmpty())
-		suid = "";
+		strcpy( tmp, "UID=" );
 	else if ( quid.isNull())
-		suid = NULL;
+		strcpy( tmp, "" );
 	else 
-		suid = quid.ascii();
+		sprintf( tmp, "UID=%s", quid.ascii());
+
+	if ( strlen( tmp ) > 0 ) {
+		if ( strlen( cstr ) > 0 ) {
+			strcat( cstr, ";" );
+			strcat( cstr, tmp );
+		}
+		else {
+			strcpy( cstr, tmp );
+		}
+	}
 
 	if ( qpwd.isEmpty())
-		spwd = "";
+		strcpy( tmp, "PWD=" );
 	else if ( qpwd.isNull())
-		spwd = NULL;
+		strcpy( tmp, "" );
 	else 
-		spwd = qpwd.ascii();
+		sprintf( tmp, "PWD=%s", qpwd.ascii());
 
-	ret = SQLConnect( hdbc, 
-		(SQLCHAR*)sdsn, sdsn ? SQL_NTS : 0,
-		(SQLCHAR*)suid, suid ? SQL_NTS : 0,
-		(SQLCHAR*)spwd, spwd ? SQL_NTS : 0 );
+	if ( strlen( tmp ) > 0 ) {
+		if ( strlen( cstr ) > 0 ) {
+			strcat( cstr, ";" );
+			strcat( cstr, tmp );
+		}
+		else {
+			strcpy( cstr, tmp );
+		}
+	}
+
+	ret = SQLDriverConnect( hdbc, (void*)1, (SQLCHAR*)cstr, strlen( cstr ), NULL, 0, NULL, SQL_DRIVER_COMPLETE );
 
 	odbctest->dumpError( SQL_HANDLE_DBC, hdbc );
 
@@ -3438,7 +3477,11 @@ dFullConnect::dFullConnect( OdbcTest *parent, QString name )
 	l_dsn = new QLabel( "DSN:", this );
     l_dsn -> setGeometry( 10, 85, 60, 20 );
 
+#ifdef QT_V4LAYOUT
+	dsn_list = new Q3ListBox( this, "DSN List" );
+#else
 	dsn_list = new QListBox( this, "DSN List" );
+#endif
     dsn_list -> setGeometry( 80, 106, 120, 100 );
 
 	/*
@@ -3514,7 +3557,11 @@ dFullConnect::dFullConnect( OdbcTest *parent, QString name )
 	l_pwd = new QLabel( "Password:", this );
     l_pwd -> setGeometry( 10, 245, 60, 20 );
 
+#ifdef QT_V4LAYOUT
+	version = new Q3ButtonGroup( "ODBC Version", this );
+#else
 	version = new QButtonGroup( "ODBC Version", this );
+#endif
     version -> setGeometry( 220, 80, 120, 100 );
 
 	ver_2 = new QRadioButton( "ODBC 2", version );
@@ -3527,7 +3574,11 @@ dFullConnect::dFullConnect( OdbcTest *parent, QString name )
     ver_def -> setGeometry( 10, 70, 100, 20 );
 	ver_def -> setChecked( TRUE );
 
+#ifdef QT_V4LAYOUT
+	cursor = new Q3ButtonGroup( "ODBC Cursors", this );
+#else
 	cursor = new QButtonGroup( "ODBC Cursors", this );
+#endif
     cursor -> setGeometry( 220, 180, 120, 130 );
 
 	cur_ifneeded = new QRadioButton( "Use If Needed", cursor );

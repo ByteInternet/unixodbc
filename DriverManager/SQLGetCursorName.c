@@ -27,9 +27,12 @@
  *
  **********************************************************************
  *
- * $Id: SQLGetCursorName.c,v 1.6 2003/10/30 18:20:46 lurcher Exp $
+ * $Id: SQLGetCursorName.c,v 1.7 2008/09/29 14:02:45 lurcher Exp $
  *
  * $Log: SQLGetCursorName.c,v $
+ * Revision 1.7  2008/09/29 14:02:45  lurcher
+ * Fix missing dlfcn group option
+ *
  * Revision 1.6  2003/10/30 18:20:46  lurcher
  *
  * Fix broken thread protection
@@ -122,7 +125,7 @@
 
 #include "drivermanager.h"
 
-static char const rcsid[]= "$RCSfile: SQLGetCursorName.c,v $ $Revision: 1.6 $";
+static char const rcsid[]= "$RCSfile: SQLGetCursorName.c,v $ $Revision: 1.7 $";
 
 SQLRETURN SQLGetCursorNameA( SQLHSTMT statement_handle,
            SQLCHAR *cursor_name,
@@ -252,7 +255,7 @@ SQLRETURN SQLGetCursorName( SQLHSTMT statement_handle,
 
         if ( SQL_SUCCEEDED( ret ) && cursor_name && s1 )
         {
-            unicode_to_ansi_copy((char*) cursor_name, s1, SQL_NTS, statement -> connection );
+            unicode_to_ansi_copy((char*) cursor_name, buffer_length, s1, SQL_NTS, statement -> connection );
         }
 
         if ( s1 )

@@ -4,12 +4,14 @@ INCLUDES = -I@top_srcdir@/include \
 	-DSYSTEM_FILE_PATH=\"@sysconfdir@\" \
 	-DDEFLIB_PATH=\"@libdir@\" \
 	-DSHLIBEXT=\"@SHLIBEXT@\" \
-	$(INCLTDL)
+	-DUNIXODBC_SOURCE \
+	$(LTDLINCL)
 
 EXTRA_DIST = \
 	odbcinst.exp 
 
 libodbcinst_la_LDFLAGS = \
+	-no-undefined  \
     -version-info @LIB_VERSION@ \
     -export-dynamic \
     -export-symbols @srcdir@/odbcinst.exp
@@ -20,11 +22,18 @@ libodbcinst_la_LIBADD = \
 	../lst/liblstlc.la \
 	$(LIBLTDL) $(LIBADD_DL) 
 
+if WITHLT
 libodbcinst_la_DEPENDENCIES = \
     ../log/libloglc.la \
     ../ini/libinilc.la \
     ../lst/liblstlc.la \
     $(LIBLTDL) 
+else
+libodbcinst_la_DEPENDENCIES = \
+    ../log/libloglc.la \
+    ../ini/libinilc.la \
+    ../lst/liblstlc.la
+endif
 
 sysconf_DATA=
 

@@ -33,24 +33,42 @@ classBrowse::classBrowse( SQLHDBC hDbc, QString qsTable, QWidget *parent, const 
  
     layoutMain = new QVBoxLayout( this );
 
+#ifdef QT_V4LAYOUT
+    tableQuery = new Q3Table( 1, 1, this );
+#else
     tableQuery = new QTable( 1, 1, this );
+#endif
     tableQuery->setColumnMovingEnabled ( TRUE );
     tableQuery->setMinimumSize( 100, 100 );
     
+#ifdef QT_V4LAYOUT
+    tableData = new Q3Table( 1, 1, this );
+#else
     tableData = new QTable( 1, 1, this );
+#endif
     tableData->setColumnMovingEnabled ( TRUE );
 
 
     labelFilter = new QLabel( "FILTER", this );
+#ifdef QT_V4LAYOUT
+    labelFilter->setPalette( QPalette( QColor(Qt::lightGray) ) );
+    labelFilter->setAlignment( Qt::AlignCenter );
+#else
     labelFilter->setPalette( QPalette( QColor(lightGray) ) );
     labelFilter->setAlignment( AlignCenter );
+#endif
     layoutMain->addWidget( labelFilter );
 
     layoutMain->addWidget( tableQuery );
 
     labelResults = new QLabel( "RESULTS", this );
+#ifdef QT_V4LAYOUT
+    labelResults->setPalette( QPalette( QColor(Qt::lightGray) ) );
+    labelResults->setAlignment( Qt::AlignCenter );
+#else
     labelResults->setPalette( QPalette( QColor(lightGray) ) );
     labelResults->setAlignment( AlignCenter );
+#endif
     layoutMain->addWidget( labelResults );
 
     layoutMain->addWidget( tableData, 10 );
@@ -63,7 +81,6 @@ classBrowse::classBrowse( SQLHDBC hDbc, QString qsTable, QWidget *parent, const 
     QWhatsThis::add( tableQuery, szHelpQuery );
     QWhatsThis::add( tableData, szHelpData );
 }
-
 
 classBrowse::~classBrowse()
 {
@@ -145,8 +162,13 @@ void classBrowse::InitQuery()
 	QString         qsError;
     SQLLEN          nCols               = 0;
     SQLINTEGER      nCol                = 0;
+#ifdef QT_V4LAYOUT
+    Q3Header         *headerQuery;
+    Q3Header         *headerData;
+#else
     QHeader         *headerQuery;
     QHeader         *headerData;
+#endif
 
 	// CREATE A STATEMENT
 	nReturn = SQLAllocStmt( hDbc, &hstmt );
@@ -157,7 +179,11 @@ void classBrowse::InitQuery()
 	}
 
 	// EXECUTE OUR SQL/CALL
+#ifdef QT_V4LAYOUT
+	strcpy( (char *)szTableName, qsTable.ascii() );
+#else
 	strcpy( (char *)szTableName, qsTable.data() );
+#endif
 
 	if ( SQL_SUCCESS != (nReturn=SQLColumns( hstmt, 0, 0, 0, 0, szTableName, SQL_NTS, 0, 0 )) )
 	{
@@ -321,7 +347,11 @@ void classBrowse::ExecHeader( SQLHSTMT hStmt, SWORD nColumns )
 {
 	int				nCol;
 	SQLCHAR			szColumnName[101]	= "";	
+#ifdef QT_V4LAYOUT
+    Q3Header         *header;
+#else
     QHeader         *header;
+#endif
     
 //printf( "[PAH][%s][%d]\n", __FILE__, __LINE__ );
 
@@ -372,7 +402,11 @@ bool classBrowse::CreateSQL()
 {
     int nCol  = 0;
     int nCols = tableQuery->numCols();
+#ifdef QT_V4LAYOUT
+    Q3Header *header = tableQuery->horizontalHeader();
+#else
     QHeader *header = tableQuery->horizontalHeader();
+#endif
     QString qsColumns           = "";
     QString qsWhereExpressions  = "";
     QString qsAnd               = "";
@@ -391,14 +425,22 @@ bool classBrowse::CreateSQL()
         qsExpression        = tableQuery->text( QUERY_ROW_EXPRESSION, nCol );
         qsShow              = tableQuery->text( QUERY_ROW_SHOW, nCol );
 
+#ifdef QT_V4LAYOUT
+        if ( !qsShow.isNull() && qsShow != "" )
+#else
         if ( qsShow && qsShow != "" )
+#endif
         {
             qsColumns += qsComma;
             qsColumns += qsColumn;
             qsComma = ", ";
         }
 
+#ifdef QT_V4LAYOUT
+        if ( !qsExpression.isNull() && qsExpression != "" ) 
+#else
         if ( qsExpression && qsExpression != "" ) 
+#endif
         {
             qsWhereExpressions += qsWhere;
             qsWhereExpressions += qsAnd;
@@ -438,7 +480,11 @@ void classBrowse::SelectAllColumns()
 {
     int nCol  = 0;
     int nCols = tableQuery->numCols();
+#ifdef QT_V4LAYOUT
+    Q3Header *header;
+#else
     QHeader *header;
+#endif
 
     header = tableQuery->horizontalHeader();
     for ( nCol=0; nCol<nCols; nCol++ ) 
@@ -451,7 +497,11 @@ void classBrowse::UnSelectAllColumns()
 {
     int nCol  = 0;
     int nCols = tableQuery->numCols();
+#ifdef QT_V4LAYOUT
+    Q3Header *header;
+#else
     QHeader *header;
+#endif
 
     header = tableQuery->horizontalHeader();
     for ( nCol=0; nCol<nCols; nCol++ ) 
@@ -466,7 +516,11 @@ void classBrowse::WriteHTML( QFile *hFile, bool bPage )
     int nCols = tableData->numCols();
     int nRow  = 0;
     int nRows = tableData->numRows();
+#ifdef QT_V4LAYOUT
+    Q3Header *header;
+#else
     QHeader *header;
+#endif
 
     header = tableData->horizontalHeader();
 
@@ -506,7 +560,11 @@ void classBrowse::WriteHTML( QFile *hFile, bool bPage )
 
 
 
+#ifdef QT_V4LAYOUT
+void classBrowse::ClearCells( Q3Table *table )
+#else
 void classBrowse::ClearCells( QTable *table )
+#endif
 {
     int nCol  = 0;
     int nCols = table->numCols();

@@ -24,12 +24,21 @@
 #ifndef CATALOG_H
 #define CATALOG_H
 
+#ifdef QT_V4LAYOUT
+#include <Qt/qwidget.h>
+#include <Qt/qdialog.h>
+#include <Qt/qpushbutton.h>
+#include <Qt/qcombobox.h>
+#include <Qt/qcheckbox.h>
+#include <Qt/qlabel.h>
+#else
 #include <qwidget.h>
 #include <qdialog.h>
 #include <qpushbutton.h>
 #include <qcombobox.h>
 #include <qcheckbox.h>
 #include <qlabel.h>
+#endif
 #include "odbctest.h"
 
 class dTables : public QDialog 
@@ -46,7 +55,11 @@ class dTables : public QDialog
 		QComboBox *schema_len, *catalog_len, *table_len, *type_len;
 		QLabel *l_handle, *l_schema, *l_catalog, *l_table, *l_type;
 		QLabel *l_schema_len, *l_catalog_len, *l_table_len, *l_type_len;
+#ifdef QT_V4LAYOUT
+		Q3MultiLineEdit *in_win;
+#else
 		QMultiLineEdit *in_win;
+#endif
 		OutputWin *out_win;
 		OdbcTest *odbctest;
 		QString txt;
@@ -69,7 +82,11 @@ class dColumns : public QDialog
 		QComboBox *schema_len, *catalog_len, *table_len, *column_len;
 		QLabel *l_handle, *l_schema, *l_catalog, *l_table, *l_column;
 		QLabel *l_schema_len, *l_catalog_len, *l_table_len, *l_column_len;
+#ifdef QT_V4LAYOUT
+		Q3MultiLineEdit *in_win;
+#else
 		QMultiLineEdit *in_win;
+#endif
 		OutputWin *out_win;
 		OdbcTest *odbctest;
 		QString txt;
@@ -92,7 +109,11 @@ class dColumnPrivileges : public QDialog
 		QComboBox *schema_len, *catalog_len, *table_len, *column_len;
 		QLabel *l_handle, *l_schema, *l_catalog, *l_table, *l_column;
 		QLabel *l_schema_len, *l_catalog_len, *l_table_len, *l_column_len;
+#ifdef QT_V4LAYOUT
+		Q3MultiLineEdit *in_win;
+#else
 		QMultiLineEdit *in_win;
+#endif
 		OutputWin *out_win;
 		OdbcTest *odbctest;
 		QString txt;
@@ -119,7 +140,11 @@ class dForeignKeys : public QDialog
 		QLabel *fk_l_schema, *fk_l_catalog, *fk_l_table;
 		QLabel *l_schema_len, *l_catalog_len, *l_table_len;
 		QLabel *fk_l_schema_len, *fk_l_catalog_len, *fk_l_table_len;
+#ifdef QT_V4LAYOUT
+		Q3MultiLineEdit *in_win;
+#else
 		QMultiLineEdit *in_win;
+#endif
 		OutputWin *out_win;
 		OdbcTest *odbctest;
 		QString txt;
@@ -142,7 +167,11 @@ class dPrimaryKeys : public QDialog
 		QComboBox *schema_len, *catalog_len, *table_len;
 		QLabel *l_handle, *l_schema, *l_catalog, *l_table;
 		QLabel *l_schema_len, *l_catalog_len, *l_table_len;
+#ifdef QT_V4LAYOUT
+		Q3MultiLineEdit *in_win;
+#else
 		QMultiLineEdit *in_win;
+#endif
 		OutputWin *out_win;
 		OdbcTest *odbctest;
 		QString txt;
@@ -165,7 +194,11 @@ class dProcedures : public QDialog
 		QComboBox *schema_len, *catalog_len, *table_len;
 		QLabel *l_handle, *l_schema, *l_catalog, *l_table;
 		QLabel *l_schema_len, *l_catalog_len, *l_table_len;
+#ifdef QT_V4LAYOUT
+		Q3MultiLineEdit *in_win;
+#else
 		QMultiLineEdit *in_win;
+#endif
 		OutputWin *out_win;
 		OdbcTest *odbctest;
 		QString txt;
@@ -188,7 +221,11 @@ class dProcedureColumns : public QDialog
 		QComboBox *schema_len, *catalog_len, *table_len, *column_len;
 		QLabel *l_handle, *l_schema, *l_catalog, *l_table, *l_column;
 		QLabel *l_schema_len, *l_catalog_len, *l_table_len, *l_column_len;
+#ifdef QT_V4LAYOUT
+		Q3MultiLineEdit *in_win;
+#else
 		QMultiLineEdit *in_win;
+#endif
 		OutputWin *out_win;
 		OdbcTest *odbctest;
 		QString txt;
@@ -211,7 +248,11 @@ class dTablePrivileges : public QDialog
 		QComboBox *schema_len, *catalog_len, *table_len;
 		QLabel *l_handle, *l_schema, *l_catalog, *l_table;
 		QLabel *l_schema_len, *l_catalog_len, *l_table_len;
+#ifdef QT_V4LAYOUT
+		Q3MultiLineEdit *in_win;
+#else
 		QMultiLineEdit *in_win;
+#endif
 		OutputWin *out_win;
 		OdbcTest *odbctest;
 		QString txt;
@@ -232,7 +273,11 @@ class dGetTypeInfo : public QDialog
 		QPushButton *ok, *cancel, *help;
 		QComboBox *handles, *type;
 		QLabel *l_handle, *l_type;
+#ifdef QT_V4LAYOUT
+		Q3MultiLineEdit *in_win;
+#else
 		QMultiLineEdit *in_win;
+#endif
 		OutputWin *out_win;
 		OdbcTest *odbctest;
 		QString txt;
@@ -257,7 +302,11 @@ class dStatistics : public QDialog
 		QLabel *l_handle, *l_schema, *l_catalog, *l_table;
 		QLabel *l_schema_len, *l_catalog_len, *l_table_len;
 		QLabel *l_unique, *l_reserved;
+#ifdef QT_V4LAYOUT
+		Q3MultiLineEdit *in_win;
+#else
 		QMultiLineEdit *in_win;
+#endif
 		OutputWin *out_win;
 		OdbcTest *odbctest;
 		QString txt;
@@ -282,7 +331,11 @@ class dSpecialColumns : public QDialog
 		QLabel *l_handle, *l_schema, *l_catalog, *l_table;
 		QLabel *l_schema_len, *l_catalog_len, *l_table_len;
 		QLabel *l_ident, *l_scope, *l_nullable;
+#ifdef QT_V4LAYOUT
+		Q3MultiLineEdit *in_win;
+#else
 		QMultiLineEdit *in_win;
+#endif
 		OutputWin *out_win;
 		OdbcTest *odbctest;
 		QString txt;

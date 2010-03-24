@@ -23,9 +23,15 @@
  *
  **********************************************************************
  *
- * $Id: SQLSetStmtOption.c,v 1.2 2003/03/05 09:48:45 lurcher Exp $
+ * $Id: SQLSetStmtOption.c,v 1.4 2005/10/27 17:54:49 lurcher Exp $
  *
  * $Log: SQLSetStmtOption.c,v $
+ * Revision 1.4  2005/10/27 17:54:49  lurcher
+ * fix what I suspect is a typo in qt.m4
+ *
+ * Revision 1.3  2005/05/03 17:16:50  lurcher
+ * Backport a couple of changes from the Debian build
+ *
  * Revision 1.2  2003/03/05 09:48:45  lurcher
  *
  * Add some 64 bit fixes
@@ -103,7 +109,7 @@ SQLRETURN CLSetStmtOption( SQLHSTMT statement_handle,
         break;
 
       case SQL_ROWSET_SIZE:
-        cl_statement -> rowset_array_size = ( SQLUINTEGER ) value;
+        cl_statement -> rowset_size = ( SQLUINTEGER ) value;
         break;
 
       case SQL_SIMULATE_CURSOR:
@@ -156,7 +162,7 @@ SQLRETURN CLSetStmtOption( SQLHSTMT statement_handle,
     if ( ret == SQL_SUCCESS_WITH_INFO )
     {
         cl_statement -> cl_connection -> dh.__post_internal_error( 
-                    &cl_statement -> dm_statement -> error,
+					&cl_statement -> dm_statement -> error,
                     ERROR_01S02, NULL,
                     cl_statement -> dm_statement -> connection -> 
                         environment -> requested_version );

@@ -13,19 +13,31 @@
 #include "datasourcesuser.xpm"
 #include "datasourcessystem.xpm"
 
+#ifdef QT_V4LAYOUT
+classDataSources::classDataSources( Q3ListView *pParent, classCanvas *pCanvas, int nDataSourceType, SQLHENV hEnv )
+#else
 classDataSources::classDataSources( QListView *pParent, classCanvas *pCanvas, int nDataSourceType, SQLHENV hEnv )
+#endif
     : classNode( pParent, pCanvas )
 {
 	Init( nDataSourceType, hEnv );
 }
 
+#ifdef QT_V4LAYOUT
+classDataSources::classDataSources( Q3ListViewItem *pParent, classCanvas *pCanvas, int nDataSourceType, SQLHENV hEnv )
+#else
 classDataSources::classDataSources( QListViewItem *pParent, classCanvas *pCanvas, int nDataSourceType, SQLHENV hEnv )
+#endif
     : classNode( pParent, pCanvas )
 {
 	Init( nDataSourceType, hEnv );
 }
 
+#ifdef QT_V4LAYOUT
+classDataSources::classDataSources( Q3ListViewItem *pParent, Q3ListViewItem *pAfter, classCanvas *pCanvas, int nDataSourceType, SQLHENV hEnv )
+#else
 classDataSources::classDataSources( QListViewItem *pParent, QListViewItem *pAfter, classCanvas *pCanvas, int nDataSourceType, SQLHENV hEnv )
+#endif
     : classNode( pParent, pAfter, pCanvas )
 {
 	Init( nDataSourceType, hEnv );
@@ -58,8 +70,9 @@ void classDataSources::Init( int nDataSourceType, SQLHENV hEnv )
 
 	this->pCanvas 	= pCanvas;
 	this->hEnv 		= hEnv;
+#ifndef QT_V4LAYOUT
 	listDataSources.setAutoDelete( TRUE );
-
+#endif
 }
 
 void classDataSources::setOpen( bool bOpen )
@@ -83,7 +96,7 @@ void classDataSources::setOpen( bool bOpen )
 		{
 			for ( nElement = 0; iniElement( szResults, '\0', '\0', nElement, szObjectName, INI_MAX_OBJECT_NAME ) == INI_SUCCESS; nElement++ )
 			{
-				listDataSources.append( pLastDataSource = new classDataSource( this, pLastDataSource, pCanvas, nDataSourceType, szObjectName, hEnv ) );
+				listDataSources.append( pLastDataSource = new classDataSource( this, pLastDataSource, pCanvas, nDataSourceType, szObjectName, hEnv ));
 			}
 		}
 		else
@@ -98,16 +111,28 @@ void classDataSources::setOpen( bool bOpen )
     {
         listDataSources.clear();
     }
+#ifdef QT_V4LAYOUT
+    Q3ListViewItem::setOpen( bOpen );
+#else
     QListViewItem::setOpen( bOpen );
+#endif
 }
 
 void classDataSources::setup()
 {
     setExpandable( TRUE );
+#ifdef QT_V4LAYOUT
+    Q3ListViewItem::setup();
+#else
     QListViewItem::setup();
+#endif
 }
 
+#ifdef QT_V4LAYOUT
+void classDataSources::selectionChanged( Q3ListViewItem *p )
+#else
 void classDataSources::selectionChanged( QListViewItem *p )
+#endif
 {
 	classDataSource	*pDataSource;
 

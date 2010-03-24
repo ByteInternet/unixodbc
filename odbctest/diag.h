@@ -24,12 +24,21 @@
 #ifndef DIAG_H
 #define DIAG_H
 
+#ifdef QT_V4LAYOUT
+#include <Qt/qwidget.h>
+#include <Qt/qdialog.h>
+#include <Qt/qpushbutton.h>
+#include <Qt/qcombobox.h>
+#include <Qt/qcheckbox.h>
+#include <Qt/qlabel.h>
+#else
 #include <qwidget.h>
 #include <qdialog.h>
 #include <qpushbutton.h>
 #include <qcombobox.h>
 #include <qcheckbox.h>
 #include <qlabel.h>
+#endif
 #include "odbctest.h"
 
 class dError : public QDialog 
@@ -46,7 +55,11 @@ class dError : public QDialog
 		QLabel *l_ehandle, *l_chandle, *l_shandle, *l_buffer_len;
 		QCheckBox *native_valid, *error_valid, *perror_valid, *sqlstate_valid;
 		QLineEdit *buffer_len;
+#ifdef QT_V4LAYOUT
+		Q3MultiLineEdit *in_win;
+#else
 		QMultiLineEdit *in_win;
+#endif
 		OutputWin *out_win;
 		OdbcTest *odbctest;
 		QString txt;
@@ -73,7 +86,11 @@ class dGetDiagRec : public QDialog
 		QLabel *l_handle_type, *l_handles, *l_buffer_len, *l_rec_num;
 		QCheckBox *native_valid, *error_valid, *perror_valid, *sqlstate_valid;
 		QLineEdit *buffer_len, *rec_num;
+#ifdef QT_V4LAYOUT
+		Q3MultiLineEdit *in_win;
+#else
 		QMultiLineEdit *in_win;
+#endif
 		OutputWin *out_win;
 		OdbcTest *odbctest;
 		QString txt;
@@ -101,7 +118,11 @@ class dGetDiagField : public QDialog
 		QLabel *l_handle_type, *l_handles, *l_buffer_len, *l_rec_num, *l_diag_info;
 		QCheckBox *diag_ptr_valid, *strlen_valid;
 		QLineEdit *buffer_len, *rec_num;
+#ifdef QT_V4LAYOUT
+		Q3MultiLineEdit *in_win;
+#else
 		QMultiLineEdit *in_win;
+#endif
 		OutputWin *out_win;
 		OdbcTest *odbctest;
 		QString txt;

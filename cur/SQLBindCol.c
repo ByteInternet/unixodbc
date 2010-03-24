@@ -23,9 +23,15 @@
  *
  **********************************************************************
  *
- * $Id: SQLBindCol.c,v 1.3 2002/11/19 18:52:28 lurcher Exp $
+ * $Id: SQLBindCol.c,v 1.5 2007/11/13 15:04:57 lurcher Exp $
  *
  * $Log: SQLBindCol.c,v $
+ * Revision 1.5  2007/11/13 15:04:57  lurcher
+ * Fix 64 bit cursor lib issues
+ *
+ * Revision 1.4  2005/10/21 16:49:53  lurcher
+ * Fix a problem with the cursor lib and rowsets
+ *
  * Revision 1.3  2002/11/19 18:52:28  lurcher
  *
  * Alter the cursor lib to not require linking to the driver manager.
@@ -101,6 +107,7 @@ static int get_bound_length( int target_type, int len )
     {
       case SQL_C_STINYINT:
       case SQL_C_UTINYINT:
+      case SQL_C_TINYINT:
         return 1;
 
       case SQL_C_SBIGINT:
@@ -109,10 +116,12 @@ static int get_bound_length( int target_type, int len )
 
       case SQL_C_SSHORT:
       case SQL_C_USHORT:
+      case SQL_C_SHORT:
         return 2;
 
       case SQL_C_SLONG:
       case SQL_C_ULONG:
+	  case SQL_C_LONG:
         return 4;
 
       case SQL_C_DOUBLE:
@@ -161,8 +170,8 @@ SQLRETURN CLBindCol( SQLHSTMT statement_handle,
 		   SQLUSMALLINT column_number,
            SQLSMALLINT target_type,
 		   SQLPOINTER target_value,
-           SQLINTEGER buffer_length,
-	   	   SQLINTEGER *strlen_or_ind )
+           SQLLEN buffer_length,
+	   	   SQLLEN *strlen_or_ind )
 {
     CLHSTMT cl_statement = (CLHSTMT) statement_handle; 
     CLBCOL *bcol;

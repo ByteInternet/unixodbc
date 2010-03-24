@@ -27,9 +27,15 @@
  *
  **********************************************************************
  *
- * $Id: SQLPrepareW.c,v 1.5 2003/10/30 18:20:46 lurcher Exp $
+ * $Id: SQLPrepareW.c,v 1.7 2008/08/29 08:01:39 lurcher Exp $
  *
  * $Log: SQLPrepareW.c,v $
+ * Revision 1.7  2008/08/29 08:01:39  lurcher
+ * Alter the way W functions are passed to the driver
+ *
+ * Revision 1.6  2007/02/28 15:37:48  lurcher
+ * deal with drivers that call internal W functions and end up in the driver manager. controlled by the --enable-handlemap configure arg
+ *
  * Revision 1.5  2003/10/30 18:20:46  lurcher
  *
  * Fix broken thread protection
@@ -90,6 +96,35 @@ SQLRETURN SQLPrepareW( SQLHSTMT statement_handle,
                     LOG_INFO, 
                     "Error: SQL_INVALID_HANDLE" );
 
+#ifdef WITH_HANDLE_REDIRECT
+		{
+			DMHSTMT parent_statement;
+
+			parent_statement = find_parent_handle( statement, SQL_HANDLE_STMT );
+
+			if ( parent_statement ) {
+        		dm_log_write( __FILE__, 
+                	__LINE__, 
+                    	LOG_INFO, 
+                    	LOG_INFO, 
+                    	"Info: found parent handle" );
+
+				if ( CHECK_SQLPREPAREW( parent_statement -> connection ))
+				{
+        			dm_log_write( __FILE__, 
+                		__LINE__, 
+                   		 	LOG_INFO, 
+                   		 	LOG_INFO, 
+                   		 	"Info: calling redirected driver function" );
+
+                	return  SQLPREPAREW( parent_statement -> connection,
+							statement_handle,
+           					statement_text,
+           					text_length );
+				}
+			}
+		}
+#endif
         return SQL_INVALID_HANDLE;
     }
 
@@ -221,7 +256,8 @@ SQLRETURN SQLPrepareW( SQLHSTMT statement_handle,
         }
     }
 
-    if ( statement -> connection -> unicode_driver )
+    if ( statement -> connection -> unicode_driver ||
+		    CHECK_SQLPREPAREW( statement -> connection ))
     {
         if ( !CHECK_SQLPREPAREW( statement -> connection ))
         {

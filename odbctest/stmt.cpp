@@ -21,9 +21,15 @@
  *
  **********************************************************************
  *
- * $Id: stmt.cpp,v 1.4 2002/05/29 10:22:58 lurcher Exp $
+ * $Id: stmt.cpp,v 1.6 2007/02/13 06:14:21 peteralexharvey Exp $
  *
  * $Log: stmt.cpp,v $
+ * Revision 1.6  2007/02/13 06:14:21  peteralexharvey
+ * caught a missed SQLULEN
+ *
+ * Revision 1.5  2007/02/12 11:49:37  lurcher
+ * Add QT4 support to existing GUI parts
+ *
  * Revision 1.4  2002/05/29 10:22:58  lurcher
  *
  * Changes and tidy's
@@ -97,9 +103,15 @@
  *
  **********************************************************************/
 
+#ifdef QT_V4LAYOUT
+#include <Qt/qapplication.h>
+#include <Qt/qmessagebox.h>
+#include <Qt/qlineedit.h>
+#else
 #include <qapplication.h>
 #include <qmessagebox.h>
 #include <qlineedit.h>
+#endif
 #include <sql.h>
 #include <sqlext.h>
 #include <sqlucode.h>
@@ -1568,7 +1580,7 @@ void dParamOption::Ok()
     Handle *hand = odbctest->extract_handle_list( SQL_HANDLE_STMT, handles );
 	SQLHANDLE in_handle = SQL_NULL_HANDLE;
 	SQLULEN *pirow_ptr, pirow;
-	SQLULEN crow;
+    SQLULEN crow;
 
 	if ( hand )
 		in_handle = hand -> getHandle();

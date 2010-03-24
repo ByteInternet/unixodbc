@@ -24,12 +24,21 @@
 #ifndef RESULTS_H
 #define RESULTS_H
 
+#ifdef QT_V4LAYOUT
+#include <Qt/qwidget.h>
+#include <Qt/qdialog.h>
+#include <Qt/qpushbutton.h>
+#include <Qt/qcombobox.h>
+#include <Qt/qcheckbox.h>
+#include <Qt/qlabel.h>
+#else
 #include <qwidget.h>
 #include <qdialog.h>
 #include <qpushbutton.h>
 #include <qcombobox.h>
 #include <qcheckbox.h>
 #include <qlabel.h>
+#endif
 #include "odbctest.h"
 
 class dGetData : public QDialog 
@@ -47,7 +56,11 @@ class dGetData : public QDialog
 		QLineEdit *buffer_len;
 		QCheckBox *target_valid, *strlen_valid;
 		QLabel *l_handle, *l_column_num, *l_type, *l_buffer_len;
+#ifdef QT_V4LAYOUT
+		Q3MultiLineEdit *in_win;
+#else
 		QMultiLineEdit *in_win;
+#endif
 		OutputWin *out_win;
 		OdbcTest *odbctest;
 		QString txt;
@@ -77,7 +90,11 @@ class dDescribeCol : public QDialog
 		QCheckBox *size_valid;
 		QCheckBox *digit_valid;
 		QCheckBox *null_valid;
+#ifdef QT_V4LAYOUT
+		Q3MultiLineEdit *in_win;
+#else
 		QMultiLineEdit *in_win;
+#endif
 		OutputWin *out_win;
 		OdbcTest *odbctest;
 		QString txt;
@@ -105,7 +122,11 @@ class dNumResultCols : public QDialog
 		QComboBox *handles;
 		QCheckBox *valid;
 		QLabel *l_handle;
+#ifdef QT_V4LAYOUT
+		Q3MultiLineEdit *in_win;
+#else
 		QMultiLineEdit *in_win;
+#endif
 		OutputWin *out_win;
 		OdbcTest *odbctest;
 		QString txt;
@@ -127,7 +148,11 @@ class dFetch : public QDialog
 		QPushButton *ok, *cancel, *help;
 		QComboBox *handles;
 		QLabel *l_handle;
+#ifdef QT_V4LAYOUT
+		Q3MultiLineEdit *in_win;
+#else
 		QMultiLineEdit *in_win;
+#endif
 		OutputWin *out_win;
 		OdbcTest *odbctest;
 		QString txt;
@@ -149,7 +174,11 @@ class dRowCount : public QDialog
 		QComboBox *handles;
 		QLabel *l_handle;
 		QCheckBox *valid;
+#ifdef QT_V4LAYOUT
+		Q3MultiLineEdit *in_win;
+#else
 		QMultiLineEdit *in_win;
+#endif
 		OutputWin *out_win;
 		OdbcTest *odbctest;
 		QString txt;
@@ -171,7 +200,11 @@ class dMoreResults : public QDialog
 		QPushButton *ok, *cancel, *help;
 		QComboBox *handles;
 		QLabel *l_handle;
+#ifdef QT_V4LAYOUT
+		Q3MultiLineEdit *in_win;
+#else
 		QMultiLineEdit *in_win;
+#endif
 		OutputWin *out_win;
 		OdbcTest *odbctest;
 		QString txt;
@@ -193,7 +226,11 @@ class dSetPos : public QDialog
 		QComboBox *handles, *operation, *lock_type;
 		QLabel *l_handle, *l_operation, *l_lock_type, *l_row_number;
 		QLineEdit *row_number;
+#ifdef QT_V4LAYOUT
+		Q3MultiLineEdit *in_win;
+#else
 		QMultiLineEdit *in_win;
+#endif
 		OutputWin *out_win;
 		OdbcTest *odbctest;
 		QString txt;
@@ -214,7 +251,11 @@ class dBulkOperations : public QDialog
 		QPushButton *ok, *cancel, *help;
 		QComboBox *handles, *operation;
 		QLabel *l_handle, *l_operation;
+#ifdef QT_V4LAYOUT
+		Q3MultiLineEdit *in_win;
+#else
 		QMultiLineEdit *in_win;
+#endif
 		OutputWin *out_win;
 		OdbcTest *odbctest;
 		QString txt;
@@ -238,7 +279,11 @@ class dColAttribute : public QDialog
         QLabel *l_field_ident;
 		QCheckBox *char_ptr_valid, *strlen_valid, *numeric_valid;
 		QLineEdit *buffer_len, *col_num;
+#ifdef QT_V4LAYOUT
+		Q3MultiLineEdit *in_win;
+#else
 		QMultiLineEdit *in_win;
+#endif
 		OutputWin *out_win;
 		OdbcTest *odbctest;
 		QString txt;
@@ -265,7 +310,11 @@ class dColAttributes : public QDialog
         QLabel *l_field_ident;
 		QCheckBox *char_ptr_valid, *strlen_valid, *numeric_valid;
 		QLineEdit *buffer_len, *col_num;
+#ifdef QT_V4LAYOUT
+		Q3MultiLineEdit *in_win;
+#else
 		QMultiLineEdit *in_win;
+#endif
 		OutputWin *out_win;
 		OdbcTest *odbctest;
 		QString txt;
@@ -290,7 +339,11 @@ class dFetchScroll : public QDialog
 		QComboBox *handles, *orentation;
 		QLabel *l_handle, *l_orentation, *l_offset;
 		QLineEdit *offset;
+#ifdef QT_V4LAYOUT
+		Q3MultiLineEdit *in_win;
+#else
 		QMultiLineEdit *in_win;
+#endif
 		OutputWin *out_win;
 		OdbcTest *odbctest;
 		QString txt;
@@ -312,7 +365,11 @@ class dExtendedFetch : public QDialog
 		QComboBox *handles, *orentation;
 		QLabel *l_handle, *l_orentation, *l_offset;
 		QLineEdit *offset;
+#ifdef QT_V4LAYOUT
+		Q3MultiLineEdit *in_win;
+#else
 		QMultiLineEdit *in_win;
+#endif
         QCheckBox *count_ptr_valid, *status_ptr_valid;
 		OutputWin *out_win;
 		OdbcTest *odbctest;
@@ -337,7 +394,11 @@ class dSetScrollOptions : public QDialog
 		QComboBox *handles, *concurrency, *keyset;
 		QLabel *l_handle, *l_concurrency, *l_keyset, *l_rowset;
 		QLineEdit *rowset;
+#ifdef QT_V4LAYOUT
+		Q3MultiLineEdit *in_win;
+#else
 		QMultiLineEdit *in_win;
+#endif
 		OutputWin *out_win;
 		OdbcTest *odbctest;
 		QString txt;

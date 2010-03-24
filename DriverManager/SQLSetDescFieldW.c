@@ -27,9 +27,21 @@
  *
  **********************************************************************
  *
- * $Id: SQLSetDescFieldW.c,v 1.3 2003/10/30 18:20:46 lurcher Exp $
+ * $Id: SQLSetDescFieldW.c,v 1.7 2008/08/29 08:01:39 lurcher Exp $
  *
  * $Log: SQLSetDescFieldW.c,v $
+ * Revision 1.7  2008/08/29 08:01:39  lurcher
+ * Alter the way W functions are passed to the driver
+ *
+ * Revision 1.6  2007/03/05 09:49:24  lurcher
+ * Get it to build on VMS again
+ *
+ * Revision 1.5  2007/02/28 15:37:48  lurcher
+ * deal with drivers that call internal W functions and end up in the driver manager. controlled by the --enable-handlemap configure arg
+ *
+ * Revision 1.4  2006/04/18 10:24:47  lurcher
+ * Add a couple of changes from Mark Vanderwiel
+ *
  * Revision 1.3  2003/10/30 18:20:46  lurcher
  *
  * Fix broken thread protection
@@ -98,6 +110,37 @@ SQLRETURN SQLSetDescFieldW( SQLHDESC descriptor_handle,
                     LOG_INFO, 
                     "Error: SQL_INVALID_HANDLE" );
 
+#ifdef WITH_HANDLE_REDIRECT
+		{
+			DMHDESC parent_desc;
+
+			parent_desc = find_parent_handle( descriptor, SQL_HANDLE_DESC );
+
+			if ( parent_desc ) {
+        		dm_log_write( __FILE__, 
+                	__LINE__, 
+                    	LOG_INFO, 
+                    	LOG_INFO, 
+                    	"Info: found parent handle" );
+
+				if ( CHECK_SQLSETDESCFIELDW( parent_desc -> connection ))
+				{
+        			dm_log_write( __FILE__, 
+                		__LINE__, 
+                   		 	LOG_INFO, 
+                   		 	LOG_INFO, 
+                   		 	"Info: calling redirected driver function" );
+
+                	return  SQLSETDESCFIELDW( parent_desc -> connection,
+							descriptor,
+							rec_number,
+							field_identifier,
+							value,
+							buffer_length );
+				}
+			}
+		}
+#endif
         return SQL_INVALID_HANDLE;
     }
 
@@ -141,40 +184,104 @@ SQLRETURN SQLSetDescFieldW( SQLHDESC descriptor_handle,
         return function_return( SQL_HANDLE_DESC, descriptor, SQL_ERROR );
     }
 
-    if ( !CHECK_SQLSETDESCFIELDW( descriptor -> connection ))
-    {
-        dm_log_write( __FILE__, 
+    if ( descriptor -> connection -> unicode_driver ||
+		    CHECK_SQLSETDESCFIELDW( descriptor -> connection ))
+	{
+    	if ( !CHECK_SQLSETDESCFIELDW( descriptor -> connection ))
+    	{
+        	dm_log_write( __FILE__, 
                 __LINE__, 
                 LOG_INFO, 
                 LOG_INFO, 
                 "Error: IM001" );
 
-        __post_internal_error( &descriptor -> error,
+        	__post_internal_error( &descriptor -> error,
                 ERROR_IM001, NULL,
                 descriptor -> connection -> environment -> requested_version );
 
-        return function_return( SQL_HANDLE_DESC, descriptor, SQL_ERROR );
-    }
+        	return function_return( SQL_HANDLE_DESC, descriptor, SQL_ERROR );
+		}
 
-    ret = SQLSETDESCFIELDW( descriptor -> connection,
-            descriptor -> driver_desc,
-            rec_number, 
-            field_identifier,
-            value, 
-            buffer_length );
+    	ret = SQLSETDESCFIELDW( descriptor -> connection,
+            	descriptor -> driver_desc,
+            	rec_number, 
+            	field_identifier,
+            	value, 
+            	buffer_length );
+	
+    	if ( log_info.log_flag )
+    	{
+        	sprintf( descriptor -> msg, 
+                	"\n\t\tExit:[%s]",
+                    	__get_return_status( ret, s1 ));
+	
+        	dm_log_write( __FILE__, 
+                	__LINE__, 
+                	LOG_INFO, 
+                	LOG_INFO, 
+                	descriptor -> msg );
+    	}
+	}
+	else
+	{
+		SQLCHAR *ascii_str = NULL;
 
-    if ( log_info.log_flag )
-    {
-        sprintf( descriptor -> msg, 
-                "\n\t\tExit:[%s]",
-                    __get_return_status( ret, s1 ));
-
-        dm_log_write( __FILE__, 
+    	if ( !CHECK_SQLSETDESCFIELD( descriptor -> connection ))
+    	{
+        	dm_log_write( __FILE__, 
                 __LINE__, 
                 LOG_INFO, 
                 LOG_INFO, 
-                descriptor -> msg );
-    }
+                "Error: IM001" );
+
+        	__post_internal_error( &descriptor -> error,
+                ERROR_IM001, NULL,
+                descriptor -> connection -> environment -> requested_version );
+
+        	return function_return( SQL_HANDLE_DESC, descriptor, SQL_ERROR );
+		}
+
+		/*
+		 * is it a char arg...
+		 */
+
+		switch ( field_identifier )
+		{
+			case SQL_DESC_NAME:		/* This is the only R/W SQLCHAR* type */
+        		ascii_str = (SQLCHAR*) unicode_to_ansi_alloc( value, buffer_length, descriptor -> connection );
+				value = ascii_str;
+				buffer_length = strlen((char*) ascii_str );
+				break;
+
+			default:
+				break;
+		}
+
+    	ret = SQLSETDESCFIELD( descriptor -> connection,
+            	descriptor -> driver_desc,
+            	rec_number, 
+            	field_identifier,
+            	value, 
+            	buffer_length );
+	
+    	if ( log_info.log_flag )
+    	{
+        	sprintf( descriptor -> msg, 
+                	"\n\t\tExit:[%s]",
+                    	__get_return_status( ret, s1 ));
+	
+        	dm_log_write( __FILE__, 
+                	__LINE__, 
+                	LOG_INFO, 
+                	LOG_INFO, 
+                	descriptor -> msg );
+    	}
+
+		if ( ascii_str ) 
+		{
+			free( ascii_str );
+		}
+	}
 
     return function_return( SQL_HANDLE_DESC, descriptor, ret );
 }

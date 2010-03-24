@@ -27,9 +27,12 @@
  *
  **********************************************************************
  *
- * $Id: SQLDataSources.c,v 1.7 2003/10/30 18:20:45 lurcher Exp $
+ * $Id: SQLDataSources.c,v 1.8 2008/06/30 08:40:48 lurcher Exp $
  *
  * $Log: SQLDataSources.c,v $
+ * Revision 1.8  2008/06/30 08:40:48  lurcher
+ * Few more tweeks towards a release
+ *
  * Revision 1.7  2003/10/30 18:20:45  lurcher
  *
  * Fix broken thread protection
@@ -128,9 +131,9 @@
 
 #include "drivermanager.h"
 
-static char const rcsid[]= "$RCSfile: SQLDataSources.c,v $ $Revision: 1.7 $";
+static char const rcsid[]= "$RCSfile: SQLDataSources.c,v $ $Revision: 1.8 $";
 
-#define BUFFERSIZE      1024
+#define BUFFERSIZE      1024*4
 
 SQLRETURN SQLDataSourcesA( SQLHENV environment_handle,
            SQLUSMALLINT direction,

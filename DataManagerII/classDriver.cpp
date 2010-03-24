@@ -11,12 +11,20 @@
  **************************************************/
 
 #include "classDriver.h"
+#ifdef QT_V4LAYOUT
+#include <Qt/qpixmap.h>
+#else
 #include <qpixmap.h>
+#endif
 #include <ini.h>
 #include <odbcinst.h>
 #include "driver.xpm"
 
+#ifdef QT_V4LAYOUT
+classDriver::classDriver( Q3ListViewItem *pParent, Q3ListViewItem *pAfter, classCanvas *pCanvas, const char *pszDriverName )
+#else
 classDriver::classDriver( QListViewItem *pParent, QListViewItem *pAfter, classCanvas *pCanvas, const char *pszDriverName )
+#endif
     : classNode( pParent, pAfter, pCanvas )
 {
   char szResults[9600] ;
@@ -30,7 +38,7 @@ classDriver::classDriver( QListViewItem *pParent, QListViewItem *pAfter, classCa
   setPixmap( 0, QPixmap( driver_xpm ) );
   setExpandable( FALSE );
 
-  if ( SQLGetPrivateProfileString((char*) qsDriverName.data(), "Description", "", szResults, sizeof(szResults), "odbcinst" ) > 0 )
+  if ( SQLGetPrivateProfileString((char*) qsDriverName.ascii(), "Description", "", szResults, sizeof(szResults), "odbcinst" ) > 0 )
     iniElement( szResults, 0, 0, 0, szPropertyValue, INI_MAX_PROPERTY_VALUE );
 
   setText( 0, qsDriverName );

@@ -21,9 +21,18 @@
  *
  **********************************************************************
  *
- * $Id: _logging.c,v 1.1.1.1 2001/10/17 16:40:30 lurcher Exp $
+ * $Id: _logging.c,v 1.4 2008/05/12 13:07:21 lurcher Exp $
  *
  * $Log: _logging.c,v $
+ * Revision 1.4  2008/05/12 13:07:21  lurcher
+ * Push a couple of small changes back into CVS, ready for new release
+ *
+ * Revision 1.3  2008/02/15 15:47:12  lurcher
+ * Add thread protection around ini caching
+ *
+ * Revision 1.2  2007/11/27 17:52:57  peteralexharvey
+ * - changes made during QT4 implementation
+ *
  * Revision 1.1.1.1  2001/10/17 16:40:30  lurcher
  *
  * First upload to SourceForge
@@ -41,8 +50,71 @@
 #include <odbcinstext.h>
 #include <log.h>
 
+#ifdef HAVE_LIBPTH
+
+#include <pth.h>
+
+static pth_mutex_t mutex_log = PTH_MUTEX_INIT;
+static int pth_init_called = 0;
+
+static int mutex_entry( void )
+{
+    if ( !pth_init_called )
+    {
+        pth_init();
+        pth_init_called = 1;
+    }
+    return pth_mutex_acquire( &mutex_log, 0, NULL );
+}
+
+static int mutex_exit( void )
+{
+    return pth_mutex_release( &mutex_log );
+}
+
+#elif HAVE_LIBPTHREAD
+
+#include <pthread.h>
+
+static pthread_mutex_t mutex_log = PTHREAD_MUTEX_INITIALIZER;
+
+static int mutex_entry( void )
+{
+    return pthread_mutex_lock( &mutex_log );
+}
+
+static int mutex_exit( void )
+{
+    return pthread_mutex_unlock( &mutex_log );
+}
+
+#elif HAVE_LIBTHREAD
+
+#include <thread.h>
+
+static mutex_t mutex_log;
+
+static int mutex_entry( void )
+{
+    return mutex_lock( &mutex_log );
+}
+
+static int mutex_exit( void )
+{
+    return mutex_unlock( &mutex_log );
+}
+
+#else
+
+#define mutex_entry()
+#define mutex_exit()
+
+#endif
 /*
  * I don't like these statics but not sure what else we can do...
+ *
+ * Indeed, access to these statics was in fact not thread safe !
+ * So they are now protected by mutex_log...
  */
 
 static HLOG hODBCINSTLog = NULL;
@@ -50,10 +122,17 @@ static int log_tried = 0;
 
 int inst_logPushMsg( char *pszModule, char *pszFunctionName, int nLine, int nSeverity, int nCode, char *pszMessage )
 {
+    int ret = LOG_ERROR;
+
+    mutex_entry();
+
     if ( !log_tried )
     {
+        long nMaxMessages = 10; /* \todo ODBC spec says 8 max. We would make it 0 (unlimited) but at the moment logPeekMsg 
+                                   would be slow if many messages. Revisit when opt is made to log storage. */
+
         log_tried = 1;
-        if ( logOpen( &hODBCINSTLog, "odbcinst", NULL, 10 ) != LOG_SUCCESS )
+        if ( logOpen( &hODBCINSTLog, "odbcinst", NULL, nMaxMessages ) != LOG_SUCCESS )
         {
             hODBCINSTLog = NULL;
         }
@@ -64,7 +143,7 @@ int inst_logPushMsg( char *pszModule, char *pszFunctionName, int nLine, int nSev
     }
     if ( hODBCINSTLog )
     {
-        return logPushMsg( hODBCINSTLog,
+        ret = logPushMsg( hODBCINSTLog,
                 pszModule, 
                 pszFunctionName, 
                 nLine, 
@@ -72,23 +151,49 @@ int inst_logPushMsg( char *pszModule, char *pszFunctionName, int nLine, int nSev
                 nCode, 
                 pszMessage );
     }
-    else
-    {
-        return LOG_ERROR;
-    }
+
+    mutex_exit();
+
+    return ret;
 }
 
-int inst_logPopMsg( char *pszMsgHdr, int *pnCode, char *pszMsg )
+/*! 
+ * \brief   Get a reference to a message in the log.
+ *
+ *          The caller (SQLInstallerError) could call logPeekMsg directly
+ *          but we would have to extern hODBCINSTLog and I have not given
+ *          any thought to that at this time.
+ * 
+ * \param   nMsg
+ * \param   phMsg
+ * 
+ * \return  int
+ */
+int inst_logPeekMsg( long nMsg, HLOGMSG *phMsg )
 {
+    int ret = LOG_NO_DATA;
+
+    mutex_entry();
+
     if ( hODBCINSTLog )
-    {
-        return logPopMsg( hODBCINSTLog,
-                pszMsgHdr,
-                pnCode,
-                pszMsg );
-    }
-    else
-    {
-        return LOG_ERROR;
-    }
+        ret = logPeekMsg( hODBCINSTLog, nMsg, phMsg );
+
+    mutex_exit();
+
+    return ret;
 }
+
+int inst_logClear( void )
+{
+    int ret = LOG_ERROR;
+
+    mutex_entry();
+
+    if ( hODBCINSTLog ) 
+        ret = logClear( hODBCINSTLog );
+
+    mutex_exit();
+
+    return ret;
+}
+

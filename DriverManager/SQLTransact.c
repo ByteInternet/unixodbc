@@ -27,9 +27,15 @@
  *
  **********************************************************************
  *
- * $Id: SQLTransact.c,v 1.8 2004/06/16 14:42:03 lurcher Exp $
+ * $Id: SQLTransact.c,v 1.10 2007/08/30 12:54:17 lurcher Exp $
  *
  * $Log: SQLTransact.c,v $
+ * Revision 1.10  2007/08/30 12:54:17  lurcher
+ * Add -3 option to isql to use ODBC3 calls
+ *
+ * Revision 1.9  2006/05/31 17:35:34  lurcher
+ * Add unicode ODBCINST entry points
+ *
  * Revision 1.8  2004/06/16 14:42:03  lurcher
  *
  *
@@ -135,7 +141,7 @@
 
 #include "drivermanager.h"
 
-static char const rcsid[]= "$RCSfile: SQLTransact.c,v $ $Revision: 1.8 $";
+static char const rcsid[]= "$RCSfile: SQLTransact.c,v $ $Revision: 1.10 $";
 
 SQLRETURN SQLTransact( SQLHENV environment_handle,
            SQLHDBC connection_handle,
@@ -255,41 +261,55 @@ SQLRETURN SQLTransact( SQLHENV environment_handle,
              * relative to the commit or rollback behavior
              */
             
-            /* release thread so we can get the info */
-            thread_release( SQL_HANDLE_DBC, connection );
+			if ( connection -> cbs_found == 0 ) 
+			{
+            	/* release thread so we can get the info */
+            	thread_release( SQL_HANDLE_DBC, connection );
             
+				ret1 = SQLGetInfo(connection, 
+                      	SQL_CURSOR_COMMIT_BEHAVIOR, 
+                      	&connection -> ccb_value, 
+                      	sizeof( SQLSMALLINT ),
+                      	&cb_value_length);
+
+				if ( SQL_SUCCEEDED( ret1 ))
+				{
+					ret1 = SQLGetInfo(connection, 
+                      	SQL_CURSOR_ROLLBACK_BEHAVIOR,
+                      	&connection -> crb_value, 
+                      	sizeof( SQLSMALLINT ), 
+                      	&cb_value_length);
+				}
+
+            	/* protect thread again */
+            	thread_protect( SQL_HANDLE_DBC, connection );
+				if ( SQL_SUCCEEDED( ret1 ))
+				{
+					connection -> cbs_found = 1;
+				}
+			}
+
             if( completion_type == SQL_COMMIT )
+			{
+				cb_value = connection -> ccb_value;
+			}
+			else
+			{
+				cb_value = connection -> crb_value;
+			}
+
+            if( connection -> cbs_found )
             {
-                ret1 = SQLGetInfo(connection, 
-                      SQL_CURSOR_COMMIT_BEHAVIOR, 
-                      &cb_value, 
-                      cb_value_length,
-                      &cb_value_length);
-            }
-            else         /*SQL_ROLLBACK*/
-            {
-                ret1 = SQLGetInfo(connection, 
-                      SQL_CURSOR_ROLLBACK_BEHAVIOR,
-                      &cb_value, 
-                      cb_value_length, 
-                      &cb_value_length);
-            }
+	    		/* 
+	     	 	 * We need to protect this at a higher level than connection
+	     	 	 * as statements can be coming and going
+	     	 	 */
+	
+	    		mutex_lib_entry();
+	
+            	statement = __get_stmt_root();
+            	stmt_remaining = connection -> statement_count;
 	    
-            /* protect thread again */
-            thread_protect( SQL_HANDLE_DBC, connection );
-
-	    /* 
-	     * We need to protect this at a higher level than connection
-	     * as statements can be coming and going
-	     */
-
-	    mutex_lib_entry();
-
-            statement = __get_stmt_root();
-            stmt_remaining = connection -> statement_count;
-	    
-            if( SQL_SUCCEEDED( ret1 ) )
-            {
                 while ( statement && stmt_remaining > 0 )
                 {
                     if ( statement -> connection == connection )
@@ -332,9 +352,8 @@ SQLRETURN SQLTransact( SQLHENV environment_handle,
                     }
                     statement = statement -> next_class_list;
                 }
+	    		mutex_lib_exit();
             }
-
-	    mutex_lib_exit();
         }
 
         if ( log_info.log_flag )

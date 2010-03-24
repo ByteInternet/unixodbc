@@ -20,6 +20,9 @@ BOOL SQLInstallDriverManager(	LPSTR	pszPath,
 								WORD	*pnPathOut )
 {
     char  szIniName[ INI_MAX_OBJECT_NAME + 1 ];
+	char  b1[ 256 ];
+
+    inst_logClear();
 
 	/* SANITY CHECKS */
 	if ( pszPath == NULL || nPathMax < 2 )
@@ -28,7 +31,7 @@ BOOL SQLInstallDriverManager(	LPSTR	pszPath,
 		return 0;
 	}
 
-    sprintf( szIniName, "%s", odbcinst_system_file_path() );
+    sprintf( szIniName, "%s", odbcinst_system_file_path( b1 ) );
 
 	/* DO SOMETHING */
 	strncpy( pszPath, szIniName, nPathMax );
@@ -38,4 +41,25 @@ BOOL SQLInstallDriverManager(	LPSTR	pszPath,
 	return TRUE;
 }
 
+BOOL INSTAPI SQLInstallDriverManagerW (LPWSTR      lpszPath,
+                                      WORD       cbPathMax,
+                                      WORD      * pcbPathOut)
+{
+	char *path;
+	BOOL ret;
 
+    inst_logClear();
+
+	path = calloc( cbPathMax, 1 );
+
+	ret = SQLInstallDriverManager( path, cbPathMax, pcbPathOut );
+
+	if ( ret ) 
+	{
+		_single_string_copy_to_wide( lpszPath, path, cbPathMax );
+	}
+
+	free( path );
+
+	return ret;
+}

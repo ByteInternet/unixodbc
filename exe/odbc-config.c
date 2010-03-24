@@ -22,11 +22,77 @@
  **********************************************************************/
 
 #include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <sql.h>
 
 static void usage( void )
 {
-        fprintf( stderr, "Usage: odbc-config\n\t\t[--prefix]\n\t\t[--exec-prefix]\n\t\t[--include-prefix]\n\t\t[--lib-prefix]\n\t\t[--bin-prefix]\n\t\t[--version]\n\t\t[--libs]\n\t\t[--static-libs]\n\t\t[--libtool-libs]\n\t\t[--cflags]\n\t\t[--odbcversion]\n\t\t[--longodbcversion]\n\t\t[--odbcini]\n\t\t[--odbcinstini]\n" );
+        fprintf( stderr, "Usage: odbc_config\n\t\t[--prefix]\n\t\t[--exec-prefix]\n\t\t[--include-prefix]\n\t\t[--lib-prefix]\n\t\t[--bin-prefix]\n\t\t[--version]\n\t\t[--libs]\n\t\t[--static-libs]\n\t\t[--libtool-libs]\n\t\t[--cflags]\n\t\t[--odbcversion]\n\t\t[--longodbcversion]\n\t\t[--odbcini]\n\t\t[--odbcinstini]\n\t\t[--header]\n\t\t[--ulen]\n" );
 
+}
+
+static void cInc( void )
+{
+#ifdef HAVE_UNISTD_H
+    printf( "#ifndef HAVE_UNISTD_H\n #define HAVE_UNISTD_H\n#endif\n" );
+#endif
+
+#ifdef HAVE_PWD_H
+    printf( "#ifndef HAVE_PWD_H\n #define HAVE_PWD_H\n#endif\n" );
+#endif
+
+#ifdef HAVE_SYS_TYPES_H
+    printf( "#ifndef HAVE_SYS_TYPES_H\n #define HAVE_SYS_TYPES_H\n#endif\n" );
+#endif
+
+#ifdef ODBC_STD
+    printf( "#ifndef ODBC_STD\n #define ODBC_STD\n#endif\n" );
+#endif
+
+#ifdef UNICODE
+    printf( "#ifndef UNICODE\n #define UNICODE\n#endif\n" );
+#endif
+
+#ifdef GUID_DEFINED
+    printf( "#ifndef GUID_DEFINED\n #define GUID_DEFINED\n#endif\n" );
+#endif
+
+#ifdef SQL_WCHART_CONVERT
+    printf( "#ifndef SQL_WCHART_CONVERT\n #define SQL_WCHART_CONVERT\n#endif\n" );
+#endif
+
+#ifdef HAVE_LONG_LONG
+    printf( "#ifndef HAVE_LONG_LONG\n #define HAVE_LONG_LONG\n#endif\n" );
+#endif
+
+#ifdef ODBCINT64
+    printf( "#ifndef ODBCINT64\n #define ODBCINT64\n#endif\n" );
+#endif
+
+#ifdef UODBCINT64
+    printf( "#ifndef UODBCINT64\n #define UODBCINT64\n#endif\n" );
+#endif
+
+#ifdef DISABLE_INI_CACHING
+    printf( "#ifndef DISABLE_INI_CACHING\n #define DISABLE_INI_CACHING\n#endif\n" );
+#endif
+
+#ifdef SIZEOF_LONG_INT
+    printf( "#ifndef SIZEOF_LONG_INT\n #define SIZEOF_LONG_INT %d\n#endif\n", SIZEOF_LONG_INT );
+#endif
+
+#ifdef ALLREADY_HAVE_WINDOWS_TYPE
+    printf( "#ifndef ALLREADY_HAVE_WINDOWS_TYPE\n #define ALLREADY_HAVE_WINDOWS_TYPE\n#endif\n" );
+#endif
+
+#ifdef DONT_TD_VOID
+    printf( "#ifndef DONT_TD_VOID\n #define DONT_TD_VOID\n#endif\n" );
+#endif
+
+#ifdef DO_YOU_KNOW_WHAT_YOUR_ARE_DOING
+    printf( "#ifndef DO_YOU_KNOW_WHAT_YOUR_ARE_DOING\n #define DO_YOU_KNOW_WHAT_YOUR_ARE_DOING\n#endif\n" );
+#endif
 }
 
 static void cflags( void )
@@ -63,20 +129,12 @@ static void cflags( void )
     printf( "-DHAVE_LONG_LONG " );
 #endif
 
-#ifdef ODBCINT64
-    printf( "-DODBCINT64 " );
-#endif
-
-#ifdef UODBCINT64
-    printf( "UODBCINT64 " );
-#endif
-
 #ifdef DISABLE_INI_CACHING
     printf( "-DDISABLE_INI_CACHING " );
 #endif
 
-#ifdef SIZEOF_LONG
-    printf( "-DSIZEOF_LONG=%d ", SIZEOF_LONG );
+#ifdef SIZEOF_LONG_INT
+    printf( "-DSIZEOF_LONG_INT=%d ", SIZEOF_LONG_INT );
 #endif
 
 #ifdef ALLREADY_HAVE_WINDOWS_TYPE
@@ -91,7 +149,18 @@ static void cflags( void )
     printf( "-DDO_YOU_KNOW_WHAT_YOUR_ARE_DOING " );
 #endif
 
+#ifdef INCLUDE_PREFIX
+	printf( "-I%s ", INCLUDE_PREFIX );
+#else
+	printf( "-I%s/include ", PREFIX );
+#endif
+
     printf( "\n" );
+}
+
+static void ulen( void )
+{
+	printf( "-DSIZEOF_SQLULEN=%d\n", sizeof( SQLULEN ));
 }
 
 int main( int argc, char **argv )
@@ -147,6 +216,10 @@ int main( int argc, char **argv )
         {
             cflags();
         }
+        else if ( strcmp( argv[ i ], "--header" ) == 0 )
+        {
+            cInc();
+        }
         else if ( strcmp( argv[ i ], "--odbcversion" ) == 0 )
         {
             printf( "3\n" );
@@ -163,10 +236,16 @@ int main( int argc, char **argv )
         {
             printf( "%s/odbcinst.ini\n", SYSTEM_FILE_PATH );
         }
+        else if ( strcmp( argv[ i ], "--ulen" ) == 0 )
+        {
+            ulen();
+        }
         else
         {
             usage();
             exit( -1 );
         }
     }
+
+	exit(0);
 }

@@ -27,9 +27,18 @@
  *
  **********************************************************************
  *
- * $Id: SQLGetInfoW.c,v 1.10 2004/11/22 17:02:49 lurcher Exp $
+ * $Id: SQLGetInfoW.c,v 1.13 2008/08/29 08:01:39 lurcher Exp $
  *
  * $Log: SQLGetInfoW.c,v $
+ * Revision 1.13  2008/08/29 08:01:39  lurcher
+ * Alter the way W functions are passed to the driver
+ *
+ * Revision 1.12  2007/02/28 15:37:48  lurcher
+ * deal with drivers that call internal W functions and end up in the driver manager. controlled by the --enable-handlemap configure arg
+ *
+ * Revision 1.11  2005/10/06 08:50:58  lurcher
+ * Fix problem with SQLDrivers not returning first entry
+ *
  * Revision 1.10  2004/11/22 17:02:49  lurcher
  * Fix unicode/ansi conversion in the SQLGet functions
  *
@@ -110,6 +119,7 @@ SQLRETURN SQLGetInfoW( SQLHDBC connection_handle,
     char txt[ 30 ], *cptr;
     SQLPOINTER *ptr;
     SQLCHAR s1[ 100 + LOG_MESSAGE_LEN ];
+	SQLUSMALLINT sval;
 
     /*
      * check connection
@@ -123,6 +133,37 @@ SQLRETURN SQLGetInfoW( SQLHDBC connection_handle,
                     LOG_INFO, 
                     "Error: SQL_INVALID_HANDLE" );
 
+#ifdef WITH_HANDLE_REDIRECT
+		{
+			DMHDBC parent_connection;
+
+			parent_connection = find_parent_handle( connection, SQL_HANDLE_DBC );
+
+			if ( parent_connection ) {
+        		dm_log_write( __FILE__, 
+                	__LINE__, 
+                    	LOG_INFO, 
+                    	LOG_INFO, 
+                    	"Info: found parent handle" );
+
+				if ( CHECK_SQLGETINFOW( parent_connection ))
+				{
+        			dm_log_write( __FILE__, 
+                		__LINE__, 
+                   		 	LOG_INFO, 
+                   		 	LOG_INFO, 
+                   		 	"Info: calling redirected driver function" );
+
+					return SQLGETINFOW( parent_connection, 
+							connection_handle, 
+           					info_type,
+           					info_value,
+           					buffer_length,
+           					string_length );
+				}
+			}
+		}
+#endif
         return SQL_INVALID_HANDLE;
     }
 
@@ -292,11 +333,17 @@ SQLRETURN SQLGetInfoW( SQLHDBC connection_handle,
         cptr = "1994";
         break;
 
+	  case SQL_ATTR_DRIVER_THREADING:
+		type = 3;
+		sval = connection -> threading_level;
+		break;
+
       default:
         /*
          * pass all the others on
          */
-        if ( connection -> unicode_driver )
+        if ( connection -> unicode_driver ||
+			CHECK_SQLGETINFOW( connection ))
         {
             if ( !CHECK_SQLGETINFOW( connection ))
             {
@@ -513,6 +560,14 @@ SQLRETURN SQLGetInfoW( SQLHDBC connection_handle,
         if ( string_length )
             *string_length = sizeof( SQLPOINTER );
     }
+	else if ( type == 3 ) 
+	{
+        if ( info_value )
+            *((SQLUSMALLINT *)info_value) = sval;
+
+        if ( string_length )
+            *string_length = sizeof( SQLUSMALLINT );
+	}
 
     if ( log_info.log_flag )
     {

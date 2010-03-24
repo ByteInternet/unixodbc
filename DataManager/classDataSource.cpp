@@ -14,19 +14,31 @@
 #include "computergreen.xpm"
 #include "computerred.xpm"
 
+#ifdef QT_V4LAYOUT
+classDataSource::classDataSource( Q3ListView *pParent, classCanvas *pCanvas, int nDataSourceType, char *pszDataSourceName, SQLHENV hEnv )
+#else
 classDataSource::classDataSource( QListView *pParent, classCanvas *pCanvas, int nDataSourceType, char *pszDataSourceName, SQLHENV hEnv )
+#endif
     : classNode( pParent, pCanvas )
 {
 	Init( nDataSourceType,	pszDataSourceName, hEnv );
 }
 
+#ifdef QT_V4LAYOUT
+classDataSource::classDataSource( Q3ListViewItem *pParent, classCanvas *pCanvas, int nDataSourceType, char *pszDataSourceName, SQLHENV hEnv )
+#else
 classDataSource::classDataSource( QListViewItem *pParent, classCanvas *pCanvas, int nDataSourceType, char *pszDataSourceName, SQLHENV hEnv )
+#endif
     : classNode( pParent, pCanvas )
 {
 	Init( nDataSourceType,	pszDataSourceName, hEnv );
 }
 
+#ifdef QT_V4LAYOUT
+classDataSource::classDataSource( Q3ListViewItem *pParent,Q3ListViewItem *pAfter, classCanvas *pCanvas, int nDataSourceType, char *pszDataSourceName, SQLHENV hEnv )
+#else
 classDataSource::classDataSource( QListViewItem *pParent,QListViewItem *pAfter, classCanvas *pCanvas, int nDataSourceType, char *pszDataSourceName, SQLHENV hEnv )
+#endif
     : classNode( pParent, pAfter, pCanvas )
 {
 	Init( nDataSourceType,	pszDataSourceName, hEnv );
@@ -81,9 +93,9 @@ void classDataSource::Init( int nDataSourceType, char *pszDataSourceName, SQLHEN
 		SQLSetConfigMode( ODBC_USER_DSN );
 	else
 		SQLSetConfigMode( ODBC_SYSTEM_DSN );
-	if ( SQLGetPrivateProfileString((char*) qsDataSourceName.data(), "Description", "", szResults, 9600, 0 ) > 0 )
+	if ( SQLGetPrivateProfileString((char*) qsDataSourceName.ascii(), "Description", "", szResults, 9600, 0 ) > 0 )
 		iniElement( szResults, '\0', '\0', 0, szDescription, INI_MAX_PROPERTY_VALUE );
-	if ( SQLGetPrivateProfileString((char*) qsDataSourceName.data(), "Driver", "", szResults, 9600, 0 ) > 0 )
+	if ( SQLGetPrivateProfileString((char*) qsDataSourceName.ascii(), "Driver", "", szResults, 9600, 0 ) > 0 )
 		iniElement( szResults, '\0', '\0', 0, szDriver, INI_MAX_PROPERTY_VALUE );
 	SQLSetConfigMode( ODBC_BOTH_DSN );
 
@@ -103,13 +115,17 @@ void classDataSource::setOpen( bool bOpen )
         // try to connect
 		if ( hDbc )
 		{
-            classLogin	*pLogin = new classLogin( pCanvas, hDbc, (char*)qsDataSourceName.data(), nDataSourceType );
+            classLogin	*pLogin = new classLogin( pCanvas, hDbc, (char*)qsDataSourceName.ascii(), nDataSourceType );
 			if ( pLogin->exec() )
 			{
 				bLoggedIn = true;
 				setPixmap( 0, QPixmap( computergreen_xpm ) );
 				pTables = new classTables( this, pCanvas, hDbc );
+#ifdef QT_V4LAYOUT
+                Q3ListViewItem::setOpen( bOpen );
+#else
                 QListViewItem::setOpen( bOpen );
+#endif
 			}
             else
             {
@@ -129,17 +145,29 @@ void classDataSource::setOpen( bool bOpen )
         SQLDisconnect( hDbc );
         setPixmap( 0, QPixmap( computerred_xpm ) );
         bLoggedIn = false;
+#ifdef QT_V4LAYOUT
+        Q3ListViewItem::setOpen( bOpen );
+#else
         QListViewItem::setOpen( bOpen );
+#endif
     }
 }
 
 void classDataSource::setup()
 {
     setExpandable( TRUE );
+#ifdef QT_V4LAYOUT
+    Q3ListViewItem::setup();
+#else
     QListViewItem::setup();
+#endif
 }
 
+#ifdef QT_V4LAYOUT
+void classDataSource::selectionChanged( Q3ListViewItem *p )
+#else
 void classDataSource::selectionChanged( QListViewItem *p )
+#endif
 {
     if ( pTables ) pTables->selectionChanged( p );
 	if ( p == this )

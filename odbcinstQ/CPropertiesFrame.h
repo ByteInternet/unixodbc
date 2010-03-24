@@ -12,11 +12,19 @@
 #ifndef CPropertiesFrame_included
 #define CPropertiesFrame_included
 
+#ifdef QT_V4LAYOUT
+#define QT3_SUPPORT
+#include <Qt/qwidget.h>
+#include <Qt/qdialog.h>
+#include <Qt/qlayout.h>
+#include <Qt/qsettings.h>
+#else
 #include <qwidget.h>
 #include <qdialog.h>
 #include <qlayout.h>
 #if (QT_VERSION>=300)
 #include <qsettings.h>
+#endif
 #endif
 
 #include <odbcinstext.h>

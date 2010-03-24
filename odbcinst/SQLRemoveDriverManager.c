@@ -12,6 +12,7 @@
 
 BOOL SQLRemoveDriverManager(	LPDWORD	pnUsageCount )
 {
+    inst_logClear();
 
 	if ( pnUsageCount == NULL )
 	{

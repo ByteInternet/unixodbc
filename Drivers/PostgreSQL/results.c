@@ -1152,14 +1152,14 @@ mylog("SQLExtendedFetch: stmt=%u\n", stmt);
 SQLRETURN  SQLExtendedFetch(
     SQLHSTMT           hstmt,
     SQLUSMALLINT       fFetchType,
-    SQLROWOFFSET       irow,
-    SQLROWSETSIZE 	  *pcrow,
+    SQLLEN             irow,
+    SQLULEN 	       *pcrow,
     SQLUSMALLINT 	  *rgfRowStatus)
 {
     return PG__SQLExtendedFetch( hstmt,
             fFetchType,
             irow,
-            pcrow,
+            (UDWORD FAR*)pcrow,
             rgfRowStatus );
 }
 

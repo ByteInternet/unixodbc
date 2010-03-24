@@ -13,8 +13,8 @@
 #include "driver.h"
 
 SQLRETURN SQLParamOptions(	SQLHSTMT    hDrvStmt,
-							UDWORD      nRow,
-							UDWORD		*pnRow )
+							SQLULEN      nRow,
+							SQLULEN		*pnRow )
 {
     HDRVSTMT hStmt	= (HDRVSTMT)hDrvStmt;
 

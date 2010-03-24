@@ -23,9 +23,12 @@
  *
  **********************************************************************
  *
- * $Id: SQLSetPos.c,v 1.2 2002/11/19 18:52:28 lurcher Exp $
+ * $Id: SQLSetPos.c,v 1.3 2007/11/13 15:04:57 lurcher Exp $
  *
  * $Log: SQLSetPos.c,v $
+ * Revision 1.3  2007/11/13 15:04:57  lurcher
+ * Fix 64 bit cursor lib issues
+ *
  * Revision 1.2  2002/11/19 18:52:28  lurcher
  *
  * Alter the cursor lib to not require linking to the driver manager.
@@ -50,7 +53,7 @@
 
 SQLRETURN CLSetPos(
     SQLHSTMT           statement_handle,
-    SQLUSMALLINT       irow,
+    SQLSETPOSIROW      irow,
     SQLUSMALLINT       foption,
     SQLUSMALLINT       flock )
 {

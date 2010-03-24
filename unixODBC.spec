@@ -1,5 +1,5 @@
 %define name     unixODBC
-%define ver      2.2.11
+%define ver      2.2.13
 %define prefix   /usr
 %define sysconfdir	/etc
 
@@ -7,7 +7,7 @@ Summary: ODBC driver manager and drivers for PostgreSQL, MySQL, etc.
 Name: %{name}
 Version: %ver
 Release: 1
-Copyright: LGPL and GPL
+License: LGPL and GPL
 Group: Applications/Databases
 Source: %{name}-%{ver}.tar.gz
 BuildRoot: /var/tmp/%{name}-%{ver}-root
@@ -44,17 +44,6 @@ All libs are LGPL (except nn which is GPL?).
 This package contains two Qt based GUI programs for unixODBC:
 ODBCConfig and DataManager
 
-%package gui-gtk
-Summary: ODBC configurator based on GTK+ and GTK+ widget for gnome-db
-Group: Applications/Databases
-Requires: %{name} = %{ver}
-
-%description gui-gtk
-unixODBC aims to provide a complete ODBC solution for the Linux platform.
-All programs are GPL.
-All libs are LGPL (except nn which is GPL?).
-This package contains one GTK+ based GUI program for unixODBC: gODBCConfig
-
 %prep
 %setup
 
@@ -84,13 +73,6 @@ fi
 
 make prefix=$RPM_BUILD_ROOT%{prefix} sysconfdir=$RPM_BUILD_ROOT%{sysconfdir} install-strip
 
-# gODBCConfig must be built after installing the main unixODBC parts
-cd gODBCConfig
-./autogen.sh --prefix=%{prefix} --sysconfdir=%{sysconfdir} --with-odbc=$RPM_BUILD_ROOT%{prefix}
-make
-make prefix=$RPM_BUILD_ROOT%{prefix} sysconfdir=$RPM_BUILD_ROOT%{sysconfdir} install-strip
-cd ..
-
 %clean
 [ -n "$RPM_BUILD_ROOT" -a "$RPM_BUILD_ROOT" != / ] && rm -rf $RPM_BUILD_ROOT
 
@@ -116,6 +98,7 @@ fi
 %{prefix}/bin/isql
 %{prefix}/bin/iusql
 %{prefix}/bin/odbcinst
+%{prefix}/bin/odbc_config
 %{prefix}/lib/libesoobS.so*
 %{prefix}/lib/libsapdbS.so*
 %{prefix}/lib/libnn.so*
@@ -135,6 +118,9 @@ fi
 %{prefix}/lib/liboraodbcS.so*
 %{prefix}/lib/libtdsS.so*
 %{prefix}/lib/libtemplate.so*
+%{prefix}/lib/libboundparam.so*
+%{prefix}/lib/libgtrtst.so*
+%{prefix}/lib/libmimerS.so*
 
 %files devel
 %defattr(-, root, root)
@@ -150,10 +136,3 @@ fi
 %{prefix}/bin/ODBCConfig
 %{prefix}/bin/odbctest
 %{prefix}/lib/libodbcinstQ.so*
-
-%files gui-gtk
-%defattr(-, root, root)
-
-%{prefix}/bin/gODBCConfig
-%{prefix}/lib/libgtkodbcconfig.so*
-

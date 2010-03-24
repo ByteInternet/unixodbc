@@ -8,7 +8,11 @@ CTracing::CTracing( QWidget* parent, const char* name )
 	QBoxLayout	*playoutTop		= new QVBoxLayout( this, 5 );
 
     // Tracing
+#ifdef QT_V4LAYOUT
+	Q3GroupBox *pgroupbox = new Q3GroupBox( this );
+#else
 	QGroupBox *pgroupbox = new QGroupBox( this );
+#endif
 	pgroupbox->setFrameStyle( QFrame::Box | QFrame::Raised );
     pgroupbox->setTitle( QString("Tracing") );
 	playoutTop->addWidget( pgroupbox, 5 );
@@ -30,7 +34,11 @@ CTracing::CTracing( QWidget* parent, const char* name )
     playoutGrid->addWidget( pTraceFile, 2, 1 );
 
     // Connection Pooling
+#ifdef QT_V4LAYOUT
+	pgroupbox = new Q3GroupBox( this );
+#else
 	pgroupbox = new QGroupBox( this );
+#endif
 	pgroupbox->setFrameStyle( QFrame::Box | QFrame::Raised );
     pgroupbox->setTitle( QString("Connection Pooling") );
 	playoutTop->addWidget( pgroupbox, 5 );
@@ -69,7 +77,12 @@ CTracing::CTracing( QWidget* parent, const char* name )
 
 	plabel2 = new QLabel( pframe, "Label_2" );
 	plabel2->setText( "These options are global. As such, they can only be set by the system administrator or someone else with 'root' access. Turn Tracing on to enable logging of calls. Turn Pooling on to enable Driver Pooling options." );
+#ifdef QT_V4LAYOUT
+	plabel2->setAlignment( Qt::AlignLeft | Qt::WordBreak );
+  	plabel2->setWordWrap( true );
+#else
 	plabel2->setAlignment( AlignLeft | WordBreak );
+#endif
 
 	playoutGrid->addWidget( plabel1, 0, 0 );
     playoutGrid->addWidget( plabel2, 0, 1 );

@@ -23,9 +23,15 @@
  *
  **********************************************************************
  *
- * $Id: SQLSetScrollOptions.c,v 1.2 2002/11/19 18:52:28 lurcher Exp $
+ * $Id: SQLSetScrollOptions.c,v 1.4 2007/11/13 15:04:57 lurcher Exp $
  *
  * $Log: SQLSetScrollOptions.c,v $
+ * Revision 1.4  2007/11/13 15:04:57  lurcher
+ * Fix 64 bit cursor lib issues
+ *
+ * Revision 1.3  2005/10/27 17:54:49  lurcher
+ * fix what I suspect is a typo in qt.m4
+ *
  * Revision 1.2  2002/11/19 18:52:28  lurcher
  *
  * Alter the cursor lib to not require linking to the driver manager.
@@ -55,7 +61,7 @@
 SQLRETURN CLSetScrollOptions(
     SQLHSTMT           statement_handle,
     SQLUSMALLINT       f_concurrency,
-    SQLINTEGER         crow_keyset,
+    SQLLEN             crow_keyset,
     SQLUSMALLINT       crow_rowset )
 {
     CLHSTMT cl_statement = (CLHSTMT) statement_handle; 
@@ -85,6 +91,7 @@ SQLRETURN CLSetScrollOptions(
     cl_statement -> cursor_type = crow_keyset;
     cl_statement -> concurrency = f_concurrency;
     cl_statement -> rowset_array_size = crow_rowset;
+    cl_statement -> rowset_size = crow_rowset;
 
     return SQL_SUCCESS;
 }

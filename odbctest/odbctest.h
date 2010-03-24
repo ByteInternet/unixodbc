@@ -1,7 +1,7 @@
 /****************************************************************************
  *  such slot OdbcTest::options()
  *  QObject::connec
-** $Id: odbctest.h,v 1.2 2001/12/20 17:26:26 lurcher Exp $
+** $Id: odbctest.h,v 1.3 2007/02/12 11:49:37 lurcher Exp $
 **
 ** Copyright (C) 1992-1999 Troll Tech AS.  All rights reserved.
 **
@@ -14,6 +14,17 @@
 #define ODBCTEST_H
 
 #include <stdio.h>
+#ifdef QT_V4LAYOUT
+#include <Qt/q3mainwindow.h>
+#include <Qt/qwidget.h>
+#include <Qt/qmenubar.h>
+#include <Qt/qlabel.h>
+#include <Qt/qcombobox.h>
+#include <Qt/qsplitter.h>
+#include <Qt/q3multilineedit.h>
+#include <Qt/qtextedit.h>
+#include <Qt/q3ptrlist.h>
+#else
 #include <qmainwindow.h>
 #include <qwidget.h>
 #include <qmenubar.h>
@@ -23,11 +34,28 @@
 #include <qmultilineedit.h>
 #if (QT_VERSION>=300)
 #include <qtextedit.h>
-#include <qptrlist.h>
-#else
+#endif
 #include <qlist.h>
 #endif
 #include <sql.h>
+
+#ifdef QT_V4LAYOUT
+#define LView			Q3ListView
+#define PList			Q3PtrList
+#define LViewItem		Q3ListViewItem
+#define MWindow			Q3MainWindow
+#define TBar			Q3ToolBar
+#define PMenu			Q3PopupMenu
+#define MLEdit			Q3MultiLineEdit
+#else
+#define LView			QListView
+#define LViewItem		QListViewItem
+#define MWindow			QMainWindow
+#define TBar			QToolBar
+#define PMenu			QPopupMenu
+#define PList			QList
+#define MLEdit			QMultiLineEdit
+#endif
 
 /*
  * structure that defines the options and values
@@ -55,7 +83,7 @@ typedef struct attr_options
 class Handle
 {
 public:
-	Handle( int t, SQLHANDLE h, QList<Handle> &list );
+	Handle( int t, SQLHANDLE h, PList<Handle> &list );
 	Handle( int t, SQLHANDLE h, QString desc = NULL, SQLHANDLE stmt = SQL_NULL_HANDLE );
 	Handle( Handle &e );
 	~Handle();
@@ -83,7 +111,7 @@ private:
     QString description;
     int implicit;
 	SQLHANDLE stmt_handle;
-    QList<Handle> *handle_list;
+    PList<Handle> *handle_list;
 };
 
 #if (QT_VERSION<300)
@@ -110,16 +138,16 @@ private:
 	int max_lines;
 };
 
-class OdbcTest : public QMainWindow
+class OdbcTest : public MWindow
 {
     Q_OBJECT
 
 public:
     OdbcTest( QWidget *parent=0, const char *name=0 );
 	QSplitter *split;
-	QMultiLineEdit *in_win;
+	MLEdit *in_win;
 	OutputWin *out_win;
-	QList<Handle> listHandle;
+	PList<Handle> listHandle;
 	const char *return_as_text( int ret );
 	void fill_list_box( attr_value *attr, QComboBox *lst );
 	void fill_list_box( attr_options *attr, QComboBox *lst );

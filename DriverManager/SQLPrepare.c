@@ -27,9 +27,12 @@
  *
  **********************************************************************
  *
- * $Id: SQLPrepare.c,v 1.5 2003/10/30 18:20:46 lurcher Exp $
+ * $Id: SQLPrepare.c,v 1.6 2005/03/04 14:38:08 lurcher Exp $
  *
  * $Log: SQLPrepare.c,v $
+ * Revision 1.6  2005/03/04 14:38:08  lurcher
+ * Bump version number
+ *
  * Revision 1.5  2003/10/30 18:20:46  lurcher
  *
  * Fix broken thread protection
@@ -121,7 +124,7 @@
 
 #include "drivermanager.h"
 
-static char const rcsid[]= "$RCSfile: SQLPrepare.c,v $ $Revision: 1.5 $";
+static char const rcsid[]= "$RCSfile: SQLPrepare.c,v $ $Revision: 1.6 $";
 
 SQLRETURN SQLPrepareA( SQLHSTMT statement_handle,
            SQLCHAR *statement_text,

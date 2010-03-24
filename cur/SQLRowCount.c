@@ -23,9 +23,12 @@
  *
  **********************************************************************
  *
- * $Id: SQLRowCount.c,v 1.2 2001/12/13 13:00:33 lurcher Exp $
+ * $Id: SQLRowCount.c,v 1.3 2007/02/12 11:49:35 lurcher Exp $
  *
  * $Log: SQLRowCount.c,v $
+ * Revision 1.3  2007/02/12 11:49:35  lurcher
+ * Add QT4 support to existing GUI parts
+ *
  * Revision 1.2  2001/12/13 13:00:33  lurcher
  *
  * Remove most if not all warnings on 64 bit platforms
@@ -52,7 +55,7 @@
 #include "cursorlibrary.h"
 
 SQLRETURN CLRowCount( SQLHSTMT statement_handle,
-       SQLINTEGER *rowcount )
+       SQLLEN *rowcount )
 {
     CLHSTMT cl_statement = (CLHSTMT) statement_handle; 
 

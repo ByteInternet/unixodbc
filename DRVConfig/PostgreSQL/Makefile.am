@@ -1,8 +1,8 @@
 lib_LTLIBRARIES = libodbcpsqlS.la
 
-INCLUDES = -I@top_srcdir@/include $(INCLTDL)
+INCLUDES = -I@top_srcdir@/include $(LTDLINCL)
 
-libodbcpsqlS_la_LDFLAGS = -version-info 1:0:0 -module
+libodbcpsqlS_la_LDFLAGS = -no-undefined  -version-info 1:0:0 -module
 
 DEFS = -DUNIXODBC @DEFS@
 

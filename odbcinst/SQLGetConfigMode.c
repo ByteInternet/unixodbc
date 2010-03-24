@@ -13,8 +13,9 @@
 #include <stdlib.h>
 #include <odbcinstext.h>
 
-BOOL SQLGetConfigMode(          UWORD	*pnConfigMode )
+BOOL SQLGetConfigMode( UWORD *pnConfigMode )
 {
+    inst_logClear();
 
     *pnConfigMode = __get_config_mode();
 

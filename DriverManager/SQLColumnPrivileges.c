@@ -27,9 +27,12 @@
  *
  **********************************************************************
  *
- * $Id: SQLColumnPrivileges.c,v 1.6 2004/01/12 09:54:39 lurcher Exp $
+ * $Id: SQLColumnPrivileges.c,v 1.7 2005/11/21 17:25:43 lurcher Exp $
  *
  * $Log: SQLColumnPrivileges.c,v $
+ * Revision 1.7  2005/11/21 17:25:43  lurcher
+ * A few DM fixes for Oracle's ODBC driver
+ *
  * Revision 1.6  2004/01/12 09:54:39  lurcher
  *
  * Fix problem where STATE_S5 stops metadata calls
@@ -119,7 +122,7 @@
 
 #include "drivermanager.h"
 
-static char const rcsid[]= "$RCSfile: SQLColumnPrivileges.c,v $ $Revision: 1.6 $";
+static char const rcsid[]= "$RCSfile: SQLColumnPrivileges.c,v $ $Revision: 1.7 $";
 
 SQLRETURN SQLColumnPrivilegesA(
     SQLHSTMT            statement_handle,
@@ -303,7 +306,7 @@ SQLRETURN SQLColumnPrivileges(
         s1 = ansi_to_unicode_alloc( catalog_name, name_length1, statement -> connection );
         s2 = ansi_to_unicode_alloc( schema_name, name_length2, statement -> connection );
         s3 = ansi_to_unicode_alloc( table_name, name_length3, statement -> connection );
-        s4 = ansi_to_unicode_alloc( column_name, name_length3, statement -> connection );
+        s4 = ansi_to_unicode_alloc( column_name, name_length4, statement -> connection );
 
         ret = SQLCOLUMNPRIVILEGESW( statement -> connection ,
                 statement -> driver_stmt,

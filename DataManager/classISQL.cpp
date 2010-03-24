@@ -30,9 +30,15 @@ classISQL::classISQL( SQLHDBC hDbc, QString qsDataSource, QWidget *parent, const
 
     setCaption( qsCaption );
 
+#ifdef QT_V4LAYOUT
+    txtSQL = new Q3MultiLineEdit( this, "txtSQL" );
+    txtSQL->setFocusPolicy( Qt::StrongFocus );
+    txtSQL->setBackgroundMode( Qt::PaletteBase );
+#else
     txtSQL = new QMultiLineEdit( this, "txtSQL" );
     txtSQL->setFocusPolicy( QWidget::StrongFocus );
     txtSQL->setBackgroundMode( QWidget::PaletteBase );
+#endif
     txtSQL->insertLine( "" );
     txtSQL->setReadOnly( FALSE );
     txtSQL->setOverwriteMode( FALSE );
@@ -41,17 +47,28 @@ classISQL::classISQL( SQLHDBC hDbc, QString qsDataSource, QWidget *parent, const
     pTabBar     = new QTabBar( this );
     pTabBar->setGeometry( 0, 0, 150, 20 );
 
+#ifdef QT_V4LAYOUT
+    pTabBar->addTab( QString( "SQL" ));
+    pTabBar->addTab( QString("Results"));
+#else
     QTab *pTab  = new QTab( "SQL" );
     pTabBar->addTab( pTab );
 
     pTab        = new QTab( "Results" );
     pTabBar->addTab( pTab );
+#endif
 
     connect( pTabBar, SIGNAL(selected(int)), SLOT(ChangeTextType(int)) );
 
+#ifdef QT_V4LAYOUT
+    txtResults = new Q3MultiLineEdit( this, "txtResults" );
+    txtResults->setFocusPolicy( Qt::StrongFocus );
+    txtResults->setBackgroundMode( Qt::PaletteBase );
+#else
     txtResults = new QMultiLineEdit( this, "txtResults" );
     txtResults->setFocusPolicy( QWidget::StrongFocus );
     txtResults->setBackgroundMode( QWidget::PaletteBase );
+#endif
     txtResults->insertLine( "" );
     txtResults->setReadOnly( FALSE );
     txtResults->setOverwriteMode( FALSE );
@@ -60,7 +77,11 @@ classISQL::classISQL( SQLHDBC hDbc, QString qsDataSource, QWidget *parent, const
     listSQL.append( QString("") );
     nSQL = 1;
 
+#ifdef QT_V4LAYOUT
+    pSliderRecentSQL = new QSlider( Qt::Vertical, this );
+#else
     pSliderRecentSQL = new QSlider( QSlider::Vertical, this );
+#endif
     pSliderRecentSQL->setTickmarks( QSlider::Left );
     pSliderRecentSQL->setTickInterval( 1 );
     pSliderRecentSQL->setLineStep( 1 );
@@ -104,7 +125,7 @@ void classISQL::ExecSQL()
     if ( SQL_SUCCESS != iRC )
         QMessageBox::critical( (QWidget *)this, "Data Manager", "Failed: SQLAllocStmt " );
 
-    if ( SQL_SUCCESS != (iRC=SQLPrepare(hStmt, (SQLCHAR*)(txtSQL->text().data()), SQL_NTS)) )
+    if ( SQL_SUCCESS != (iRC=SQLPrepare(hStmt, (SQLCHAR*)(txtSQL->text().ascii()), SQL_NTS)) )
     {
         retcode = SQLError(SQL_NULL_HENV, hDbc, hStmt, (SQLCHAR*)szState, NULL, (SQLCHAR*)szBuf, 700, NULL);
         if ( retcode == SQL_SUCCESS || retcode == SQL_SUCCESS_WITH_INFO )
@@ -270,7 +291,11 @@ void classISQL::ChangeTextType( int nTab )
 
 void classISQL::gotoHistoryItem( int nValue )
 {
+#ifdef QT_V4LAYOUT
+    Q3ValueList<QString>::Iterator it;
+#else
     QValueList<QString>::Iterator it;
+#endif
 
     // SAVE ANY CHANGES
     it      = listSQL.at( nSQL );
@@ -302,7 +327,11 @@ void classISQL::gotoHistoryItem( int nValue )
 
 void classISQL::appendHistoryItem()
 {
+#ifdef QT_V4LAYOUT
+    Q3ValueList<QString>::Iterator it;
+#else
     QValueList<QString>::Iterator it;
+#endif
 
     // SAVE ANY CHANGES
     it      = listSQL.at( nSQL );
@@ -326,11 +355,43 @@ void classISQL::NewSQL()
     setTextType( 0 );
 }
 
+/*
+ * there seems to be two of these, and they are different!!!
+ * this seems to be the same as appendHistoryItem()
+ */
+/*
 void classISQL::OpenSQL()
 {
-    QMultiLineEdit *txt;
+#ifdef QT_V4LAYOUT
+    Q3ValueList<QString>::Iterator it;
+#else
+    QValueList<QString>::Iterator it;
+#endif
 
+    // SAVE ANY CHANGES
+    it      = listSQL.at( nSQL );
+    (*it)   = txtSQL->text();
+
+    // ADD AS LAST & MOVE TO LAST
+    listSQL.append( txtSQL->text() );
+    pSliderRecentSQL->setMaxValue( pSliderRecentSQL->maxValue() + 1 );
+    pSliderRecentSQL->setValue( pSliderRecentSQL->maxValue() );
+}
+*/
+
+void classISQL::OpenSQL()
+{
+#ifdef QT_V4LAYOUT
+    Q3MultiLineEdit *txt;
+#else
+    QMultiLineEdit *txt;
+#endif
+
+#ifdef QT_V4LAYOUT
+    if ( pTabBar->currentIndex() == 0 )
+#else
     if ( pTabBar->currentTab() == 0 )
+#endif
     {
         pSliderRecentSQL->setValue( pSliderRecentSQL->maxValue() );
         txt = txtSQL;
@@ -352,7 +413,11 @@ void classISQL::OpenSQL()
     txt->setAutoUpdate( FALSE );
     txt->clear();
 
+#ifdef QT_V4LAYOUT
+    Q3TextStream t( &hFile );
+#else
     QTextStream t( &hFile );
+#endif
     while ( !t.eof() )
     {
         QString s = t.readLine();
@@ -363,7 +428,11 @@ void classISQL::OpenSQL()
     txt->setAutoUpdate( TRUE );
     txt->repaint();
 
+#ifdef QT_V4LAYOUT
+    if ( pTabBar->currentIndex() == 0 )
+#else
     if ( pTabBar->currentTab() == 0 )
+#endif
         qsSQLFileName = qsFile;
     else
         qsResultsFileName = qsFile;
@@ -373,10 +442,18 @@ void classISQL::OpenSQL()
 
 void classISQL::SaveSQL()
 {
+#ifdef QT_V4LAYOUT
+    Q3MultiLineEdit  *txt;
+#else
     QMultiLineEdit  *txt;
+#endif
     QString         qsFileName;
 
+#ifdef QT_V4LAYOUT
+    if ( pTabBar->currentIndex() == 0 )
+#else
     if ( pTabBar->currentTab() == 0 )
+#endif
     {
         txt = txtSQL;
         qsFileName = qsSQLFileName;
@@ -406,10 +483,18 @@ void classISQL::SaveSQL()
 
 void classISQL::SaveAsSQL()
 {
+#ifdef QT_V4LAYOUT
+    Q3MultiLineEdit  *txt;
+#else
     QMultiLineEdit  *txt;
+#endif
     QString         qsFileName;
 
+#ifdef QT_V4LAYOUT
+    if ( pTabBar->currentIndex() == 0 )
+#else
     if ( pTabBar->currentTab() == 0 )
+#endif
     {
         txt = txtSQL;
         qsFileName = qsSQLFileName;
@@ -434,7 +519,11 @@ void classISQL::SaveAsSQL()
     hFile.writeBlock( txt->text(), txt->text().length() );
     hFile.close();
 
+#ifdef QT_V4LAYOUT
+    if ( pTabBar->currentIndex() == 0 )
+#else
     if ( pTabBar->currentTab() == 0 )
+#endif
     {
         qsSQLFileName = qsFile;
     }

@@ -11,21 +11,28 @@
  **************************************************/
 #include <odbcinstext.h>
 
-BOOL SQLConfigDriver(           HWND	hWnd,
+static BOOL SQLConfigDriverWide( HWND	hWnd,
 								WORD	nRequest,
-								LPCSTR	pszDriver,				/* USER FRIENDLY NAME (not file name) */
+								LPCSTR	pszDriver,
 								LPCSTR	pszArgs,
 								LPSTR	pszMsg,
 								WORD	nMsgMax,
-								WORD	*pnMsgOut )
+								WORD	*pnMsgOut,
+								LPCWSTR	pszDriverW,
+								LPCWSTR	pszArgsW,
+								LPWSTR	pszMsgW,
+								int 	*iswide )
 {
 	BOOL	nReturn;
 	void 	*hDLL;
 	BOOL	(*pConfigDriver)( HWND, WORD, LPCSTR, LPCSTR, LPCSTR, WORD, WORD *	);
+	BOOL	(*pConfigDriverW)( HWND, WORD, LPCWSTR, LPCWSTR, LPCWSTR, WORD, WORD *	);
 	char	szDriverSetup[ODBC_FILENAME_MAX+1];
 	HINI	hIni;
     char    szIniName[ INI_MAX_OBJECT_NAME + 1 ];
+	char	b1[ 256 ], b2[ 256 ];
 
+	*iswide = 0;
 
 	/* SANITY CHECKS */
     nReturn = FALSE;
@@ -34,7 +41,7 @@ BOOL SQLConfigDriver(           HWND	hWnd,
 		inst_logPushMsg( __FILE__, __FILE__, __LINE__, LOG_CRITICAL, ODBC_ERROR_INVALID_NAME, "" );
 		return FALSE;
 	}
-	if ( nRequest < ODBC_CONFIG_DRIVER )
+	if ( nRequest > ODBC_CONFIG_DRIVER )
 	{
 		inst_logPushMsg( __FILE__, __FILE__, __LINE__, LOG_CRITICAL, ODBC_ERROR_INVALID_REQUEST_TYPE, "" );
 		return FALSE;
@@ -43,9 +50,9 @@ BOOL SQLConfigDriver(           HWND	hWnd,
 	/* OK */
 
 #ifdef VMS
-    sprintf( szIniName, "%sODBCINST.INI", odbcinst_system_file_path() );
+    sprintf( szIniName, "%s:%s", odbcinst_system_file_path( b1 ), odbcinst_system_file_name( b2 ));
 #else
-    sprintf( szIniName, "%s/odbcinst.ini", odbcinst_system_file_path() );
+    sprintf( szIniName, "%s/%s", odbcinst_system_file_path( b1 ), odbcinst_system_file_name( b2 ));
 #endif
 
 	/* lets get driver setup file name from odbcinst.ini */
@@ -98,9 +105,15 @@ BOOL SQLConfigDriver(           HWND	hWnd,
 		if ( (hDLL = lt_dlopen( szDriverSetup ))  )
 		{
 			pConfigDriver = (BOOL (*)(HWND, WORD, LPCSTR, LPCSTR, LPCSTR, WORD, WORD * )) lt_dlsym( hDLL, "ConfigDriver" );
+			pConfigDriverW = (BOOL (*)(HWND, WORD, LPCWSTR, LPCWSTR, LPCWSTR, WORD, WORD * )) lt_dlsym( hDLL, "ConfigDriverW" );
 /*			if ( lt_dlerror() == NULL ) */
             if ( pConfigDriver )
 				nReturn = pConfigDriver( hWnd, nRequest, pszDriver, pszArgs, pszMsg, nMsgMax, pnMsgOut);
+			else if ( pConfigDriverW )
+			{
+				nReturn = pConfigDriverW( hWnd, nRequest, pszDriverW, pszArgsW, pszMsgW, nMsgMax, pnMsgOut);
+				*iswide = 1;
+			}
 			else
 				inst_logPushMsg( __FILE__, __FILE__, __LINE__, LOG_CRITICAL, ODBC_ERROR_GENERAL_ERR, "" );
 		}
@@ -111,4 +124,154 @@ BOOL SQLConfigDriver(           HWND	hWnd,
 	return TRUE;
 }
 
+BOOL INSTAPI SQLConfigDriver(HWND hwndParent,
+                             WORD fRequest,
+                             LPCSTR lpszDriver,
+                             LPCSTR lpszArgs,
+                             LPSTR  lpszMsg,
+                             WORD   cbMsgMax,
+                             WORD   *pcbMsgOut)
+{
+	SQLWCHAR *drv;
+	SQLWCHAR *args;
+	SQLWCHAR *msg;
+	BOOL ret;
+	WORD len;
+	int iswide;
 
+    inst_logClear();
+
+	drv = lpszDriver ? _single_string_alloc_and_expand( lpszDriver ) : (SQLWCHAR*)NULL;
+	args = lpszArgs ? _multi_string_alloc_and_expand( lpszArgs ) : (SQLWCHAR*)NULL;
+
+	if ( lpszMsg ) 
+	{
+		if ( cbMsgMax > 0 ) 
+		{
+			msg = calloc( cbMsgMax + 1, sizeof( SQLWCHAR ));
+		}
+		else
+		{
+			msg = NULL;
+		}
+	}
+	else 
+	{
+		msg = NULL;
+	}
+
+	ret = SQLConfigDriverWide( hwndParent, 
+							fRequest,
+							lpszDriver,
+							lpszArgs,
+							lpszMsg,
+							cbMsgMax, 
+							&len,
+				   			drv,
+							args,
+							msg,
+				   			&iswide	);
+
+	if ( drv )
+		free( drv );
+	if ( args )
+		free( args );
+
+	if ( iswide ) 
+	{
+		if ( ret && msg )
+		{
+			_single_copy_from_wide((SQLCHAR*) lpszMsg, msg, len + 1 );
+		}
+	}
+	else 
+	{
+		/*
+		 * the output is already in the right buffer
+		 */
+	}
+	
+	if ( msg )
+		free( msg );
+	
+	if ( pcbMsgOut )
+		*pcbMsgOut = len;
+	
+	return ret;
+}
+
+BOOL INSTAPI SQLConfigDriverW(HWND hwndParent,
+                             WORD fRequest,
+                             LPCWSTR lpszDriver,
+                             LPCWSTR lpszArgs,
+                             LPWSTR  lpszMsg,
+                             WORD   cbMsgMax,
+                             WORD   *pcbMsgOut)
+{
+	char *drv;
+	char *args;
+	char *msg;
+	BOOL ret;
+	WORD len;
+	int iswide;
+
+    inst_logClear();
+
+	drv = lpszDriver ? _single_string_alloc_and_copy( lpszDriver ) : (char*)NULL;
+	args = lpszArgs ? _multi_string_alloc_and_copy( lpszArgs ) : (char*)NULL;
+
+	if ( lpszMsg ) 
+	{
+		if ( cbMsgMax > 0 ) 
+		{
+			msg = calloc( cbMsgMax + 1, 1 );
+		}
+		else
+		{
+			msg = NULL;
+		}
+	}
+	else 
+	{
+		msg = NULL;
+	}
+
+	ret = SQLConfigDriverWide( hwndParent, 
+							fRequest,
+							drv,
+							args,
+							msg,
+							cbMsgMax, 
+							&len,
+				   			lpszDriver,
+							lpszArgs,
+							lpszMsg,
+				   			&iswide	);
+
+	if ( drv )
+		free( drv );
+	if ( args )
+		free( args );
+
+	if ( iswide ) 
+	{
+			/*
+			 * the output is already in the right buffer
+			 */
+	}
+	else 
+	{
+		if ( ret && msg )
+		{
+			_single_copy_to_wide( lpszMsg, msg, len + 1 );
+		}
+	}
+	
+	if ( msg )
+		free( msg );
+	
+	if ( pcbMsgOut )
+		*pcbMsgOut = len;
+	
+	return ret;
+}

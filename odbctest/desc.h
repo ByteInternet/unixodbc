@@ -24,12 +24,21 @@
 #ifndef DESC_H
 #define DESC_H
 
+#ifdef QT_V4LAYOUT
+#include <Qt/qwidget.h>
+#include <Qt/qdialog.h>
+#include <Qt/qpushbutton.h>
+#include <Qt/qcombobox.h>
+#include <Qt/qcheckbox.h>
+#include <Qt/qlabel.h>
+#else
 #include <qwidget.h>
 #include <qdialog.h>
 #include <qpushbutton.h>
 #include <qcombobox.h>
 #include <qcheckbox.h>
 #include <qlabel.h>
+#endif
 #include "odbctest.h"
 
 class dCopyDesc : public QDialog 
@@ -44,7 +53,11 @@ class dCopyDesc : public QDialog
 		QPushButton *ok, *cancel, *help;
 		QComboBox *handle1, *handle2;
 		QLabel *l_handle1, *l_handle2;
+#ifdef QT_V4LAYOUT
+		Q3MultiLineEdit *in_win;
+#else
 		QMultiLineEdit *in_win;
+#endif
 		OutputWin *out_win;
 		OdbcTest *odbctest;
 		QString txt;
@@ -67,7 +80,11 @@ class dGetDescField : public QDialog
 		QLabel *l_handle_type, *l_handles, *l_buffer_len, *l_rec_num, *l_diag_info;
 		QCheckBox *ptr_valid, *strlen_valid;
 		QLineEdit *buffer_len, *rec_num;
+#ifdef QT_V4LAYOUT
+		Q3MultiLineEdit *in_win;
+#else
 		QMultiLineEdit *in_win;
+#endif
 		OutputWin *out_win;
 		OdbcTest *odbctest;
 		QString txt;
@@ -93,7 +110,11 @@ class dGetDescRec : public QDialog
 		QCheckBox *name_valid, *strlen_valid, *type_valid, *sub_type_valid;
         QCheckBox *length_valid, *precision_valid, *scale_valid, *nullable_valid;
 		QLineEdit *buffer_len, *rec_num;
+#ifdef QT_V4LAYOUT
+		Q3MultiLineEdit *in_win;
+#else
 		QMultiLineEdit *in_win;
+#endif
 		OutputWin *out_win;
 		OdbcTest *odbctest;
 		QString txt;

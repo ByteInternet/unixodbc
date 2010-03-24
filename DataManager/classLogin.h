@@ -16,12 +16,21 @@
 #include <pwd.h>
 #include <sys/types.h>
 
+#ifdef QT_V4LAYOUT
+#include <Qt/qdialog.h>
+#include <Qt/qlabel.h>
+#include <Qt/qlineedit.h>
+#include <Qt/qmessagebox.h>
+#include <Qt/qpushbutton.h>
+#include <Qt/qstring.h>
+#else
 #include <qdialog.h>
 #include <qlabel.h>
 #include <qlineedit.h>
 #include <qmessagebox.h>
 #include <qpushbutton.h>
 #include <qstring.h>
+#endif
 
 #include <sqlext.h>
 

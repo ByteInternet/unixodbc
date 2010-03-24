@@ -26,8 +26,13 @@ CAboutDiagram::CAboutDiagram( QWidget *pwidgetParent, const char *pszName )
 	qtarch_Frame_12->setGeometry( 210, 60, 140, 10 );
 	qtarch_Frame_12->setMinimumSize( 0, 0 );
 	qtarch_Frame_12->setMaximumSize( 32767, 32767 );
+#ifdef QT_V4LAYOUT
+	qtarch_Frame_12->setFocusPolicy( Qt::NoFocus );
+	qtarch_Frame_12->setBackgroundMode( Qt::PaletteBackground );
+#else
 	qtarch_Frame_12->setFocusPolicy( QWidget::NoFocus );
 	qtarch_Frame_12->setBackgroundMode( QWidget::PaletteBackground );
+#endif
 	qtarch_Frame_12->setFrameStyle( 36 );
 
 	QFrame* qtarch_Frame_8;
@@ -35,8 +40,13 @@ CAboutDiagram::CAboutDiagram( QWidget *pwidgetParent, const char *pszName )
 	qtarch_Frame_8->setGeometry( 90, 60, 150, 10 );
 	qtarch_Frame_8->setMinimumSize( 0, 0 );
 	qtarch_Frame_8->setMaximumSize( 32767, 32767 );
+#ifdef QT_V4LAYOUT
+	qtarch_Frame_8->setFocusPolicy( Qt::NoFocus );
+	qtarch_Frame_8->setBackgroundMode( Qt::PaletteBackground );
+#else
 	qtarch_Frame_8->setFocusPolicy( QWidget::NoFocus );
 	qtarch_Frame_8->setBackgroundMode( QWidget::PaletteBackground );
+#endif
 	qtarch_Frame_8->setFrameStyle( 36 );
 
 	QFrame* qtarch_Frame_9;
@@ -44,8 +54,13 @@ CAboutDiagram::CAboutDiagram( QWidget *pwidgetParent, const char *pszName )
 	qtarch_Frame_9->setGeometry( 330, 60, 10, 70 );
 	qtarch_Frame_9->setMinimumSize( 0, 0 );
 	qtarch_Frame_9->setMaximumSize( 32767, 32767 );
+#ifdef QT_V4LAYOUT
+	qtarch_Frame_9->setFocusPolicy( Qt::NoFocus );
+	qtarch_Frame_9->setBackgroundMode( Qt::PaletteBackground );
+#else
 	qtarch_Frame_9->setFocusPolicy( QWidget::NoFocus );
 	qtarch_Frame_9->setBackgroundMode( QWidget::PaletteBackground );
+#endif
 	qtarch_Frame_9->setFrameStyle( 37 );
 
 	QFrame* qtarch_Frame_7;
@@ -53,8 +68,13 @@ CAboutDiagram::CAboutDiagram( QWidget *pwidgetParent, const char *pszName )
 	qtarch_Frame_7->setGeometry( 70, 0, 10, 180 );
 	qtarch_Frame_7->setMinimumSize( 0, 0 );
 	qtarch_Frame_7->setMaximumSize( 32767, 32767 );
+#ifdef QT_V4LAYOUT
+	qtarch_Frame_7->setFocusPolicy( Qt::NoFocus );
+	qtarch_Frame_7->setBackgroundMode( Qt::PaletteBackground );
+#else
 	qtarch_Frame_7->setFocusPolicy( QWidget::NoFocus );
 	qtarch_Frame_7->setBackgroundMode( QWidget::PaletteBackground );
+#endif
 	qtarch_Frame_7->setFrameStyle( 37 );
 
     // PARTS BUTTONS
@@ -64,11 +84,18 @@ CAboutDiagram::CAboutDiagram( QWidget *pwidgetParent, const char *pszName )
 	qtarch_pbApplication->setMinimumSize( 0, 0 );
 	qtarch_pbApplication->setMaximumSize( 32767, 32767 );
 	connect( qtarch_pbApplication, SIGNAL(clicked()), SLOT(pbApplication_Clicked()) );
+#ifdef QT_V4LAYOUT
+	qtarch_pbApplication->setFocusPolicy( Qt::TabFocus );
+	qtarch_pbApplication->setBackgroundMode( Qt::PaletteBackground );
+#else
 	qtarch_pbApplication->setFocusPolicy( QWidget::TabFocus );
 	qtarch_pbApplication->setBackgroundMode( QWidget::PaletteBackground );
+#endif
 	qtarch_pbApplication->setText( "Application" );
 	qtarch_pbApplication->setAutoRepeat( FALSE );
+#ifndef QT_V4LAYOUT
 	qtarch_pbApplication->setAutoResize( FALSE );
+#endif
 
 	QPushButton* qtarch_pbDriverManager;
 	qtarch_pbDriverManager = new QPushButton( this, "pbDriverManager" );
@@ -76,11 +103,18 @@ CAboutDiagram::CAboutDiagram( QWidget *pwidgetParent, const char *pszName )
 	qtarch_pbDriverManager->setMinimumSize( 0, 0 );
 	qtarch_pbDriverManager->setMaximumSize( 32767, 32767 );
 	connect( qtarch_pbDriverManager, SIGNAL(clicked()), SLOT(pbDriverManager_Clicked()) );
+#ifdef QT_V4LAYOUT
+	qtarch_pbDriverManager->setFocusPolicy( Qt::TabFocus );
+	qtarch_pbDriverManager->setBackgroundMode( Qt::PaletteBackground );
+#else
 	qtarch_pbDriverManager->setFocusPolicy( QWidget::TabFocus );
 	qtarch_pbDriverManager->setBackgroundMode( QWidget::PaletteBackground );
+#endif
 	qtarch_pbDriverManager->setText( "Driver Manager" );
 	qtarch_pbDriverManager->setAutoRepeat( FALSE );
+#ifndef QT_V4LAYOUT
 	qtarch_pbDriverManager->setAutoResize( FALSE );
+#endif
 
 	QPushButton* qtarch_pbDriver;
 	qtarch_pbDriver = new QPushButton( this, "pbDriver" );
@@ -88,11 +122,18 @@ CAboutDiagram::CAboutDiagram( QWidget *pwidgetParent, const char *pszName )
 	qtarch_pbDriver->setMinimumSize( 0, 0 );
 	qtarch_pbDriver->setMaximumSize( 32767, 32767 );
 	connect( qtarch_pbDriver, SIGNAL(clicked()), SLOT(pbDriver_Clicked()) );
+#ifdef QT_V4LAYOUT
+	qtarch_pbDriver->setFocusPolicy( Qt::TabFocus );
+	qtarch_pbDriver->setBackgroundMode( Qt::PaletteBackground );
+#else
 	qtarch_pbDriver->setFocusPolicy( QWidget::TabFocus );
 	qtarch_pbDriver->setBackgroundMode( QWidget::PaletteBackground );
+#endif
 	qtarch_pbDriver->setText( "Driver" );
 	qtarch_pbDriver->setAutoRepeat( FALSE );
+#ifndef QT_V4LAYOUT
 	qtarch_pbDriver->setAutoResize( FALSE );
+#endif
 
 	QPushButton* qtarch_pbDatabase;
 	qtarch_pbDatabase = new QPushButton( this, "pbDatabase" );
@@ -100,11 +141,18 @@ CAboutDiagram::CAboutDiagram( QWidget *pwidgetParent, const char *pszName )
 	qtarch_pbDatabase->setMinimumSize( 0, 0 );
 	qtarch_pbDatabase->setMaximumSize( 32767, 32767 );
 	connect( qtarch_pbDatabase, SIGNAL(clicked()), SLOT(pbDatabase_Clicked()) );
+#ifdef QT_V4LAYOUT
+	qtarch_pbDatabase->setFocusPolicy( Qt::TabFocus );
+	qtarch_pbDatabase->setBackgroundMode( Qt::PaletteBackground );
+#else
 	qtarch_pbDatabase->setFocusPolicy( QWidget::TabFocus );
 	qtarch_pbDatabase->setBackgroundMode( QWidget::PaletteBackground );
+#endif
 	qtarch_pbDatabase->setText( "Database System" );
 	qtarch_pbDatabase->setAutoRepeat( FALSE );
+#ifndef QT_V4LAYOUT
 	qtarch_pbDatabase->setAutoResize( FALSE );
+#endif
 
 	QPushButton* qtarch_pbODBC;
 	qtarch_pbODBC = new QPushButton( this, "pbODBC" );
@@ -112,11 +160,18 @@ CAboutDiagram::CAboutDiagram( QWidget *pwidgetParent, const char *pszName )
 	qtarch_pbODBC->setMinimumSize( 0, 0 );
 	qtarch_pbODBC->setMaximumSize( 32767, 32767 );
 	connect( qtarch_pbODBC, SIGNAL(clicked()), SLOT(pbODBC_Clicked()) );
+#ifdef QT_V4LAYOUT
+	qtarch_pbODBC->setFocusPolicy( Qt::TabFocus );
+	qtarch_pbODBC->setBackgroundMode( Qt::PaletteBackground );
+#else
 	qtarch_pbODBC->setFocusPolicy( QWidget::TabFocus );
 	qtarch_pbODBC->setBackgroundMode( QWidget::PaletteBackground );
+#endif
 	qtarch_pbODBC->setText( "odbc.ini" );
 	qtarch_pbODBC->setAutoRepeat( FALSE );
+#ifndef QT_V4LAYOUT
 	qtarch_pbODBC->setAutoResize( FALSE );
+#endif
 
 	QPushButton* qtarch_pbODBCDrivers;
 	qtarch_pbODBCDrivers = new QPushButton( this, "pbODBCDrivers" );
@@ -124,11 +179,18 @@ CAboutDiagram::CAboutDiagram( QWidget *pwidgetParent, const char *pszName )
 	qtarch_pbODBCDrivers->setMinimumSize( 0, 0 );
 	qtarch_pbODBCDrivers->setMaximumSize( 32767, 32767 );
 	connect( qtarch_pbODBCDrivers, SIGNAL(clicked()), SLOT(pbODBCDrivers_Clicked()) );
+#ifdef QT_V4LAYOUT
+	qtarch_pbODBCDrivers->setFocusPolicy( Qt::TabFocus );
+	qtarch_pbODBCDrivers->setBackgroundMode( Qt::PaletteBackground );
+#else
 	qtarch_pbODBCDrivers->setFocusPolicy( QWidget::TabFocus );
 	qtarch_pbODBCDrivers->setBackgroundMode( QWidget::PaletteBackground );
+#endif
 	qtarch_pbODBCDrivers->setText( "odbcinst.ini" );
 	qtarch_pbODBCDrivers->setAutoRepeat( FALSE );
+#ifndef QT_V4LAYOUT
 	qtarch_pbODBCDrivers->setAutoResize( FALSE );
+#endif
 
 	QPushButton* qtarch_pbConfig;
 	qtarch_pbConfig = new QPushButton( this, "pbConfig" );
@@ -136,11 +198,18 @@ CAboutDiagram::CAboutDiagram( QWidget *pwidgetParent, const char *pszName )
 	qtarch_pbConfig->setMinimumSize( 0, 0 );
 	qtarch_pbConfig->setMaximumSize( 32767, 32767 );
 	connect( qtarch_pbConfig, SIGNAL(clicked()), SLOT(pbODBCConfig_Clicked()) );
+#ifdef QT_V4LAYOUT
+	qtarch_pbConfig->setFocusPolicy( Qt::TabFocus );
+	qtarch_pbConfig->setBackgroundMode( Qt::PaletteBackground );
+#else
 	qtarch_pbConfig->setFocusPolicy( QWidget::TabFocus );
 	qtarch_pbConfig->setBackgroundMode( QWidget::PaletteBackground );
+#endif
 	qtarch_pbConfig->setText( "Config" );
 	qtarch_pbConfig->setAutoRepeat( FALSE );
+#ifndef QT_V4LAYOUT
 	qtarch_pbConfig->setAutoResize( FALSE );
+#endif
 
 	resize( 400,300 );
 }
@@ -294,7 +363,12 @@ CAbout::CAbout( QWidget *pwidgetParent, const char *pszName )
 
 	plabelText          = new QLabel( pframeHelp );
 	plabelText->setText( "Open DataBase Connectivity (ODBC) was developed to be an Open and portable standard for accessing data. unixODBC implements this standard for Linux/UNIX.\nhttp://www.unixodbc.org" );
+#ifdef QT_V4LAYOUT
+	plabelText->setAlignment(  Qt::AlignLeft | Qt::WordBreak  );
+  	plabelText->setWordWrap( true );
+#else
 	plabelText->setAlignment(  AlignLeft | WordBreak  );
+#endif
 
 	ppushbuttonCredits  = new QPushButton( pframeHelp );
 	connect( ppushbuttonCredits, SIGNAL(clicked()), SLOT(pbCredits_Clicked()) );

@@ -13,10 +13,17 @@
 #define classLogin_included
 
 class ConnectionScoper ;
+#ifdef QT_V4LAYOUT
+#include <Qt/qdialog.h>
+#include <Qt/qwidget.h>
+#include <Qt/qlineedit.h>
+#include <Qt/qstring.h>
+#else
 #include <qdialog.h>
 #include <qwidget.h>
 #include <qlineedit.h>
 #include <qstring.h>
+#endif
 #include <sqlext.h>
 
 class classLogin: public QDialog

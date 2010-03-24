@@ -27,9 +27,15 @@
  *
  **********************************************************************
  *
- * $Id: SQLSpecialColumnsW.c,v 1.6 2004/01/12 09:54:39 lurcher Exp $
+ * $Id: SQLSpecialColumnsW.c,v 1.8 2008/08/29 08:01:39 lurcher Exp $
  *
  * $Log: SQLSpecialColumnsW.c,v $
+ * Revision 1.8  2008/08/29 08:01:39  lurcher
+ * Alter the way W functions are passed to the driver
+ *
+ * Revision 1.7  2007/02/28 15:37:49  lurcher
+ * deal with drivers that call internal W functions and end up in the driver manager. controlled by the --enable-handlemap configure arg
+ *
  * Revision 1.6  2004/01/12 09:54:39  lurcher
  *
  * Fix problem where STATE_S5 stops metadata calls
@@ -104,6 +110,42 @@ SQLRETURN SQLSpecialColumnsW( SQLHSTMT statement_handle,
                     LOG_INFO, 
                     "Error: SQL_INVALID_HANDLE" );
 
+#ifdef WITH_HANDLE_REDIRECT
+		{
+			DMHSTMT parent_statement;
+
+			parent_statement = find_parent_handle( statement, SQL_HANDLE_STMT );
+
+			if ( parent_statement ) {
+        		dm_log_write( __FILE__, 
+                	__LINE__, 
+                    	LOG_INFO, 
+                    	LOG_INFO, 
+                    	"Info: found parent handle" );
+
+				if ( CHECK_SQLSPECIALCOLUMNSW( parent_statement -> connection ))
+				{
+        			dm_log_write( __FILE__, 
+                		__LINE__, 
+                   		 	LOG_INFO, 
+                   		 	LOG_INFO, 
+                   		 	"Info: calling redirected driver function" );
+
+                	return  SQLSPECIALCOLUMNSW( parent_statement -> connection,
+							statement_handle,
+           					identifier_type,
+           					catalog_name,
+           					name_length1,
+           					schema_name,
+           					name_length2,
+           					table_name,
+           					name_length3,
+           					scope,
+           					nullable );
+				}
+			}
+		}
+#endif
         return SQL_INVALID_HANDLE;
     }
 
@@ -280,7 +322,8 @@ SQLRETURN SQLSpecialColumnsW( SQLHSTMT statement_handle,
         }
     }
 
-    if ( statement -> connection -> unicode_driver )
+    if ( statement -> connection -> unicode_driver ||
+		    CHECK_SQLSPECIALCOLUMNSW( statement -> connection ))
     {
         if ( !CHECK_SQLSPECIALCOLUMNSW( statement -> connection ))
         {

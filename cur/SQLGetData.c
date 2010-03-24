@@ -23,9 +23,20 @@
  *
  **********************************************************************
  *
- * $Id: SQLGetData.c,v 1.8 2004/12/23 14:51:04 lurcher Exp $
+ * $Id: SQLGetData.c,v 1.11 2008/01/02 15:10:33 lurcher Exp $
  *
  * $Log: SQLGetData.c,v $
+ * Revision 1.11  2008/01/02 15:10:33  lurcher
+ * Fix problems trying to use the cursor lib on a non select statement
+ *
+ * Revision 1.10  2007/11/13 15:04:57  lurcher
+ * Fix 64 bit cursor lib issues
+ *
+ * Revision 1.9  2005/07/08 12:11:24  lurcher
+ *
+ * Fix a cursor lib problem (it was broken if you did metadata calls)
+ * Alter the params to SQLParamOptions to use SQLULEN
+ *
  * Revision 1.8  2004/12/23 14:51:04  lurcher
  * Fix problem in the cursor lib with blobs
  *
@@ -81,24 +92,35 @@ SQLRETURN CLGetData( SQLHSTMT statement_handle,
            SQLUSMALLINT column_number,
            SQLSMALLINT target_type,
            SQLPOINTER target_value,
-           SQLINTEGER buffer_length,
-           SQLINTEGER *strlen_or_ind )
+           SQLLEN buffer_length,
+           SQLLEN *strlen_or_ind )
 {
     CLHSTMT cl_statement = (CLHSTMT) statement_handle; 
     CLHDBC cl_connection = cl_statement -> cl_connection;
     SQLRETURN ret;
     SQLCHAR sql[ 4095 ];
     CLBCOL *bound_columns;
-	int i, next_bind, first;
+	int next_bind, first;
 
-    if ( cl_statement -> not_from_select )
-    {
+	if ( cl_statement -> cursor_type == SQL_CURSOR_FORWARD_ONLY ) 
+	{
         cl_statement -> cl_connection -> dh.__post_internal_error( &cl_statement -> dm_statement -> error,
-                ERROR_SL004, NULL,
+                ERROR_SL008, NULL,
                 cl_statement -> dm_statement -> connection ->
                     environment -> requested_version );
 
         return SQL_ERROR;
+	}
+
+    if ( cl_statement -> not_from_select )
+    {
+    	return SQLGETDATA( cl_connection,
+                cl_statement -> driver_stmt, 
+                column_number,
+                target_type,
+                target_value,
+                buffer_length,
+                strlen_or_ind );
     }
 
     /*
@@ -254,7 +276,8 @@ SQLRETURN CLGetData( SQLHSTMT statement_handle,
     	if ( !SQL_SUCCEEDED( ret ) && ret != SQL_NO_DATA )
     	{
         	SQLCHAR sqlstate[ 6 ];
-        	SQLINTEGER native_error, ind;
+        	SQLINTEGER native_error;
+        	SQLSMALLINT ind;
         	SQLCHAR message_text[ SQL_MAX_MESSAGE_LENGTH + 1 ];
         	SQLRETURN ret;
 			int rec;
@@ -375,23 +398,26 @@ SQLRETURN CLGetData( SQLHSTMT statement_handle,
     bound_columns = cl_statement -> bound_columns;
 
 	first = 1;
-    for ( i = next_bind = 0; i < cl_statement -> column_count; i ++ )
+	next_bind = 0;
+
+	while( bound_columns ) 
     {
         char addon[ 256 ];
+		int col = bound_columns -> column_number;
 
 		/*
 		 * Don't bind long types
 		 */
 
-		if ( cl_statement -> data_type[ i ] == SQL_LONGVARCHAR || 
-						cl_statement -> data_type[ i ] == SQL_LONGVARBINARY )
+		if ( cl_statement -> data_type[ col ] == SQL_LONGVARCHAR || 
+						cl_statement -> data_type[ col ] == SQL_LONGVARBINARY )
 		{
 		}
 		else
 		{
 			if ( bound_columns -> len_ind == -1 )
 			{
-        		sprintf( addon, " %s IS NULL", cl_statement -> column_names[ i ] );
+        		sprintf( addon, " %s IS NULL", cl_statement -> column_names[ col - 1 ] );
 
         		if ( !first )
         		{
@@ -403,7 +429,7 @@ SQLRETURN CLGetData( SQLHSTMT statement_handle,
 			}
 			else
 			{	
-        		sprintf( addon, " %s = ?", cl_statement -> column_names[ i ] );
+        		sprintf( addon, " %s = ?", cl_statement -> column_names[ col - 1 ] );
 
         		if ( !first )
         		{
@@ -420,9 +446,9 @@ SQLRETURN CLGetData( SQLHSTMT statement_handle,
                     		next_bind + 1,
                     		SQL_PARAM_INPUT,
                     		bound_columns -> bound_type,
-                    		cl_statement -> data_type[ i ],
-                    		cl_statement -> column_size[ i ],
-                    		cl_statement -> decimal_digits[ i ],
+                    		cl_statement -> data_type[ col - 1 ],
+                    		cl_statement -> column_size[ col - 1 ],
+                    		cl_statement -> decimal_digits[ col - 1 ],
                     		bound_columns -> local_buffer,
                     		bound_columns -> bound_length,
                     		&bound_columns -> len_ind );
@@ -433,9 +459,9 @@ SQLRETURN CLGetData( SQLHSTMT statement_handle,
                     		cl_statement -> fetch_statement,
                     		next_bind + 1,
                     		bound_columns -> bound_type,
-                    		cl_statement -> data_type[ i ],
-                    		cl_statement -> column_size[ i ],
-                    		cl_statement -> decimal_digits[ i ],
+                    		cl_statement -> data_type[ col - 1 ],
+                    		cl_statement -> column_size[ col - 1 ],
+                    		cl_statement -> decimal_digits[ col - 1 ],
                     		bound_columns -> local_buffer,
                     		&bound_columns -> len_ind );
         		}
@@ -446,6 +472,61 @@ SQLRETURN CLGetData( SQLHSTMT statement_handle,
                     		ERROR_SL010, NULL,
                     		cl_statement -> dm_statement -> connection ->
                         		environment -> requested_version );
+
+					if ( !SQL_SUCCEEDED( ret ) && ret != SQL_NO_DATA )
+					{
+						SQLCHAR sqlstate[ 6 ];
+						SQLINTEGER native_error;
+						SQLSMALLINT ind;
+						SQLCHAR message_text[ SQL_MAX_MESSAGE_LENGTH + 1 ];
+						SQLRETURN ret;
+						int rec;
+				
+						/*
+						* get the error from the driver before
+						* loseing the stmt
+						*/
+				
+						do
+						{
+							if ( CHECK_SQLERROR( cl_connection ))
+							{
+								ret = SQLERROR( cl_connection,
+										SQL_NULL_HENV,
+										SQL_NULL_HSTMT,
+										cl_statement -> fetch_statement,
+										sqlstate,
+										&native_error,
+										message_text,
+										sizeof( message_text ),
+										&ind );
+							}
+							else if ( CHECK_SQLGETDIAGREC( cl_connection ))
+							{
+								ret = SQLGETDIAGREC( cl_connection,
+										SQL_HANDLE_STMT,
+										cl_statement -> fetch_statement,
+										rec ++,
+										sqlstate,
+										&native_error,
+										message_text,
+										sizeof( message_text ),
+										&ind );
+							}
+							else
+							{
+								ret = SQL_NO_DATA;
+							}
+				
+							if ( ret != SQL_NO_DATA )
+							{
+								cl_statement -> cl_connection -> dh.__post_internal_error_ex( &cl_statement -> dm_statement -> error,
+										sqlstate, native_error, message_text,
+									SUBCLASS_ODBC, SUBCLASS_ODBC );
+							}
+						}
+						while ( SQL_SUCCEEDED( ret ));
+					}
 		
             		SQLFREESTMT( cl_connection,
                     		cl_statement -> fetch_statement, 
@@ -486,9 +567,64 @@ SQLRETURN CLGetData( SQLHSTMT statement_handle,
     if ( !SQL_SUCCEEDED( ret ))
     {
         cl_statement -> cl_connection -> dh.__post_internal_error( &cl_statement -> dm_statement -> error,
-                ERROR_SL010, NULL,
+                ERROR_SL004, NULL,
                 cl_statement -> dm_statement -> connection ->
                     environment -> requested_version );
+
+		if ( !SQL_SUCCEEDED( ret ) && ret != SQL_NO_DATA )
+		{
+			SQLCHAR sqlstate[ 6 ];
+			SQLINTEGER native_error;
+			SQLSMALLINT ind;
+			SQLCHAR message_text[ SQL_MAX_MESSAGE_LENGTH + 1 ];
+			SQLRETURN ret;
+			int rec;
+	
+			/*
+			* get the error from the driver before
+			* loseing the stmt
+			*/
+	
+			do
+			{
+				if ( CHECK_SQLERROR( cl_connection ))
+				{
+					ret = SQLERROR( cl_connection,
+							SQL_NULL_HENV,
+							SQL_NULL_HSTMT,
+							cl_statement -> fetch_statement,
+							sqlstate,
+							&native_error,
+							message_text,
+							sizeof( message_text ),
+							&ind );
+				}
+				else if ( CHECK_SQLGETDIAGREC( cl_connection ))
+				{
+					ret = SQLGETDIAGREC( cl_connection,
+							SQL_HANDLE_STMT,
+							cl_statement -> fetch_statement,
+							rec ++,
+							sqlstate,
+							&native_error,
+							message_text,
+							sizeof( message_text ),
+							&ind );
+				}
+				else
+				{
+					ret = SQL_NO_DATA;
+				}
+
+				if ( ret != SQL_NO_DATA )
+				{
+					cl_statement -> cl_connection -> dh.__post_internal_error_ex( &cl_statement -> dm_statement -> error,
+							sqlstate, native_error, message_text,
+						SUBCLASS_ODBC, SUBCLASS_ODBC );
+				}
+			}
+			while ( SQL_SUCCEEDED( ret ));
+		}
 
         SQLFREESTMT( cl_connection,
                 cl_statement -> fetch_statement,
@@ -507,14 +643,15 @@ SQLRETURN CLGetData( SQLHSTMT statement_handle,
 		if ( ret == SQL_NO_DATA )
 		{
         	cl_statement -> cl_connection -> dh.__post_internal_error( &cl_statement -> dm_statement -> error,
-                ERROR_SL010, NULL,
+                ERROR_SL004, NULL,
                 cl_statement -> dm_statement -> connection ->
                     environment -> requested_version );
 		}
 		else
 		{
         	SQLCHAR sqlstate[ 6 ];
-        	SQLINTEGER native_error, ind;
+        	SQLINTEGER native_error;
+        	SQLSMALLINT ind;
         	SQLCHAR message_text[ SQL_MAX_MESSAGE_LENGTH + 1 ];
         	SQLRETURN ret;
 			int rec = 1;
@@ -585,7 +722,8 @@ SQLRETURN CLGetData( SQLHSTMT statement_handle,
     if ( !SQL_SUCCEEDED( ret ))
     {
         SQLCHAR sqlstate[ 6 ];
-        SQLINTEGER native_error, ind;
+        SQLINTEGER native_error;
+        SQLSMALLINT ind;
         SQLCHAR message_text[ SQL_MAX_MESSAGE_LENGTH + 1 ];
         SQLRETURN ret;
 		int rec;

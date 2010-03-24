@@ -38,7 +38,7 @@ protected slots:
 
 protected:
     QSplitter   *splSplitter;
-    QListView   *lvwBrowser;
+    QListView  	*lvwBrowser;
     classCanvas *pCanvas;
     classODBC   *pODBC;
 

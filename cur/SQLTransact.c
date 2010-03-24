@@ -23,9 +23,12 @@
  *
  **********************************************************************
  *
- * $Id: SQLTransact.c,v 1.1.1.1 2001/10/17 16:40:15 lurcher Exp $
+ * $Id: SQLTransact.c,v 1.2 2005/07/25 16:11:22 lurcher Exp $
  *
  * $Log: SQLTransact.c,v $
+ * Revision 1.2  2005/07/25 16:11:22  lurcher
+ * Fix swapped about args in the cursor lib
+ *
  * Revision 1.1.1.1  2001/10/17 16:40:15  lurcher
  *
  * First upload to SourceForge
@@ -60,8 +63,8 @@ SQLRETURN CLTransact( SQLHENV environment_handle,
         CLHDBC cl_connection = (CLHDBC) connection_handle; 
 
             return SQLTRANSACT( cl_connection,
-                cl_connection -> driver_dbc,
                 SQL_NULL_HENV,
+                cl_connection -> driver_dbc,
                 completion_type );
     }
     else

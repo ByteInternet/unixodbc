@@ -27,9 +27,12 @@
  *
  **********************************************************************
  *
- * $Id: SQLRowCount.c,v 1.6 2003/10/30 18:20:46 lurcher Exp $
+ * $Id: SQLRowCount.c,v 1.7 2007/04/02 10:50:19 lurcher Exp $
  *
  * $Log: SQLRowCount.c,v $
+ * Revision 1.7  2007/04/02 10:50:19  lurcher
+ * Fix some 64bit problems (only when sizeof(SQLLEN) == 8 )
+ *
  * Revision 1.6  2003/10/30 18:20:46  lurcher
  *
  * Fix broken thread protection
@@ -123,7 +126,7 @@
 
 #include "drivermanager.h"
 
-static char const rcsid[]= "$RCSfile: SQLRowCount.c,v $ $Revision: 1.6 $";
+static char const rcsid[]= "$RCSfile: SQLRowCount.c,v $ $Revision: 1.7 $";
 
 SQLRETURN SQLRowCount( SQLHSTMT statement_handle,
        SQLLEN *rowcount )
@@ -231,7 +234,7 @@ SQLRETURN SQLRowCount( SQLHSTMT statement_handle,
                 "\n\t\tExit:[%s]\
                 \n\t\t\tRow Count = %s",
                     __get_return_status( ret, s1 ),
-                    __ptr_as_string( s1, (void*)rowcount ));
+                    __ptr_as_string( s1, rowcount ));
 
         dm_log_write( __FILE__, 
                 __LINE__, 

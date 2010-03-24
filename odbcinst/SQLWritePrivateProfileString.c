@@ -21,6 +21,8 @@ BOOL SQLWritePrivateProfileString(
 	HINI	hIni;
 	char	szFileName[ODBC_FILENAME_MAX+1];
 
+        inst_logClear();
+
 	/* SANITY CHECKS */
 	if ( pszSection == NULL )
 	{
@@ -116,6 +118,32 @@ BOOL SQLWritePrivateProfileString(
 	return TRUE;
 }
 
+BOOL INSTAPI SQLWritePrivateProfileStringW(LPCWSTR lpszSection,
+                                         LPCWSTR lpszEntry,
+                                         LPCWSTR lpszString,
+                                         LPCWSTR lpszFilename)
+{
+	char *sect;
+	char *entry;
+	char *string;
+	char *file;
+	BOOL ret;
 
+	sect = lpszSection ? _single_string_alloc_and_copy( lpszSection ) : (char*)NULL;
+	entry = lpszEntry ? _single_string_alloc_and_copy( lpszEntry ) : (char*)NULL;
+	string = lpszString ? _single_string_alloc_and_copy( lpszString ) : (char*)NULL;
+	file = lpszFilename ? _single_string_alloc_and_copy( lpszFilename ) : (char*)NULL;
 
+	ret = SQLWritePrivateProfileString( sect, entry, string, file );
 
+	if ( sect )
+		free( sect );
+	if ( entry )
+		free( entry );
+	if ( string )
+		free( string );
+	if ( file )
+		free( file );
+
+	return ret;
+}

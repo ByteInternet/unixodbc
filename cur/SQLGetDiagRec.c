@@ -23,9 +23,18 @@
  *
  **********************************************************************
  *
- * $Id: SQLGetDiagRec.c,v 1.2 2004/07/24 20:00:39 peteralexharvey Exp $
+ * $Id: SQLGetDiagRec.c,v 1.5 2008/01/02 15:10:33 lurcher Exp $
  *
  * $Log: SQLGetDiagRec.c,v $
+ * Revision 1.5  2008/01/02 15:10:33  lurcher
+ * Fix problems trying to use the cursor lib on a non select statement
+ *
+ * Revision 1.4  2007/02/12 11:49:35  lurcher
+ * Add QT4 support to existing GUI parts
+ *
+ * Revision 1.3  2005/08/26 09:31:39  lurcher
+ * Add call to allow the cursor lib to call SQLGetDiagRec
+ *
  * Revision 1.2  2004/07/24 20:00:39  peteralexharvey
  * for OS2 port
  *
@@ -56,11 +65,34 @@ SQLRETURN CLGetDiagRec( SQLSMALLINT handle_type,
         SQLSMALLINT buffer_length,
         SQLSMALLINT *text_length_ptr )
 {
-    /*
-     * todo
-     */
+    SQLRETURN ret;
+    CLHDBC cl_connection = (CLHDBC) handle;
+    DRV_SQLHANDLE dhandle;
 
-    return SQL_ERROR;
+    switch(handle_type) {
+      case SQL_HANDLE_ENV:
+      {
+          return SQL_NO_DATA;
+      }
+      case SQL_HANDLE_DBC:
+      {
+          dhandle = cl_connection->driver_dbc;
+          break;
+      }
+      case SQL_HANDLE_STMT:
+      {
+          CLHSTMT cl_statement = (CLHSTMT)handle;
+          cl_connection = cl_statement->cl_connection;
+		  if ( cl_statement -> driver_stmt_closed ) {
+			  return SQL_NO_DATA;
+		  }
+          dhandle = cl_statement->driver_stmt;
+          break;
+      }
+    }
+    return SQLGETDIAGREC(cl_connection, handle_type, dhandle, rec_number, sqlstate,
+                         native, message_text, buffer_length,
+                         text_length_ptr);
 }
 
 DMHDBC __get_connection( EHEAD * head )

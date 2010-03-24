@@ -36,11 +36,11 @@ PRE_UNINSTALL = :
 POST_UNINSTALL = :
 build_triplet = @build@
 host_triplet = @host@
-@QT_TRUE@bin_PROGRAMS = odbctest$(EXEEXT)
+@QT4_FALSE@@QT_TRUE@bin_PROGRAMS = odbctest$(EXEEXT)
 subdir = odbctest
 DIST_COMMON = $(srcdir)/Makefile.am $(srcdir)/Makefile.in
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
-am__aclocal_m4_deps = $(top_srcdir)/acinclude.m4 \
+am__aclocal_m4_deps = $(top_srcdir)/acinclude.m4 $(top_srcdir)/qt.m4 \
 	$(top_srcdir)/configure.in
 am__configure_deps = $(am__aclocal_m4_deps) $(CONFIGURE_DEPENDENCIES) \
 	$(ACLOCAL_M4)
@@ -51,23 +51,29 @@ binPROGRAMS_INSTALL = $(INSTALL_PROGRAM)
 PROGRAMS = $(bin_PROGRAMS)
 am__odbctest_SOURCES_DIST = tools.cpp stmt.cpp results.cpp open.cpp \
 	odbctest.cpp installer.cpp env.cpp edit.cpp desc.cpp diag.cpp \
-	conn.cpp catalog.cpp attr.cpp
-@QT_TRUE@am_odbctest_OBJECTS = tools.$(OBJEXT) stmt.$(OBJEXT) \
-@QT_TRUE@	results.$(OBJEXT) open.$(OBJEXT) odbctest.$(OBJEXT) \
-@QT_TRUE@	installer.$(OBJEXT) env.$(OBJEXT) edit.$(OBJEXT) \
-@QT_TRUE@	desc.$(OBJEXT) diag.$(OBJEXT) conn.$(OBJEXT) \
-@QT_TRUE@	catalog.$(OBJEXT) attr.$(OBJEXT)
-@QT_TRUE@nodist_odbctest_OBJECTS = moc_results.$(OBJEXT) \
-@QT_TRUE@	moc_stmt.$(OBJEXT) moc_odbctest.$(OBJEXT) \
-@QT_TRUE@	moc_desc.$(OBJEXT) moc_diag.$(OBJEXT) \
-@QT_TRUE@	moc_env.$(OBJEXT) moc_catalog.$(OBJEXT) \
-@QT_TRUE@	moc_conn.$(OBJEXT) moc_attr.$(OBJEXT) \
-@QT_TRUE@	moc_tools.$(OBJEXT)
-odbctest_OBJECTS = $(am_odbctest_OBJECTS) $(nodist_odbctest_OBJECTS)
+	conn.cpp catalog.cpp attr.cpp moc_results.cpp moc_stmt.cpp \
+	moc_odbctest.cpp moc_desc.cpp moc_diag.cpp moc_env.cpp \
+	moc_catalog.cpp moc_conn.cpp moc_attr.cpp moc_tools.cpp
+@QT4_FALSE@@QT_TRUE@am_odbctest_OBJECTS = tools.$(OBJEXT) \
+@QT4_FALSE@@QT_TRUE@	stmt.$(OBJEXT) results.$(OBJEXT) \
+@QT4_FALSE@@QT_TRUE@	open.$(OBJEXT) odbctest.$(OBJEXT) \
+@QT4_FALSE@@QT_TRUE@	installer.$(OBJEXT) env.$(OBJEXT) \
+@QT4_FALSE@@QT_TRUE@	edit.$(OBJEXT) desc.$(OBJEXT) \
+@QT4_FALSE@@QT_TRUE@	diag.$(OBJEXT) conn.$(OBJEXT) \
+@QT4_FALSE@@QT_TRUE@	catalog.$(OBJEXT) attr.$(OBJEXT) \
+@QT4_FALSE@@QT_TRUE@	moc_results.$(OBJEXT) moc_stmt.$(OBJEXT) \
+@QT4_FALSE@@QT_TRUE@	moc_odbctest.$(OBJEXT) moc_desc.$(OBJEXT) \
+@QT4_FALSE@@QT_TRUE@	moc_diag.$(OBJEXT) moc_env.$(OBJEXT) \
+@QT4_FALSE@@QT_TRUE@	moc_catalog.$(OBJEXT) moc_conn.$(OBJEXT) \
+@QT4_FALSE@@QT_TRUE@	moc_attr.$(OBJEXT) moc_tools.$(OBJEXT)
+odbctest_OBJECTS = $(am_odbctest_OBJECTS)
 am__DEPENDENCIES_1 =
-@QT_TRUE@odbctest_DEPENDENCIES = ../odbcinst/libodbcinst.la \
-@QT_TRUE@	../DriverManager/libodbc.la $(am__DEPENDENCIES_1) \
-@QT_TRUE@	$(am__DEPENDENCIES_1)
+@QT4_FALSE@@QT_TRUE@odbctest_DEPENDENCIES = $(am__DEPENDENCIES_1) \
+@QT4_FALSE@@QT_TRUE@	$(am__DEPENDENCIES_1) ../ini/libinilc.la \
+@QT4_FALSE@@QT_TRUE@	../odbcinst/libodbcinst.la \
+@QT4_FALSE@@QT_TRUE@	../DriverManager/libodbc.la \
+@QT4_FALSE@@QT_TRUE@	$(am__DEPENDENCIES_1) \
+@QT4_FALSE@@QT_TRUE@	$(am__DEPENDENCIES_1)
 DEFAULT_INCLUDES = -I. -I$(srcdir)
 depcomp = $(SHELL) $(top_srcdir)/depcomp
 am__depfiles_maybe = depfiles
@@ -79,7 +85,7 @@ LTCXXCOMPILE = $(LIBTOOL) --tag=CXX --mode=compile $(CXX) $(DEFS) \
 CXXLD = $(CXX)
 CXXLINK = $(LIBTOOL) --tag=CXX --mode=link $(CXXLD) $(AM_CXXFLAGS) \
 	$(CXXFLAGS) $(AM_LDFLAGS) $(LDFLAGS) -o $@
-SOURCES = $(odbctest_SOURCES) $(nodist_odbctest_SOURCES)
+SOURCES = $(odbctest_SOURCES)
 DIST_SOURCES = $(am__odbctest_SOURCES_DIST)
 ETAGS = etags
 CTAGS = ctags
@@ -90,6 +96,7 @@ AMDEP_FALSE = @AMDEP_FALSE@
 AMDEP_TRUE = @AMDEP_TRUE@
 AMTAR = @AMTAR@
 AR = @AR@
+AS = @AS@
 AUTOCONF = @AUTOCONF@
 AUTOHEADER = @AUTOHEADER@
 AUTOMAKE = @AUTOMAKE@
@@ -106,18 +113,19 @@ CXXFLAGS = @CXXFLAGS@
 CYGPATH_W = @CYGPATH_W@
 DEFS = @DEFS@
 DEPDIR = @DEPDIR@
+DLLTOOL = @DLLTOOL@
 DRIVERS_FALSE = @DRIVERS_FALSE@
 DRIVERS_TRUE = @DRIVERS_TRUE@
-ECHO = @ECHO@
+DSYMUTIL = @DSYMUTIL@
+DUMPBIN = @DUMPBIN@
 ECHO_C = @ECHO_C@
 ECHO_N = @ECHO_N@
 ECHO_T = @ECHO_T@
 EGREP = @EGREP@
 EXEEXT = @EXEEXT@
-F77 = @F77@
 FDB_FALSE = @FDB_FALSE@
 FDB_TRUE = @FDB_TRUE@
-FFLAGS = @FFLAGS@
+FGREP = @FGREP@
 GREP = @GREP@
 HAVE_FLEX_FALSE = @HAVE_FLEX_FALSE@
 HAVE_FLEX_TRUE = @HAVE_FLEX_TRUE@
@@ -128,6 +136,7 @@ INSTALL_DATA = @INSTALL_DATA@
 INSTALL_PROGRAM = @INSTALL_PROGRAM@
 INSTALL_SCRIPT = @INSTALL_SCRIPT@
 INSTALL_STRIP_PROGRAM = @INSTALL_STRIP_PROGRAM@
+LD = @LD@
 LDFLAGS = @LDFLAGS@
 LEX = @LEX@
 LEXLIB = @LEXLIB@
@@ -140,29 +149,37 @@ LIBICONV = @LIBICONV@
 LIBLTDL = @LIBLTDL@
 LIBNSL = @LIBNSL@
 LIBOBJS = @LIBOBJS@
-LIBPNG = @LIBPNG@
 LIBS = @LIBS@
 LIBSOCKET = @LIBSOCKET@
 LIBTOOL = @LIBTOOL@
-LIBZ = @LIBZ@
-LIB_QT = @LIB_QT@
 LIB_VERSION = @LIB_VERSION@
-LIB_X11 = @LIB_X11@
+LIPO = @LIPO@
 LN_S = @LN_S@
+LTDLDEPS = @LTDLDEPS@
+LTDLINCL = @LTDLINCL@
 LTLIBOBJS = @LTLIBOBJS@
 MAINT = @MAINT@
 MAINTAINER_MODE_FALSE = @MAINTAINER_MODE_FALSE@
 MAINTAINER_MODE_TRUE = @MAINTAINER_MODE_TRUE@
 MAKEINFO = @MAKEINFO@
 MOC = @MOC@
+MOCDEFS = @MOCDEFS@
 MSQL_FALSE = @MSQL_FALSE@
 MSQL_TRUE = @MSQL_TRUE@
+NM = @NM@
+NMEDIT = @NMEDIT@
+OBJDUMP = @OBJDUMP@
 OBJEXT = @OBJEXT@
+ODBCTRACE_FALSE = @ODBCTRACE_FALSE@
+ODBCTRACE_TRUE = @ODBCTRACE_TRUE@
+OTOOL = @OTOOL@
+OTOOL64 = @OTOOL64@
 PACKAGE = @PACKAGE@
 PACKAGE_BUGREPORT = @PACKAGE_BUGREPORT@
 PACKAGE_NAME = @PACKAGE_NAME@
 PACKAGE_STRING = @PACKAGE_STRING@
 PACKAGE_TARNAME = @PACKAGE_TARNAME@
+PACKAGE_URL = @PACKAGE_URL@
 PACKAGE_VERSION = @PACKAGE_VERSION@
 PATH_SEPARATOR = @PATH_SEPARATOR@
 PTH_CFLAGS = @PTH_CFLAGS@
@@ -171,28 +188,41 @@ PTH_LDFLAGS = @PTH_LDFLAGS@
 PTH_LIBS = @PTH_LIBS@
 QNX_FALSE = @QNX_FALSE@
 QNX_TRUE = @QNX_TRUE@
+QT4_FALSE = @QT4_FALSE@
+QT4_TRUE = @QT4_TRUE@
+QTMAX = @QTMAX@
+QTMDIAREA_FALSE = @QTMDIAREA_FALSE@
+QTMDIAREA_TRUE = @QTMDIAREA_TRUE@
+QTMIN = @QTMIN@
+QTVERSION = @QTVERSION@
+QTWIZARD_FALSE = @QTWIZARD_FALSE@
+QTWIZARD_TRUE = @QTWIZARD_TRUE@
+QT_CXXFLAGS = @QT_CXXFLAGS@
 QT_FALSE = @QT_FALSE@
-QT_INCLUDES = @QT_INCLUDES@
 QT_LDFLAGS = @QT_LDFLAGS@
+QT_LIBS = @QT_LIBS@
 QT_TRUE = @QT_TRUE@
 RANLIB = @RANLIB@
 READLINE = @READLINE@
+SED = @SED@
 SET_MAKE = @SET_MAKE@
 SHELL = @SHELL@
 SHLIBEXT = @SHLIBEXT@
 STRIP = @STRIP@
-USER_INCLUDES = @USER_INCLUDES@
-USER_LDFLAGS = @USER_LDFLAGS@
+UIC = @UIC@
 VERSION = @VERSION@
 WITHLT_FALSE = @WITHLT_FALSE@
 WITHLT_TRUE = @WITHLT_TRUE@
-X_INCLUDES = @X_INCLUDES@
-X_LDFLAGS = @X_LDFLAGS@
+XMKMF = @XMKMF@
+X_CFLAGS = @X_CFLAGS@
+X_EXTRA_LIBS = @X_EXTRA_LIBS@
+X_LIBS = @X_LIBS@
+X_PRE_LIBS = @X_PRE_LIBS@
 YACC = @YACC@
 YFLAGS = @YFLAGS@
 ac_ct_CC = @ac_ct_CC@
 ac_ct_CXX = @ac_ct_CXX@
-ac_ct_F77 = @ac_ct_F77@
+ac_ct_DUMPBIN = @ac_ct_DUMPBIN@
 am__fastdepCC_FALSE = @am__fastdepCC_FALSE@
 am__fastdepCC_TRUE = @am__fastdepCC_TRUE@
 am__fastdepCXX_FALSE = @am__fastdepCXX_FALSE@
@@ -226,6 +256,7 @@ libdir = @libdir@
 libexecdir = @libexecdir@
 localedir = @localedir@
 localstatedir = @localstatedir@
+lt_ECHO = @lt_ECHO@
 mandir = @mandir@
 mkdir_p = @mkdir_p@
 msql_headers = @msql_headers@
@@ -235,63 +266,57 @@ pdfdir = @pdfdir@
 prefix = @prefix@
 program_transform_name = @program_transform_name@
 psdir = @psdir@
-qt_includes = @qt_includes@
-qt_libraries = @qt_libraries@
 sbindir = @sbindir@
 sharedstatedir = @sharedstatedir@
 subdirs = @subdirs@
 sysconfdir = @sysconfdir@
 target_alias = @target_alias@
-x_includes = @x_includes@
-x_libraries = @x_libraries@
-@QT_TRUE@INCLUDES = -I@top_srcdir@/include @QT_INCLUDES@ -DSYSTEM_FILE_PATH=\"@sysconfdir@\" $(INCLTDL)
-@QT_TRUE@odbctest_LDADD = @X_LDFLAGS@ \
-@QT_TRUE@	@QT_LDFLAGS@ \
-@QT_TRUE@	@USER_LDFLAGS@ \
-@QT_TRUE@	@LIB_QT@ \
-@QT_TRUE@	../odbcinst/libodbcinst.la \
-@QT_TRUE@	../DriverManager/libodbc.la \
-@QT_TRUE@	$(LIBLTDL) $(LIBADD_DL)
+@QT4_FALSE@@QT_TRUE@INCLUDES = -I@top_srcdir@/include $(QT_CXXFLAGS) -DSYSTEM_FILE_PATH=\"@sysconfdir@\" $(LTDLINCL)
+@QT4_FALSE@@QT_TRUE@odbctest_LDADD = \
+@QT4_FALSE@@QT_TRUE@	$(QT_LDFLAGS) \
+@QT4_FALSE@@QT_TRUE@	$(QT_LIBS) \
+@QT4_FALSE@@QT_TRUE@	../ini/libinilc.la \
+@QT4_FALSE@@QT_TRUE@	../odbcinst/libodbcinst.la \
+@QT4_FALSE@@QT_TRUE@	../DriverManager/libodbc.la \
+@QT4_FALSE@@QT_TRUE@	$(LIBLTDL) $(LIBADD_DL) 
 
-@QT_TRUE@odbctest_DEPENDANCIES = ../odbcinst/libodbcinst.la ../DriverManager/libodbc.la
-@QT_TRUE@CLEANFILES = \
-@QT_TRUE@	moc_results.cpp \
-@QT_TRUE@	moc_stmt.cpp \
-@QT_TRUE@	moc_odbctest.cpp \
-@QT_TRUE@	moc_desc.cpp \
-@QT_TRUE@	moc_diag.cpp \
-@QT_TRUE@	moc_env.cpp \
-@QT_TRUE@	moc_catalog.cpp \
-@QT_TRUE@	moc_conn.cpp \
-@QT_TRUE@	moc_attr.cpp \
-@QT_TRUE@	moc_tools.cpp
+@QT4_FALSE@@QT_TRUE@odbctest_DEPENDANCIES = ../odbcinst/libodbcinst.la ../DriverManager/libodbc.la
+@QT4_FALSE@@QT_TRUE@odbctest_SOURCES = \
+@QT4_FALSE@@QT_TRUE@	tools.cpp \
+@QT4_FALSE@@QT_TRUE@	stmt.cpp \
+@QT4_FALSE@@QT_TRUE@	results.cpp \
+@QT4_FALSE@@QT_TRUE@	open.cpp \
+@QT4_FALSE@@QT_TRUE@	odbctest.cpp \
+@QT4_FALSE@@QT_TRUE@	installer.cpp \
+@QT4_FALSE@@QT_TRUE@	env.cpp \
+@QT4_FALSE@@QT_TRUE@	edit.cpp \
+@QT4_FALSE@@QT_TRUE@	desc.cpp \
+@QT4_FALSE@@QT_TRUE@	diag.cpp \
+@QT4_FALSE@@QT_TRUE@	conn.cpp \
+@QT4_FALSE@@QT_TRUE@	catalog.cpp \
+@QT4_FALSE@@QT_TRUE@	attr.cpp \
+@QT4_FALSE@@QT_TRUE@	moc_results.cpp \
+@QT4_FALSE@@QT_TRUE@	moc_stmt.cpp \
+@QT4_FALSE@@QT_TRUE@	moc_odbctest.cpp \
+@QT4_FALSE@@QT_TRUE@	moc_desc.cpp \
+@QT4_FALSE@@QT_TRUE@	moc_diag.cpp \
+@QT4_FALSE@@QT_TRUE@	moc_env.cpp \
+@QT4_FALSE@@QT_TRUE@	moc_catalog.cpp \
+@QT4_FALSE@@QT_TRUE@	moc_conn.cpp \
+@QT4_FALSE@@QT_TRUE@	moc_attr.cpp \
+@QT4_FALSE@@QT_TRUE@	moc_tools.cpp
 
-@QT_TRUE@nodist_odbctest_SOURCES = \
-@QT_TRUE@	moc_results.cpp \
-@QT_TRUE@	moc_stmt.cpp \
-@QT_TRUE@	moc_odbctest.cpp \
-@QT_TRUE@	moc_desc.cpp \
-@QT_TRUE@	moc_diag.cpp \
-@QT_TRUE@	moc_env.cpp \
-@QT_TRUE@	moc_catalog.cpp \
-@QT_TRUE@	moc_conn.cpp \
-@QT_TRUE@	moc_attr.cpp \
-@QT_TRUE@	moc_tools.cpp
-
-@QT_TRUE@odbctest_SOURCES = \
-@QT_TRUE@	tools.cpp \
-@QT_TRUE@	stmt.cpp \
-@QT_TRUE@	results.cpp \
-@QT_TRUE@	open.cpp \
-@QT_TRUE@	odbctest.cpp \
-@QT_TRUE@	installer.cpp \
-@QT_TRUE@	env.cpp \
-@QT_TRUE@	edit.cpp \
-@QT_TRUE@	desc.cpp \
-@QT_TRUE@	diag.cpp \
-@QT_TRUE@	conn.cpp \
-@QT_TRUE@	catalog.cpp \
-@QT_TRUE@	attr.cpp
+@QT4_FALSE@@QT_TRUE@CLEANFILES = \
+@QT4_FALSE@@QT_TRUE@	moc_attr.cpp \
+@QT4_FALSE@@QT_TRUE@	moc_conn.cpp \
+@QT4_FALSE@@QT_TRUE@	moc_diag.cpp \
+@QT4_FALSE@@QT_TRUE@	moc_odbctest.cpp \
+@QT4_FALSE@@QT_TRUE@	moc_stmt.cpp \
+@QT4_FALSE@@QT_TRUE@	moc_catalog.cpp \
+@QT4_FALSE@@QT_TRUE@	moc_desc.cpp \
+@QT4_FALSE@@QT_TRUE@	moc_env.cpp \
+@QT4_FALSE@@QT_TRUE@	moc_results.cpp \
+@QT4_FALSE@@QT_TRUE@	moc_tools.cpp
 
 EXTRA_DIST = \
 	results.h \
@@ -303,7 +328,8 @@ EXTRA_DIST = \
 	catalog.h \
 	conn.h \
 	attr.h \
-	tools.h 
+	tools.h \
+	tools4.h
 
 all: all-am
 
@@ -601,35 +627,35 @@ uninstall-am: uninstall-binPROGRAMS uninstall-info-am
 	uninstall-binPROGRAMS uninstall-info-am
 
 
-@QT_TRUE@moc_results.cpp: @srcdir@/results.h
-@QT_TRUE@	@MOC@ @srcdir@/results.h -o moc_results.cpp
+@QT4_FALSE@@QT_TRUE@moc_results.cpp: @srcdir@/results.h
+@QT4_FALSE@@QT_TRUE@	@MOC@ @srcdir@/results.h -o moc_results.cpp
 
-@QT_TRUE@moc_stmt.cpp: @srcdir@/stmt.h
-@QT_TRUE@	@MOC@ @srcdir@/stmt.h -o moc_stmt.cpp
+@QT4_FALSE@@QT_TRUE@moc_stmt.cpp: @srcdir@/stmt.h
+@QT4_FALSE@@QT_TRUE@	@MOC@ @srcdir@/stmt.h -o moc_stmt.cpp
 
-@QT_TRUE@moc_odbctest.cpp: @srcdir@/odbctest.h
-@QT_TRUE@	@MOC@ @srcdir@/odbctest.h -o moc_odbctest.cpp
+@QT4_FALSE@@QT_TRUE@moc_odbctest.cpp: @srcdir@/odbctest.h
+@QT4_FALSE@@QT_TRUE@	@MOC@ @srcdir@/odbctest.h -o moc_odbctest.cpp
 
-@QT_TRUE@moc_desc.cpp: @srcdir@/desc.h
-@QT_TRUE@	@MOC@ @srcdir@/desc.h -o moc_desc.cpp
+@QT4_FALSE@@QT_TRUE@moc_desc.cpp: @srcdir@/desc.h
+@QT4_FALSE@@QT_TRUE@	@MOC@ @srcdir@/desc.h -o moc_desc.cpp
 
-@QT_TRUE@moc_diag.cpp: @srcdir@/diag.h
-@QT_TRUE@	@MOC@ @srcdir@/diag.h -o moc_diag.cpp
+@QT4_FALSE@@QT_TRUE@moc_diag.cpp: @srcdir@/diag.h
+@QT4_FALSE@@QT_TRUE@	@MOC@ @srcdir@/diag.h -o moc_diag.cpp
 
-@QT_TRUE@moc_env.cpp: @srcdir@/env.h
-@QT_TRUE@	@MOC@ @srcdir@/env.h -o moc_env.cpp
+@QT4_FALSE@@QT_TRUE@moc_env.cpp: @srcdir@/env.h
+@QT4_FALSE@@QT_TRUE@	@MOC@ @srcdir@/env.h -o moc_env.cpp
 
-@QT_TRUE@moc_catalog.cpp: @srcdir@/catalog.h
-@QT_TRUE@	@MOC@ @srcdir@/catalog.h -o moc_catalog.cpp
+@QT4_FALSE@@QT_TRUE@moc_catalog.cpp: @srcdir@/catalog.h
+@QT4_FALSE@@QT_TRUE@	@MOC@ @srcdir@/catalog.h -o moc_catalog.cpp
 
-@QT_TRUE@moc_conn.cpp: @srcdir@/conn.h
-@QT_TRUE@	@MOC@ @srcdir@/conn.h -o moc_conn.cpp
+@QT4_FALSE@@QT_TRUE@moc_conn.cpp: @srcdir@/conn.h
+@QT4_FALSE@@QT_TRUE@	@MOC@ @srcdir@/conn.h -o moc_conn.cpp
 
-@QT_TRUE@moc_attr.cpp: @srcdir@/attr.h
-@QT_TRUE@	@MOC@ @srcdir@/attr.h -o moc_attr.cpp
+@QT4_FALSE@@QT_TRUE@moc_attr.cpp: @srcdir@/attr.h
+@QT4_FALSE@@QT_TRUE@	@MOC@ @srcdir@/attr.h -o moc_attr.cpp
 
-@QT_TRUE@moc_tools.cpp: @srcdir@/tools.h
-@QT_TRUE@	@MOC@ @srcdir@/tools.h -o moc_tools.cpp
+@QT4_FALSE@@QT_TRUE@moc_tools.cpp: @srcdir@/tools.h
+@QT4_FALSE@@QT_TRUE@	@MOC@ @srcdir@/tools.h -o moc_tools.cpp
 # Tell versions [3.59,3.63) of GNU make to not export all variables.
 # Otherwise a system limit (for SysV at least) may be exceeded.
 .NOEXPORT:

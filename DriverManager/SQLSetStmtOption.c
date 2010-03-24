@@ -27,9 +27,18 @@
  *
  **********************************************************************
  *
- * $Id: SQLSetStmtOption.c,v 1.5 2003/10/30 18:20:46 lurcher Exp $
+ * $Id: SQLSetStmtOption.c,v 1.8 2007/11/29 12:00:31 lurcher Exp $
  *
  * $Log: SQLSetStmtOption.c,v $
+ * Revision 1.8  2007/11/29 12:00:31  lurcher
+ * Add 64 bit type changes to SQLExtendedFetch etc
+ *
+ * Revision 1.7  2005/11/23 08:29:16  lurcher
+ * Add cleanup in postgres driver
+ *
+ * Revision 1.6  2005/04/05 09:11:31  lurcher
+ * The config string being passed into ConfigDsn was wrong, removed semicolon, and added terminating double null
+ *
  * Revision 1.5  2003/10/30 18:20:46  lurcher
  *
  * Fix broken thread protection
@@ -133,11 +142,18 @@
 
 #include "drivermanager.h"
 
-static char const rcsid[]= "$RCSfile: SQLSetStmtOption.c,v $ $Revision: 1.5 $";
+static char const rcsid[]= "$RCSfile: SQLSetStmtOption.c,v $ $Revision: 1.8 $";
+
+SQLRETURN SQLSetStmtOptionA( SQLHSTMT statement_handle,
+           SQLUSMALLINT option,
+           SQLULEN value )
+{
+	return SQLSetStmtOption( statement_handle, option, value );
+}
 
 SQLRETURN SQLSetStmtOption( SQLHSTMT statement_handle,
            SQLUSMALLINT option,
-           SQLROWCOUNT value )
+           SQLULEN value )
 {
     DMHSTMT statement = (DMHSTMT) statement_handle;
     SQLRETURN ret;
@@ -329,6 +345,51 @@ SQLRETURN SQLSetStmtOption( SQLHSTMT statement_handle,
 
           default:
             ret = SQLSETSTMTATTR( statement -> connection,
+                    statement -> driver_stmt,
+                    option,
+                    value,
+                    SQL_NTS );
+            break;
+        }
+    }
+    else if ( CHECK_SQLSETSTMTATTRW( statement -> connection ))
+    {
+        switch ( option )
+        {
+          case SQL_ATTR_APP_PARAM_DESC:
+            if ( value )
+                memcpy( &statement -> apd, (void*)value, 
+                        sizeof( statement -> apd ));
+
+            ret = SQL_SUCCESS;
+            break;
+
+          case SQL_ATTR_APP_ROW_DESC:
+            if ( value )
+                memcpy( &statement -> ard, (void*)value, 
+                        sizeof( statement -> ard ));
+
+            ret = SQL_SUCCESS;
+            break;
+
+          case SQL_ATTR_IMP_PARAM_DESC:
+            if ( value )
+                memcpy( &statement -> ipd, (void*)value, 
+                        sizeof( statement -> ipd ));
+
+            ret = SQL_SUCCESS;
+            break;
+
+          case SQL_ATTR_IMP_ROW_DESC:
+            if ( value )
+                memcpy( &statement -> ird, (void*)value, 
+                        sizeof( statement -> ird ));
+
+            ret = SQL_SUCCESS;
+            break;
+
+          default:
+            ret = SQLSETSTMTATTRW( statement -> connection,
                     statement -> driver_stmt,
                     option,
                     value,

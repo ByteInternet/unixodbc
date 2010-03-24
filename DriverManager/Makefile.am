@@ -1,11 +1,12 @@
 lib_LTLIBRARIES = libodbc.la
 
 INCLUDES = -I@top_srcdir@/include \
-		$(INCLTDL) \
+		$(LTDLINCL) \
 		-DSHLIBEXT=\"@SHLIBEXT@\" \
 		-DSYSTEM_FILE_PATH=\"@sysconfdir@\" \
 		-DSYSTEM_LIB_PATH=\"@libdir@\" \
 		-DUNICODE_ENCODING=\"@ICONV_UNICODE_ENCODING@\" \
+		-DUNIXODBC_SOURCE \
 		-DASCII_ENCODING=\"@ICONV_CHAR_ENCODING@\" 
 
 EXTRA_DIST = \
@@ -24,14 +25,23 @@ libodbc_la_LIBADD = \
 
 libodbc_la_LDFLAGS = \
 	-version-info @LIB_VERSION@ \
+	-no-undefined \
 	-export-dynamic \
 	-export-symbols @srcdir@/DriverManager.exp
 
+if WITHLT
 libodbc_la_DEPENDENCIES = $(LIBLTDL) \
 	../lst/liblstlc.la \
     ../log/libloglc.la \
     ../ini/libinilc.la \
     ../odbcinst/libodbcinstlc.la 
+else
+libodbc_la_DEPENDENCIES = \
+	../lst/liblstlc.la \
+    ../log/libloglc.la \
+    ../ini/libinilc.la \
+    ../odbcinst/libodbcinstlc.la 
+endif
 
 libodbc_la_SOURCES = \
 	SQLAllocConnect.c \
@@ -145,6 +155,7 @@ libodbc_la_SOURCES = \
 	SQLSetCursorNameW.c \
 	SQLSetDescFieldW.c \
 	SQLSetStmtAttrW.c \
+	SQLSetStmtOptionW.c \
 	SQLSpecialColumnsW.c \
 	SQLStatisticsW.c \
 	SQLTablePrivilegesW.c \

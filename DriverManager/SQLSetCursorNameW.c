@@ -27,9 +27,12 @@
  *
  **********************************************************************
  *
- * $Id: SQLSetCursorNameW.c,v 1.5 2003/10/30 18:20:46 lurcher Exp $
+ * $Id: SQLSetCursorNameW.c,v 1.6 2008/08/29 08:01:39 lurcher Exp $
  *
  * $Log: SQLSetCursorNameW.c,v $
+ * Revision 1.6  2008/08/29 08:01:39  lurcher
+ * Alter the way W functions are passed to the driver
+ *
  * Revision 1.5  2003/10/30 18:20:46  lurcher
  *
  * Fix broken thread protection
@@ -171,7 +174,8 @@ SQLRETURN SQLSetCursorNameW( SQLHSTMT statement_handle,
         return function_return( SQL_HANDLE_STMT, statement, SQL_ERROR );
     }
 
-    if ( statement -> connection -> unicode_driver )
+    if ( statement -> connection -> unicode_driver ||
+		    CHECK_SQLSETCURSORNAMEW( statement -> connection ))
     {
         if ( !CHECK_SQLSETCURSORNAMEW( statement -> connection ))
         {

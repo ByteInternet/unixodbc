@@ -12,51 +12,203 @@
 #include "log.h"
 #include "ini.h"
 
+/* Define this as a fall through, HAVE_STDARG_H is probably already set */
+
+/*#define HAVE_VARARGS_H*/
+
+/* varargs declarations: */
+
+#if defined(HAVE_STDARG_H)
+# include <stdarg.h>
+    #define VA_LOCAL_DECL   va_list ap
+    #define VA_START(f)     va_start(ap, f)
+    #define VA_SHIFT(v,t)  ;   /* no-op for ANSI */
+    #define VA_END          va_end(ap)
+#else
+    #if defined(HAVE_VARARGS_H)
+        #define VA_LOCAL_DECL   va_list ap
+        #define VA_START(f)     va_start(ap)      /* f is ignored! */
+        #define VA_SHIFT(v,t) v = va_arg(ap,t)
+        #define VA_END        va_end(ap)
+    #else
+        #error No variable argument support
+    #endif
+#endif
+
+#ifndef HAVE_VSNPRINTF 
+int uodbc_vsnprintf (char *str, size_t count, const char *fmt, va_list args);
+#endif
+
+
 int logPushMsg( HLOG hLog, char *pszModule, char *pszFunctionName, int nLine, int nSeverity, int nCode, char *pszMessage )
 {
-    HLOGMSG		hMsg;
-	FILE 		*hFile;
+    HLOGMSG     hMsg;
+    FILE        *hFile;
 
-	if ( !hLog ) return LOG_ERROR;
-	if ( !hLog->hMessages ) return LOG_ERROR;
-	if ( !hLog->bOn ) return LOG_SUCCESS;
+    if ( !hLog ) return LOG_ERROR;
+    if ( !hLog->hMessages ) return LOG_ERROR;
+    if ( !hLog->bOn ) return LOG_SUCCESS;
 
-	if ( !pszModule ) return LOG_ERROR;
-	if ( !pszFunctionName ) return LOG_ERROR;
-	if ( !pszMessage ) return LOG_ERROR;
+    if ( !pszModule ) return LOG_ERROR;
+    if ( !pszFunctionName ) return LOG_ERROR;
+    if ( !pszMessage ) return LOG_ERROR;
 
 
-	/* check for, and handle, max msg */
-	if ( hLog->hMessages->nItems == hLog->nMaxMsgs )
-	{
-		lstFirst( hLog->hMessages );
-        lstDelete( hLog->hMessages );
-	}
+    /* check for, and handle, max msg */
+    if ( hLog->nMaxMsgs && hLog->hMessages->nItems >= hLog->nMaxMsgs )
+        logPopMsg( hLog );
 
-	/* allocate msg */
-	hMsg 					= malloc( sizeof(LOGMSG) );
-	hMsg->pszModuleName		= (char *)strdup( pszModule );
-	hMsg->pszFunctionName	= (char *)strdup( pszFunctionName );
-	hMsg->pszMessage		= (char *)strdup( pszMessage );
-	hMsg->nLine				= nLine;
-	hMsg->nSeverity			= nSeverity;
-	hMsg->nCode				= nCode;
+    hMsg                    = malloc( sizeof(LOGMSG) );
+    if (!hMsg) goto error_abort0;
 
-	/* append to  list */
-	lstAppend( hLog->hMessages, hMsg );
+    hMsg->pszModuleName     = (char *)strdup( pszModule );
+    if (!hMsg->pszModuleName) goto error_abort1;
 
-	/* append to file */
-	if ( hLog->pszLogFile )
-	{
-		hFile = uo_fopen( hLog->pszLogFile, "a" );
-		if ( !hFile ) return LOG_ERROR;
+    hMsg->pszFunctionName   = (char *)strdup( pszFunctionName );
+    if (!hMsg->pszFunctionName) goto error_abort2;
 
-		uo_fprintf( hFile, "[%s][%s][%s][%d]%s\n", hLog->pszProgramName, hMsg->pszModuleName, hMsg->pszFunctionName, hMsg->nLine, hMsg->pszMessage );
+    hMsg->pszMessage        = (char *)strdup( pszMessage );
+    if (!hMsg->pszMessage) goto error_abort3;
 
-		uo_fclose( hFile );
-	}
+    hMsg->nLine             = nLine;
+    hMsg->nSeverity         = nSeverity;
+    hMsg->nCode             = nCode;
 
-	return LOG_SUCCESS;
+    /* append to  list */
+    lstAppend( hLog->hMessages, hMsg );
+
+    /* append to file */
+    if ( hLog->pszLogFile )
+    {
+        hFile = uo_fopen( hLog->pszLogFile, "a" );
+        if ( !hFile ) return LOG_ERROR;
+
+        uo_fprintf( hFile, "[%s][%s][%s][%d]%s\n", hLog->pszProgramName, pszModule, pszFunctionName, nLine, pszMessage );
+
+        uo_fclose( hFile );
+    }
+
+    return LOG_SUCCESS;
+
+    error_abort3:
+    free(hMsg->pszFunctionName);
+    error_abort2:
+    free(hMsg->pszModuleName);
+    error_abort1:
+    free(hMsg);
+    error_abort0:
+    return LOG_ERROR;
 }
 
+int logvPushMsgf( HLOG hLog, char *pszModule, char *pszFunctionName, int nLine, int nSeverity, int nCode, char *pszMessageFormat, va_list args )
+{
+    HLOGMSG     hMsg=NULL;
+    FILE        *hFile;
+    int             mlen=0;
 
+    if ( !hLog ) return LOG_ERROR;
+    if ( !hLog->hMessages ) return LOG_ERROR;
+    if ( !hLog->bOn ) return LOG_SUCCESS;
+
+    if ( !pszModule ) return LOG_ERROR;
+    if ( !pszFunctionName ) return LOG_ERROR;
+    if ( !pszMessageFormat ) return LOG_ERROR;
+
+    /* check for, and handle, max msg */
+    if ( hLog->nMaxMsgs && hLog->hMessages->nItems == hLog->nMaxMsgs )
+        logPopMsg( hLog );
+
+    hMsg                    = malloc( sizeof(LOGMSG) );
+    if (!hMsg) goto error_abort0;
+
+    hMsg->pszModuleName     = (char *)strdup( pszModule );
+    if (!hMsg->pszModuleName) goto error_abort1;
+
+    hMsg->pszFunctionName   = (char *)strdup( pszFunctionName );
+    if (!hMsg->pszFunctionName) goto error_abort2;
+
+#if defined( HAVE_VSNPRINTF )
+    mlen=vsnprintf(NULL,0,pszMessageFormat,args);
+#else
+    mlen=uodbc_vsnprintf(NULL,0,pszMessageFormat,args);
+#endif
+    mlen++;
+    hMsg->pszMessage        = malloc(mlen);
+    if (!hMsg->pszMessage) goto error_abort3;
+
+#if defined( HAVE_VSNPRINTF )
+    vsnprintf(hMsg->pszMessage,mlen,pszMessageFormat,args);
+#else
+    uodbc_vsnprintf(hMsg->pszMessage,mlen,pszMessageFormat,args);
+#endif
+
+    hMsg->nLine             = nLine;
+    hMsg->nSeverity         = nSeverity;
+    hMsg->nCode             = nCode;
+
+    /* append to  list */
+    lstAppend( hLog->hMessages, hMsg );
+
+    /* append to file */
+    if ( hLog->pszLogFile )
+    {
+        hFile = uo_fopen( hLog->pszLogFile, "a" );
+        if ( !hFile ) return LOG_ERROR;
+
+        if (hMsg)
+        {
+            uo_fprintf( hFile, "[%s][%s][%s][%d]%s\n", hLog->pszProgramName, pszModule, pszFunctionName, nLine, hMsg->pszMessage );
+        }
+        else
+        {
+            uo_fprintf( hFile, "[%s][%s][%s][%d]", hLog->pszProgramName, pszModule, pszFunctionName, nLine );
+            uo_vfprintf( hFile, pszMessageFormat, args );
+            uo_fprintf( hFile, "\n" );
+        }
+
+        uo_fclose( hFile );
+    }
+
+    return LOG_SUCCESS;
+
+    error_abort3:
+    free(hMsg->pszFunctionName);
+    error_abort2:
+    free(hMsg->pszModuleName);
+    error_abort1:
+    free(hMsg);
+    error_abort0:
+    return LOG_ERROR;
+}
+
+#ifdef HAVE_STDARGS
+int logPushMsgf( HLOG hLog, char *pszModule, char *pszFunctionName, int nLine, int nSeverity, int nCode, char *pszMessageFormat, ... )
+#else
+int logPushMsgf( va_alist ) va_dcl
+#endif
+{
+    int err;
+#ifndef HAVE_STDARGS
+    HLOG hLog;
+    char *pszModule;
+    char *pszFunctionName;
+    int nLine;
+    int nSeverity;
+    int nCode;
+    char *pszMessageFormat;
+#endif
+    VA_LOCAL_DECL;
+
+    VA_START (pszMessageFormat);
+    VA_SHIFT (hLog, HLOG);
+    VA_SHIFT (pszModule, char *);
+    VA_SHIFT (pszFunctionName, char *);
+    VA_SHIFT (nLine, int );
+    VA_SHIFT (nSeverity, int );
+    VA_SHIFT (nCode, int );
+    VA_SHIFT (pszMessageFormat, char *);
+    err=logvPushMsgf(hLog,pszModule,pszFunctionName,nLine,nSeverity,nCode,pszMessageFormat,ap);
+    VA_END;
+    return err;
+
+}

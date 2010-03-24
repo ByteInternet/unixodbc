@@ -27,9 +27,15 @@
  *
  **********************************************************************
  *
- * $Id: SQLParamData.c,v 1.4 2004/05/07 09:53:13 lurcher Exp $
+ * $Id: SQLParamData.c,v 1.6 2007/05/25 16:42:32 lurcher Exp $
  *
  * $Log: SQLParamData.c,v $
+ * Revision 1.6  2007/05/25 16:42:32  lurcher
+ * Sync up
+ *
+ * Revision 1.5  2005/11/21 17:25:43  lurcher
+ * A few DM fixes for Oracle's ODBC driver
+ *
  * Revision 1.4  2004/05/07 09:53:13  lurcher
  *
  *
@@ -118,7 +124,7 @@
 
 #include "drivermanager.h"
 
-static char const rcsid[]= "$RCSfile: SQLParamData.c,v $ $Revision: 1.4 $";
+static char const rcsid[]= "$RCSfile: SQLParamData.c,v $ $Revision: 1.6 $";
 
 SQLRETURN SQLParamData( SQLHSTMT statement_handle,
            SQLPOINTER *value )
@@ -221,6 +227,18 @@ SQLRETURN SQLParamData( SQLHSTMT statement_handle,
         return function_return( SQL_HANDLE_STMT, statement, SQL_ERROR );
     }
 
+	/* 
+	 * When a NULL is passed, driver tries to access this memory and dumps core,
+	 * so pass a vaild pointer to the driver. This mirrors what the MS DM does
+	 */
+
+
+	if (!value)
+	{
+		statement -> valueptr = NULL;
+		value = &statement -> valueptr;
+	}
+
     ret = SQLPARAMDATA( statement -> connection,
             statement -> driver_stmt,
             value );
@@ -282,6 +300,11 @@ SQLRETURN SQLParamData( SQLHSTMT statement_handle,
     {
         statement -> state = STATE_S9;
     }
+	else if ( ret == SQL_NO_DATA )
+	{
+		statement -> interupted_func = 0;
+		statement -> state = STATE_S4;
+	}
     else
     {
         if ( statement -> interupted_func == SQL_API_SQLEXECDIRECT )

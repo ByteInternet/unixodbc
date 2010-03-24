@@ -12,13 +12,21 @@
 
 #include "classDataSource.h"
 #include "classLogin.h"
+#ifdef QT_V4LAYOUT
+#include "Qt/qpixmap.h"
+#else
 #include "qpixmap.h"
+#endif
 #include <ini.h>
 #include <odbcinst.h>
 #include "computergreen.xpm"
 #include "computerred.xpm"
 
+#ifdef QT_V4LAYOUT
+classDataSource::classDataSource( Q3ListViewItem *pParent, Q3ListViewItem *pAfter, classCanvas *pCanvas, classODBC::DSType dataSourceType, const char *pszDataSourceName )
+#else
 classDataSource::classDataSource( QListViewItem *pParent, QListViewItem *pAfter, classCanvas *pCanvas, classODBC::DSType dataSourceType, const char *pszDataSourceName )
+#endif
     : classNode( pParent, pAfter, pCanvas ), env(), dbc( env(), "classDataSource" ), pConnectionFrame( NULL )
 {
   listLibraries.setAutoDelete( TRUE );
@@ -41,9 +49,9 @@ classDataSource::classDataSource( QListViewItem *pParent, QListViewItem *pAfter,
   else
     SQLSetConfigMode( ODBC_SYSTEM_DSN );
 
-  if ( SQLGetPrivateProfileString((char*) qsDataSourceName.data(), "Description", "", szResults, sizeof(szResults), 0 ) > 0 )
+  if ( SQLGetPrivateProfileString((char*) qsDataSourceName.ascii(), "Description", "", szResults, sizeof(szResults), 0 ) > 0 )
     iniElement( szResults, '\0', '\0', 0, szDescription, INI_MAX_PROPERTY_VALUE );
-  if ( SQLGetPrivateProfileString((char*) qsDataSourceName.data(), "Driver", "", szResults, sizeof(szResults), 0 ) > 0 )
+  if ( SQLGetPrivateProfileString((char*) qsDataSourceName.ascii(), "Driver", "", szResults, sizeof(szResults), 0 ) > 0 )
     iniElement( szResults, '\0', '\0', 0, szDriver, INI_MAX_PROPERTY_VALUE );
 
   SQLSetConfigMode( ODBC_BOTH_DSN );
@@ -83,7 +91,11 @@ void classDataSource::setOpen( bool bOpen )
     dbc.disconnect() ;
     setPixmap( 0, QPixmap( computerred_xpm ) );
   }
+#ifdef QT_V4LAYOUT
+  Q3ListViewItem::setOpen( bOpen );
+#else
   QListViewItem::setOpen( bOpen );
+#endif
 }
 
 void classDataSource::LoadLibraries()
@@ -135,7 +147,11 @@ void classDataSource::LoadLibraries()
   }
 }
 
+#ifdef QT_V4LAYOUT
+void classDataSource::selectionChanged( Q3ListViewItem *p )
+#else
 void classDataSource::selectionChanged( QListViewItem *p )
+#endif
 {
 
   for ( classTables *pLibrary = listLibraries.first(); pLibrary != 0; pLibrary = listLibraries.next() )

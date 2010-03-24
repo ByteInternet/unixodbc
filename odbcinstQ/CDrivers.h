@@ -24,19 +24,28 @@
 #include <ini.h>
 #include <odbcinstext.h>
 
+#ifdef QT_V4LAYOUT
+#define QT3_SUPPORT
+#include <Qt/qmessagebox.h>
+#include <Qt/qwidget.h>
+#include <Qt/q3listview.h>
+#include <Qt/qpushbutton.h>
+#include <Qt/qpixmap.h>
+#include <Qt/qlayout.h>
+#include <Qt/qlabel.h>
+#include <Qt/qframe.h>
+#include <Qt/qlistview.h>
+#else
 #include <qmessagebox.h>
 #include <qwidget.h>
 #include <qlistview.h>
-#if (QT_VERSION>=300)
-#include <qpushbutton.h>
-#else
 #include <qpushbt.h>
-#endif
 #include <qpixmap.h>
 #include <qlayout.h>
 #include <qlabel.h>
 #include <qframe.h>
 #include <qlistview.h>
+#endif
 
 #include "CPropertiesFrame.h"
 
@@ -60,7 +69,11 @@ public:
     CDrivers( QWidget* parent = NULL, const char* name = NULL );
     ~CDrivers();
 
+#ifdef QT_V4LAYOUT
+	Q3ListView *getListView() { return lvwDrivers; };
+#else
 	QListView *getListView() { return lvwDrivers; };
+#endif
 
 public slots:
 	void Add();
@@ -71,7 +84,11 @@ protected:
     QPushButton* pbAdd;
     QPushButton* pbRemove;
     QPushButton* pbConfigure;
+#ifdef QT_V4LAYOUT
+    Q3ListView* lvwDrivers;
+#else
     QListView* lvwDrivers;
+#endif
 
 private:
 	HINI	hIni;

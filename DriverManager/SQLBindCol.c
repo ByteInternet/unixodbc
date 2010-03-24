@@ -27,9 +27,18 @@
  *
  **********************************************************************
  *
- * $Id: SQLBindCol.c,v 1.4 2003/10/30 18:20:45 lurcher Exp $
+ * $Id: SQLBindCol.c,v 1.7 2007/03/05 09:49:23 lurcher Exp $
  *
  * $Log: SQLBindCol.c,v $
+ * Revision 1.7  2007/03/05 09:49:23  lurcher
+ * Get it to build on VMS again
+ *
+ * Revision 1.6  2006/04/11 10:22:56  lurcher
+ * Fix a data type check
+ *
+ * Revision 1.5  2006/03/08 11:22:13  lurcher
+ * Add check for valid C_TYPE
+ *
  * Revision 1.4  2003/10/30 18:20:45  lurcher
  *
  * Fix broken thread protection
@@ -115,7 +124,58 @@
 
 #include "drivermanager.h"
 
-static char const rcsid[]= "$RCSfile: SQLBindCol.c,v $ $Revision: 1.4 $";
+static char const rcsid[]= "$RCSfile: SQLBindCol.c,v $ $Revision: 1.7 $";
+
+int check_target_type( int c_type ) 
+{
+	switch( c_type ) {
+		case SQL_C_CHAR:
+		case SQL_C_LONG:
+		case SQL_C_SHORT:
+		case SQL_C_FLOAT:
+		case SQL_C_NUMERIC:
+		case SQL_C_DEFAULT:
+		case SQL_C_DATE:
+		case SQL_C_TIME:
+		case SQL_C_TIMESTAMP:
+		case SQL_C_TYPE_DATE:
+		case SQL_C_TYPE_TIME:
+		case SQL_C_TYPE_TIMESTAMP:
+		case SQL_C_INTERVAL_YEAR:
+		case SQL_C_INTERVAL_MONTH:
+		case SQL_C_INTERVAL_DAY:
+		case SQL_C_INTERVAL_HOUR:
+		case SQL_C_INTERVAL_MINUTE:
+		case SQL_C_INTERVAL_SECOND:
+		case SQL_C_INTERVAL_YEAR_TO_MONTH:
+		case SQL_C_INTERVAL_DAY_TO_HOUR:
+		case SQL_C_INTERVAL_DAY_TO_MINUTE:
+		case SQL_C_INTERVAL_DAY_TO_SECOND:
+		case SQL_C_INTERVAL_HOUR_TO_MINUTE:
+		case SQL_C_INTERVAL_HOUR_TO_SECOND:
+		case SQL_C_INTERVAL_MINUTE_TO_SECOND:
+		case SQL_C_BINARY:
+		case SQL_C_BIT:
+		case SQL_C_SBIGINT:
+		case SQL_C_UBIGINT:
+		case SQL_C_TINYINT:
+		case SQL_C_SLONG:
+		case SQL_C_SSHORT:
+		case SQL_C_STINYINT:
+		case SQL_C_ULONG:
+		case SQL_C_USHORT:
+		case SQL_C_UTINYINT:
+		case SQL_C_GUID:
+		case SQL_C_WCHAR:
+		case SQL_ARD_TYPE:
+		case SQL_C_DOUBLE:
+		/* case SQL_C_XML: still trying to find what value this is */
+			return 1;
+
+		default:
+			return 0;
+	}
+}
 
 SQLRETURN SQLBindCol( SQLHSTMT statement_handle,
 		   SQLUSMALLINT column_number,
@@ -188,7 +248,6 @@ SQLRETURN SQLBindCol( SQLHSTMT statement_handle,
     /*
      * TO_DO
      * Check the type against a bookmark
-     * check thats its a valid type
      * check that the length is 4 for a odbc 2 bookmark
      * remember thats its bound for SQLGetData checks
      */
@@ -216,6 +275,25 @@ SQLRETURN SQLBindCol( SQLHSTMT statement_handle,
         return function_return( SQL_HANDLE_STMT, statement, SQL_ERROR );
     }
 
+	/*
+	 * check valid C_TYPE
+	 */
+
+	if ( !check_target_type( target_type ))
+	{
+        dm_log_write( __FILE__, 
+                __LINE__, 
+                LOG_INFO, 
+                LOG_INFO, 
+                "Error: HY003" );
+
+        __post_internal_error( &statement -> error,
+                ERROR_HY003, NULL,
+                statement -> connection -> environment -> requested_version );
+
+        return function_return( SQL_HANDLE_STMT, statement, SQL_ERROR );
+	}
+
     if ( !CHECK_SQLBINDCOL( statement -> connection ))
     {
         dm_log_write( __FILE__, 
@@ -241,7 +319,7 @@ SQLRETURN SQLBindCol( SQLHSTMT statement_handle,
 
     if ( log_info.log_flag )
     {
-        char buf[ 128 ];
+        SQLCHAR buf[ 128 ];
 
         sprintf( statement -> msg, 
                 "\n\t\tExit:[%s]",

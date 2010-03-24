@@ -18,11 +18,21 @@
  * Peter Harvey         - pharvey@codebydesign.com
  **************************************************/
 
+#ifdef QT_V4LAYOUT
+#include "classDataManager4.h"
+#else
 #include "classDataManager.h"
+#endif
 #include <stdlib.h>
 #include <ini.h>
+#ifdef QT_V4LAYOUT
+#include <Qt/qpixmap.h>
+#include <Qt/q3valuelist.h>
+#include <Qt/qdir.h>
+#else
 #include <qpixmap.h>
 #include <qdir.h>
+#endif
 #include "LinuxODBC.xpm"
 
 classDataManager::classDataManager( QWidget *pParent, const char *pszName )
@@ -34,33 +44,69 @@ classDataManager::classDataManager( QWidget *pParent, const char *pszName )
 
   splSplitter = new QSplitter( this, "splSplitter" );
 
+#ifdef QT_V4LAYOUT
+  lvwBrowser = new Q3ListView( splSplitter, "lvwBrowser" );
+#else
   lvwBrowser = new QListView( splSplitter, "lvwBrowser" );
+#endif
   lvwBrowser->setMinimumSize( 50, 50 );
   lvwBrowser->setMaximumSize( 32767, 32767 );
+#ifdef QT_V4LAYOUT
+  connect( lvwBrowser, SIGNAL(rightButtonClicked(Q3ListViewItem*,const QPoint&,int)), SLOT(ItemMenu(Q3ListViewItem*,const QPoint&,int)) );
+  connect( lvwBrowser, SIGNAL(selectionChanged(Q3ListViewItem*)), SLOT(ItemChanged(Q3ListViewItem*)) );
+#else
   connect( lvwBrowser, SIGNAL(rightButtonClicked(QListViewItem*,const QPoint&,int)), SLOT(ItemMenu(QListViewItem*,const QPoint&,int)) );
   connect( lvwBrowser, SIGNAL(selectionChanged(QListViewItem*)), SLOT(ItemChanged(QListViewItem*)) );
+#endif
+#ifdef QT_V4LAYOUT
+  lvwBrowser->setFocusPolicy( Qt::TabFocus );
+  lvwBrowser->setBackgroundMode( Qt::PaletteBackground );
+#else
   lvwBrowser->setFocusPolicy( QWidget::TabFocus );
   lvwBrowser->setBackgroundMode( QWidget::PaletteBackground );
+#endif
   lvwBrowser->setFrameStyle( 17 );
+#ifdef QT_V4LAYOUT
+  lvwBrowser->setResizePolicy( Q3ScrollView::Manual );
+  lvwBrowser->setVScrollBarMode( Q3ScrollView::Auto );
+  lvwBrowser->setHScrollBarMode( Q3ScrollView::Auto );
+#else
   lvwBrowser->setResizePolicy( QScrollView::Manual );
   lvwBrowser->setVScrollBarMode( QScrollView::Auto );
   lvwBrowser->setHScrollBarMode( QScrollView::Auto );
+#endif
   lvwBrowser->setTreeStepSize( 20 );
   lvwBrowser->setMultiSelection( FALSE );
   lvwBrowser->setAllColumnsShowFocus( TRUE );
   lvwBrowser->setItemMargin( 1 );
   lvwBrowser->setRootIsDecorated( TRUE );
   lvwBrowser->addColumn( "Object", -1 );
+#ifdef QT_V4LAYOUT
+  lvwBrowser->setColumnWidthMode( 0, Q3ListView::Maximum );
+#else
   lvwBrowser->setColumnWidthMode( 0, QListView::Maximum );
+#endif
   lvwBrowser->setColumnAlignment( 0, 1 );
   lvwBrowser->addColumn( "Type", -1 );
+#ifdef QT_V4LAYOUT
+  lvwBrowser->setColumnWidthMode( 1, Q3ListView::Maximum );
+#else
   lvwBrowser->setColumnWidthMode( 1, QListView::Maximum );
+#endif
   lvwBrowser->setColumnAlignment( 1, 1 );
   lvwBrowser->addColumn( "Description", -1 );
+#ifdef QT_V4LAYOUT
+  lvwBrowser->setColumnWidthMode( 2, Q3ListView::Maximum );
+#else
   lvwBrowser->setColumnWidthMode( 2, QListView::Maximum );
+#endif
   lvwBrowser->setColumnAlignment( 2, 1 );
   lvwBrowser->setSorting( -1, 0 );
+#ifdef QT_V4LAYOUT
+  lvwBrowser->setSelectionMode( Q3ListView::Single );
+#else
   lvwBrowser->setSelectionMode( QListView::Single );
+#endif
 
   pCanvas = new classCanvas( splSplitter, "fraProperties" );
 
@@ -77,13 +123,21 @@ classDataManager::~classDataManager()
   SaveState();
 }
 
+#ifdef QT_V4LAYOUT
+void classDataManager::ItemMenu(Q3ListViewItem *pItem, const QPoint &, int )
+#else
 void classDataManager::ItemMenu(QListViewItem *pItem, const QPoint &, int )
+#endif
 {
   if ( pItem == 0 ) return;
   lvwBrowser->setSelected( pItem, TRUE );
 }
 
+#ifdef QT_V4LAYOUT
+void classDataManager::ItemChanged(Q3ListViewItem *pItem )
+#else
 void classDataManager::ItemChanged(QListViewItem *pItem )
+#endif
 {
   QString         qsType;
 
@@ -183,7 +237,11 @@ void classDataManager::LoadState()
         move( nX, nY );
         if ( nCell1 && nCell2 )
         {
+#ifdef QT_V4LAYOUT
+          Q3ValueList<int> list;
+#else
           QValueList<int> list;
+#endif
           list.append( nCell1 );
           list.append( nCell2 );
           splSplitter->setSizes( list );

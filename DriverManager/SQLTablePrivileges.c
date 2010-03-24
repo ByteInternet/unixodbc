@@ -27,9 +27,12 @@
  *
  **********************************************************************
  *
- * $Id: SQLTablePrivileges.c,v 1.6 2004/01/12 09:54:39 lurcher Exp $
+ * $Id: SQLTablePrivileges.c,v 1.7 2006/07/26 16:29:48 lurcher Exp $
  *
  * $Log: SQLTablePrivileges.c,v $
+ * Revision 1.7  2006/07/26 16:29:48  lurcher
+ * Fix unicode translation for SQLTablePrivileges
+ *
  * Revision 1.6  2004/01/12 09:54:39  lurcher
  *
  * Fix problem where STATE_S5 stops metadata calls
@@ -119,7 +122,7 @@
 
 #include "drivermanager.h"
 
-static char const rcsid[]= "$RCSfile: SQLTablePrivileges.c,v $ $Revision: 1.6 $";
+static char const rcsid[]= "$RCSfile: SQLTablePrivileges.c,v $ $Revision: 1.7 $";
 
 SQLRETURN SQLTablePrivilegesA(
     SQLHSTMT           statement_handle,
@@ -300,11 +303,11 @@ SQLRETURN SQLTablePrivileges(
 
         ret = SQLTABLEPRIVILEGESW( statement -> connection ,
                 statement -> driver_stmt,
-                sz_catalog_name,
+                s1,
                 cb_catalog_name,
-                sz_schema_name,
+                s2,
                 cb_schema_name,
-                sz_table_name,
+                s3,
                 cb_table_name );
 
         if( s1 )

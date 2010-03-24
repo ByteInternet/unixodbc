@@ -16,11 +16,19 @@
 #include "classCanvas.h"
 class classDrivers ;
 class classDataSources ;
+#ifdef QT_V4LAYOUT
+#include <Qt/qstring.h>
+#include <Qt/qcursor.h>
+#include <Qt/qnamespace.h>
+#include <Qt/qmessagebox.h>
+#include <Qt/q3listview.h>
+#else
 #include <qstring.h>
 #include <qcursor.h>
 #include <qnamespace.h>
 #include <qmessagebox.h>
 #include <qlistview.h>
+#endif
 #include <sqlext.h>
 
 #define MAX_COLUMN_WIDTH 1024
@@ -44,7 +52,11 @@ class CursorScoper: public QWidget
 {
  public:
   CursorScoper( QWidget * w ) : w_(w)
+#ifdef QT_V4LAYOUT
+    { w_->setCursor(Qt::waitCursor) ; }
+#else
     { w_->setCursor(waitCursor) ; }
+#endif
  ~CursorScoper()
     { w_->unsetCursor()         ; }
  private:
@@ -101,7 +113,7 @@ class ConnectionScoper
   bool connect( const QString & dataSourceName, const QString & uid, const QString & pwd )
   {
     SQLRETURN nReturn ;
-    if (!active_ && !SQL_SUCCEEDED(nReturn=SQLConnect( hDbc_, (SQLCHAR*)dataSourceName.data(), SQL_NTS, (SQLCHAR*)uid.data(), SQL_NTS, (SQLCHAR*)pwd.data(), SQL_NTS ) ) )
+    if (!active_ && !SQL_SUCCEEDED(nReturn=SQLConnect( hDbc_, (SQLCHAR*)dataSourceName.ascii(), SQL_NTS, (SQLCHAR*)uid.ascii(), SQL_NTS, (SQLCHAR*)pwd.ascii(), SQL_NTS ) ) )
       my_msgBox( className_, "SQLConnect", nReturn, NULL, hDbc_, NULL, dataSourceName ) ;
     else
       active_ = true ;
@@ -188,11 +200,19 @@ public:
       System
     };
 
+#ifdef QT_V4LAYOUT
+    classODBC( Q3ListView *pParent, classCanvas *pCanvas );
+#else
     classODBC( QListView *pParent, classCanvas *pCanvas );
+#endif
    ~classODBC() {}
 
     void setOpen( bool );
+#ifdef QT_V4LAYOUT
+    void selectionChanged ( Q3ListViewItem * );
+#else
     void selectionChanged ( QListViewItem * );
+#endif
 
 private:
     classDrivers      *pDrivers;

@@ -33,13 +33,14 @@ CFileDSN::CFileDSN( QWidget* parent, const char* name, QString *cwd )
     QHBoxLayout	*playoutMain	= new QHBoxLayout( playoutTop );
 	QVBoxLayout	*playoutLeft	= new QVBoxLayout( playoutMain, 5 );
 	QHBoxLayout	*playoutHead	= new QHBoxLayout( playoutLeft, 3 );
+	char buffer[ 128 ];
 
     if ( !cwd )
     {
         char szFilePath[ 256 ];
         char szFileName[ 256 ];
 
-        sprintf( szFileName, "%s/ODBCDataSources", odbcinst_system_file_path());
+        sprintf( szFileName, "%s/ODBCDataSources", odbcinst_system_file_path( buffer ));
         SQLGetPrivateProfileString( "ODBC", "FileDSNPath", szFileName, szFilePath, sizeof( szFilePath ), "odbcinst.ini" );
         path.sprintf( "%s", szFilePath );
     }
@@ -62,7 +63,11 @@ CFileDSN::CFileDSN( QWidget* parent, const char* name, QString *cwd )
 	pFileList->setMaximumSize( 32767, 32767 );
 
     playoutHead->addWidget( dirlab, 10 );
+#ifdef QT_V4LAYOUT
+	dirlab->setAlignment( Qt::AlignLeft );
+#else
 	dirlab->setAlignment( AlignLeft );
+#endif
 
     playoutLeft->addWidget( pFileList, 10 );
 
@@ -70,11 +75,18 @@ CFileDSN::CFileDSN( QWidget* parent, const char* name, QString *cwd )
 	pbDir->setGeometry( 10, 10, 100, 35 );
 	pbDir->setMinimumSize( 0, 0 );
 	pbDir->setMaximumSize( 90, 400 );
+#ifdef QT_V4LAYOUT
+	pbDir->setFocusPolicy( Qt::TabFocus );
+	pbDir->setBackgroundMode( Qt::PaletteBackground );
+#else
 	pbDir->setFocusPolicy( QWidget::TabFocus );
 	pbDir->setBackgroundMode( QWidget::PaletteBackground );
+#endif
 	pbDir->setText( "&Set Dir..." );
 	pbDir->setAutoRepeat( FALSE );
+#ifndef QT_V4LAYOUT
 	pbDir->setAutoResize( FALSE );
+#endif
 
     playoutHead->addWidget( pbDir, 10 );
 
@@ -84,11 +96,18 @@ CFileDSN::CFileDSN( QWidget* parent, const char* name, QString *cwd )
 	pbAdd->setGeometry( 290, 10, 100, 30 );
 	pbAdd->setMinimumSize( 0, 0 );
 	pbAdd->setMaximumSize( 32767, 32767 );
+#ifdef QT_V4LAYOUT
+	pbAdd->setFocusPolicy( Qt::TabFocus );
+	pbAdd->setBackgroundMode( Qt::PaletteBackground );
+#else
 	pbAdd->setFocusPolicy( QWidget::TabFocus );
 	pbAdd->setBackgroundMode( QWidget::PaletteBackground );
+#endif
 	pbAdd->setText( "A&dd..." );
 	pbAdd->setAutoRepeat( FALSE );
+#ifndef QT_V4LAYOUT
 	pbAdd->setAutoResize( FALSE );
+#endif
 
     playoutButtons->addWidget( pbAdd );
 
@@ -96,11 +115,18 @@ CFileDSN::CFileDSN( QWidget* parent, const char* name, QString *cwd )
 	pbRemove->setGeometry( 290, 50, 100, 30 );
 	pbRemove->setMinimumSize( 0, 0 );
 	pbRemove->setMaximumSize( 32767, 32767 );
+#ifdef QT_V4LAYOUT
+	pbRemove->setFocusPolicy( Qt::TabFocus );
+	pbRemove->setBackgroundMode( Qt::PaletteBackground );
+#else
 	pbRemove->setFocusPolicy( QWidget::TabFocus );
 	pbRemove->setBackgroundMode( QWidget::PaletteBackground );
+#endif
 	pbRemove->setText( "&Remove" );
 	pbRemove->setAutoRepeat( FALSE );
+#ifndef QT_V4LAYOUT
 	pbRemove->setAutoResize( FALSE );
+#endif
 
     playoutButtons->addWidget( pbRemove );
 
@@ -108,11 +134,18 @@ CFileDSN::CFileDSN( QWidget* parent, const char* name, QString *cwd )
 	pbConfigure->setGeometry( 290, 90, 100, 30 );
 	pbConfigure->setMinimumSize( 0, 0 );
 	pbConfigure->setMaximumSize( 32767, 32767 );
+#ifdef QT_V4LAYOUT
+	pbConfigure->setFocusPolicy( Qt::TabFocus );
+	pbConfigure->setBackgroundMode( Qt::PaletteBackground );
+#else
 	pbConfigure->setFocusPolicy( QWidget::TabFocus );
 	pbConfigure->setBackgroundMode( QWidget::PaletteBackground );
+#endif
 	pbConfigure->setText( "&Configure..." );
 	pbConfigure->setAutoRepeat( FALSE );
+#ifndef QT_V4LAYOUT
 	pbConfigure->setAutoResize( FALSE );
+#endif
 
     playoutButtons->addWidget( pbConfigure );
 
@@ -139,7 +172,12 @@ CFileDSN::CFileDSN( QWidget* parent, const char* name, QString *cwd )
 	plabel2->setMinimumSize( 0, 0 );
 	plabel2->setMaximumSize( 32767, 32767 );
 	plabel2->setText( "An ODBC File data source can be stored on a file server to be shared among many users on a network. All users should have required drivers installed on their machine." );
+#ifdef QT_V4LAYOUT
+	plabel2->setAlignment( Qt::AlignLeft | Qt::WordBreak );
+	plabel2->setWordWrap( true );
+#else
 	plabel2->setAlignment( AlignLeft | WordBreak );
+#endif
 
 	playoutHelp->addWidget( plabel1, 0, 0 );
     playoutHelp->addWidget( plabel2, 0, 1 );

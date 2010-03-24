@@ -23,9 +23,12 @@
  *
  **********************************************************************
  *
- * $Id: SQLMoreResults.c,v 1.1.1.1 2001/10/17 16:40:15 lurcher Exp $
+ * $Id: SQLMoreResults.c,v 1.2 2008/11/03 14:53:29 lurcher Exp $
  *
  * $Log: SQLMoreResults.c,v $
+ * Revision 1.2  2008/11/03 14:53:29  lurcher
+ * Allow cursor lib to handle multiple result sets
+ *
  * Revision 1.1.1.1  2001/10/17 16:40:15  lurcher
  *
  * First upload to SourceForge
@@ -47,7 +50,27 @@
 SQLRETURN CLMoreResults( SQLHSTMT statement_handle )
 {
     CLHSTMT cl_statement = (CLHSTMT) statement_handle; 
+	SQLRETURN ret;
 
-    return SQLMORERESULTS( cl_statement -> cl_connection,
+    ret = SQLMORERESULTS( cl_statement -> cl_connection,
             cl_statement -> driver_stmt );
+
+    if ( SQL_SUCCEEDED( ret ))
+    {
+        SQLSMALLINT column_count;
+
+        ret = SQLNUMRESULTCOLS( cl_statement -> cl_connection,
+           cl_statement -> driver_stmt,
+           &column_count );
+
+        cl_statement -> column_count = column_count;
+        cl_statement -> first_fetch_done = 0;
+
+        if ( column_count > 0 )
+        {
+            ret = get_column_names( cl_statement );
+        }
+    }
+
+	return ret;
 }

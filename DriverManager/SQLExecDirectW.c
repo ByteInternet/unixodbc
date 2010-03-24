@@ -26,9 +26,18 @@
  *
  **********************************************************************
  *
- * $Id: SQLExecDirectW.c,v 1.6 2003/10/30 18:20:45 lurcher Exp $
+ * $Id: SQLExecDirectW.c,v 1.9 2008/08/29 08:01:38 lurcher Exp $
  *
  * $Log: SQLExecDirectW.c,v $
+ * Revision 1.9  2008/08/29 08:01:38  lurcher
+ * Alter the way W functions are passed to the driver
+ *
+ * Revision 1.8  2007/02/28 15:37:48  lurcher
+ * deal with drivers that call internal W functions and end up in the driver manager. controlled by the --enable-handlemap configure arg
+ *
+ * Revision 1.7  2006/04/11 10:22:56  lurcher
+ * Fix a data type check
+ *
  * Revision 1.6  2003/10/30 18:20:45  lurcher
  *
  * Fix broken thread protection
@@ -99,6 +108,35 @@ SQLRETURN SQLExecDirectW( SQLHSTMT statement_handle,
                     LOG_INFO, 
                     "Error: SQL_INVALID_HANDLE" );
 
+#ifdef WITH_HANDLE_REDIRECT
+		{
+			DMHSTMT parent_statement;
+
+			parent_statement = find_parent_handle( statement, SQL_HANDLE_STMT );
+
+			if ( parent_statement ) {
+        		dm_log_write( __FILE__, 
+                	__LINE__, 
+                    	LOG_INFO, 
+                    	LOG_INFO, 
+                    	"Info: found parent handle" );
+
+				if ( CHECK_SQLEXECDIRECTW( parent_statement -> connection ))
+				{
+        			dm_log_write( __FILE__, 
+                		__LINE__, 
+                   		 	LOG_INFO, 
+                   		 	LOG_INFO, 
+                   		 	"Info: calling redirected driver function" );
+
+                	return  SQLEXECDIRECTW( parent_statement -> connection,
+							statement,
+							statement_text,
+							text_length );
+				}
+			}
+		}
+#endif
         return SQL_INVALID_HANDLE;
     }
 
@@ -112,15 +150,15 @@ SQLRETURN SQLExecDirectW( SQLHSTMT statement_handle,
 
         if ( statement_text && text_length == SQL_NTS )
         {
-             s1 = malloc( wide_strlen( statement_text ) * 2 + 101 );
+             s1 = malloc( wide_strlen( statement_text ) * 2 + LOG_MESSAGE_LEN * 2 );
         }
         else if ( statement_text )
         {
-            s1 = malloc( text_length + 101 );
+            s1 = malloc( text_length + LOG_MESSAGE_LEN * 2 );
         }
         else
         {
-            s1 = malloc( 101 );
+            s1 = malloc( LOG_MESSAGE_LEN * 2 );
         }
 
         sprintf( statement -> msg, "\n\t\tEntry:\
@@ -231,7 +269,8 @@ SQLRETURN SQLExecDirectW( SQLHSTMT statement_handle,
         }
     }
 
-    if ( statement -> connection -> unicode_driver )
+    if ( statement -> connection -> unicode_driver ||
+		    CHECK_SQLEXECDIRECTW( statement -> connection ))
     {
 #ifdef NR_PROBE
         if ( !CHECK_SQLEXECDIRECTW( statement -> connection ) ||

@@ -27,9 +27,12 @@
  *
  **********************************************************************
  *
- * $Id: SQLNumResultCols.c,v 1.3 2003/10/30 18:20:46 lurcher Exp $
+ * $Id: SQLNumResultCols.c,v 1.4 2007/01/02 10:27:50 lurcher Exp $
  *
  * $Log: SQLNumResultCols.c,v $
+ * Revision 1.4  2007/01/02 10:27:50  lurcher
+ * Fix descriptor leak with unicode only driver
+ *
  * Revision 1.3  2003/10/30 18:20:46  lurcher
  *
  * Fix broken thread protection
@@ -110,7 +113,7 @@
 
 #include "drivermanager.h"
 
-static char const rcsid[]= "$RCSfile: SQLNumResultCols.c,v $ $Revision: 1.3 $";
+static char const rcsid[]= "$RCSfile: SQLNumResultCols.c,v $ $Revision: 1.4 $";
 
 SQLRETURN SQLNumResultCols( SQLHSTMT statement_handle,
            SQLSMALLINT *column_count )
@@ -224,11 +227,18 @@ SQLRETURN SQLNumResultCols( SQLHSTMT statement_handle,
 
     if ( log_info.log_flag )
     {
-        sprintf( statement -> msg, 
+		if ( SQL_SUCCEEDED( ret )) {
+        	sprintf( statement -> msg, 
                 "\n\t\tExit:[%s]\
                 \n\t\t\tCount = %s",
                     __get_return_status( ret, s2 ),
                     __sptr_as_string( s1, column_count ));
+		}
+		else {
+        	sprintf( statement -> msg, 
+                "\n\t\tExit:[%s]",
+                    __get_return_status( ret, s2 ));
+		}
 
         dm_log_write( __FILE__, 
                 __LINE__, 

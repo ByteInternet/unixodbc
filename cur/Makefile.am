@@ -1,19 +1,16 @@
 lib_LTLIBRARIES = libodbccr.la
 
 INCLUDES = -I@top_srcdir@/include \
-            -I@top_srcdir@/DriverManager $(INCLTDL)
+            -I@top_srcdir@/DriverManager $(LTDLINCL)
 
 EXTRA_DIST = \
 	cursorlibrary.h \
 	cur.exp
 
 libodbccr_la_LDFLAGS = \
+	-no-undefined \
 	-version-info @LIB_VERSION@ \
 	-export-symbols @srcdir@/cur.exp -export-dynamic 
-
-# PAH - Redundant?
-#libodbccr_la_DEPENDENCIES = \
-#    $(LIBLTDL)
 
 libodbccr_la_SOURCES = \
     SQLAllocHandle.c \

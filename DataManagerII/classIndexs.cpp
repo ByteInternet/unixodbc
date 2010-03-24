@@ -12,10 +12,18 @@
 
 #include "classIndexs.h"
 #include "classODBC.h"  // my_msgBox
+#ifdef QT_V4LAYOUT
+#include <Qt/qpixmap.h>
+#else
 #include <qpixmap.h>
+#endif
 #include "keysilver2.xpm"
 
+#ifdef QT_V4LAYOUT
+classIndexs::classIndexs( Q3ListViewItem *pParent, Q3ListViewItem *pAfter, classCanvas *pCanvas, SQLHENV hDbc, const char *pszTable, const char *pszLibrary )
+#else
 classIndexs::classIndexs( QListViewItem *pParent, QListViewItem *pAfter, classCanvas *pCanvas, SQLHENV hDbc, const char *pszTable, const char *pszLibrary )
+#endif
     : classNode( pParent, pAfter, pCanvas ), hDbc( hDbc ), qsTable( pszTable ), qsLibrary( pszLibrary )
 {
   setText( 0, "Indexs" );
@@ -33,7 +41,11 @@ void classIndexs::setOpen( bool bOpen )
   else
     listIndexs.clear() ;
 
+#ifdef QT_V4LAYOUT
+  Q3ListViewItem::setOpen( bOpen );
+#else
   QListViewItem::setOpen( bOpen );
+#endif
 }
 
 void classIndexs::LoadIndexs()
@@ -52,7 +64,7 @@ void classIndexs::LoadIndexs()
   StatementScoper stmt( hDbc ) ; if ( !stmt() ) return ;
 
   // EXECUTE OUR SQL/CALL
-  if ( !SQL_SUCCEEDED(nReturn=SQLStatistics( stmt(), 0, 0, (SQLCHAR*)qsLibrary.data(), SQL_NTS, (SQLCHAR*)qsTable.data(), SQL_NTS, 0, 0 ) ) )
+  if ( !SQL_SUCCEEDED(nReturn=SQLStatistics( stmt(), 0, 0, (SQLCHAR*)qsLibrary.ascii(), SQL_NTS, (SQLCHAR*)qsTable.ascii(), SQL_NTS, 0, 0 ) ) )
     return my_msgBox( "classIndexs", "SQLStatistics", nReturn, NULL, NULL, stmt() ) ;
 
   // GET RESULTS
@@ -72,7 +84,7 @@ void classIndexs::LoadIndexs()
     if ( !SQL_SUCCEEDED(nReturn) || nIndicator == SQL_NULL_DATA )
       strcpy( (char *)szIndexName, "Unknown" );
 
-    qsDesc.sprintf("Column=%s %s", QString((char*)szColumnName).stripWhiteSpace().data(), (char*)szUnique ) ;
+    qsDesc.sprintf("Column=%s %s", QString((char*)szColumnName).stripWhiteSpace().ascii(), (char*)szUnique ) ;
     listIndexs.append( pColumn = new classColumn( this, pColumn, pCanvas, hDbc, QString((char*)szIndexName).stripWhiteSpace(), "INDEX", qsDesc ) );
   }
 }

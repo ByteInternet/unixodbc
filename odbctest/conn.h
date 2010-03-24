@@ -24,6 +24,19 @@
 #ifndef CONN_H
 #define CONN_H
 
+#ifdef QT_V4LAYOUT
+#include <Qt/qwidget.h>
+#include <Qt/qdialog.h>
+#include <Qt/qpushbutton.h>
+#include <Qt/qcombobox.h>
+#include <Qt/qcheckbox.h>
+#include <Qt/qlabel.h>
+#include <Qt/q3listbox.h>
+#include <Qt/q3buttongroup.h>
+#include <Qt/qradiobutton.h>
+#include <Qt/qlineedit.h>
+#include <Qt/q3multilineedit.h>
+#else
 #include <qwidget.h>
 #include <qdialog.h>
 #include <qpushbutton.h>
@@ -35,6 +48,7 @@
 #include <qradiobutton.h>
 #include <qlineedit.h>
 #include <qmultilineedit.h>
+#endif
 #include "odbctest.h"
 
 class dConnect : public QDialog 
@@ -51,7 +65,11 @@ class dConnect : public QDialog
 		QComboBox *server_len, *user_len, *auth_len;
 		QLabel *l_handle, *l_server, *l_user, *l_auth;
 		QLabel *l_server_len, *l_user_len, *l_auth_len;
+#ifdef QT_V4LAYOUT
+		Q3MultiLineEdit *in_win;
+#else
 		QMultiLineEdit *in_win;
+#endif
 		OutputWin *out_win;
 		OdbcTest *odbctest;
 		QString txt;
@@ -72,7 +90,11 @@ class dDisconnect : public QDialog
 		QPushButton *ok, *cancel, *help;
 		QComboBox *handles;
 		QLabel *l_handle;
+#ifdef QT_V4LAYOUT
+		Q3MultiLineEdit *in_win;
+#else
 		QMultiLineEdit *in_win;
+#endif
 		OutputWin *out_win;
 		OdbcTest *odbctest;
 		QString txt;
@@ -93,12 +115,18 @@ class dFullConnect : public QDialog
 		QPushButton *ok, *cancel, *help;
 		QComboBox *handles;
 		QLineEdit *dsn, *usr, *pwd;
-		QListBox *dsn_list;
 		QLabel *l_handle, *l_dsn, *l_usr, *l_pwd;
+#ifdef QT_V4LAYOUT
+		Q3ListBox *dsn_list;
+		Q3MultiLineEdit *in_win;
+		Q3ButtonGroup *version, *cursor;
+#else
+		QListBox *dsn_list;
 		QMultiLineEdit *in_win;
+		QButtonGroup *version, *cursor;
+#endif
 		OutputWin *out_win;
 		OdbcTest *odbctest;
-		QButtonGroup *version, *cursor;
 		QRadioButton *ver_2, *ver_3, *ver_def; 
 		QRadioButton *cur_ifneeded, *cur_use, *cur_driver, *cur_default;
 		QString txt;
@@ -122,7 +150,11 @@ class dGetInfo : public QDialog
 		QLineEdit *buffer_len;
 		QCheckBox *target_valid, *strlen_valid;
 		QLabel *l_handle, *l_type, *l_buffer_len;
+#ifdef QT_V4LAYOUT
+		Q3MultiLineEdit *in_win;
+#else
 		QMultiLineEdit *in_win;
+#endif
 		OutputWin *out_win;
 		OdbcTest *odbctest;
 		QString txt;
@@ -146,7 +178,11 @@ class dGetFunctions : public QDialog
 		QComboBox *handles, *type;
 		QCheckBox *target_valid;
 		QLabel *l_handle, *l_type;
+#ifdef QT_V4LAYOUT
+		Q3MultiLineEdit *in_win;
+#else
 		QMultiLineEdit *in_win;
+#endif
 		OutputWin *out_win;
 		OdbcTest *odbctest;
 		QString txt;
@@ -171,7 +207,11 @@ class dBrowseConnect : public QDialog
 		QCheckBox *out_str_valid, *strlen_valid;
 		QLabel *l_handle, *l_out_str, *l_buffer_len;
 		QLabel *l_str_len, *l_in_str;
+#ifdef QT_V4LAYOUT
+		Q3MultiLineEdit *in_win;
+#else
 		QMultiLineEdit *in_win;
+#endif
 		OutputWin *out_win;
 		OdbcTest *odbctest;
 		QString txt;
@@ -197,7 +237,11 @@ class dDriverConnect : public QDialog
 		QCheckBox *out_str_valid, *strlen_valid;
 		QLabel *l_handle, *l_out_str, *l_buffer_len;
 		QLabel *l_str_len, *l_in_str, *l_driver_completion;
+#ifdef QT_V4LAYOUT
+		Q3MultiLineEdit *in_win;
+#else
 		QMultiLineEdit *in_win;
+#endif
 		OutputWin *out_win;
 		OdbcTest *odbctest;
 		QString txt;
@@ -223,7 +267,11 @@ class dNativeSQL : public QDialog
 		QCheckBox *out_str_valid, *strlen_valid;
 		QLabel *l_handle, *l_out_str, *l_buffer_len;
 		QLabel *l_str_len, *l_in_str;
+#ifdef QT_V4LAYOUT
+		Q3MultiLineEdit *in_win;
+#else
 		QMultiLineEdit *in_win;
+#endif
 		OutputWin *out_win;
 		OdbcTest *odbctest;
 		QString txt;
@@ -244,7 +292,11 @@ class dAllocConnect : public QDialog
 
 	protected:
 		QPushButton *ok, *cancel, *help;
+#ifdef QT_V4LAYOUT
+		Q3MultiLineEdit *in_win;
+#else
 		QMultiLineEdit *in_win;
+#endif
 		QCheckBox *handle_valid;
         QComboBox *handles;
         QLabel *l_handles;
@@ -267,7 +319,11 @@ class dFreeConnect : public QDialog
 
 	protected:
 		QPushButton *ok, *cancel, *help;
+#ifdef QT_V4LAYOUT
+		Q3MultiLineEdit *in_win;
+#else
 		QMultiLineEdit *in_win;
+#endif
 		QComboBox *handles;
 		QLabel *l_handles;
 		OutputWin *out_win;

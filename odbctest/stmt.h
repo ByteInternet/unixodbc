@@ -24,12 +24,21 @@
 #ifndef STMT_H
 #define STMT_H
 
+#ifdef QT_V4LAYOUT
+#include <Qt/qwidget.h>
+#include <Qt/qdialog.h>
+#include <Qt/qpushbutton.h>
+#include <Qt/qcombobox.h>
+#include <Qt/qcheckbox.h>
+#include <Qt/qlabel.h>
+#else
 #include <qwidget.h>
 #include <qdialog.h>
 #include <qpushbutton.h>
 #include <qcombobox.h>
 #include <qcheckbox.h>
 #include <qlabel.h>
+#endif
 #include "odbctest.h"
 
 class dPrepare : public QDialog 
@@ -44,7 +53,11 @@ class dPrepare : public QDialog
 		QPushButton *ok, *cancel, *help;
 		QComboBox *handles, *str, *name_len;
 		QLabel *l_handle, *l_str, *l_name_len;
+#ifdef QT_V4LAYOUT
+		Q3MultiLineEdit *in_win;
+#else
 		QMultiLineEdit *in_win;
+#endif
 		OutputWin *out_win;
 		OdbcTest *odbctest;
 		QString txt;
@@ -65,7 +78,11 @@ class dExecute : public QDialog
 		QPushButton *ok, *cancel, *help;
 		QComboBox *handles;
 		QLabel *l_handle;
+#ifdef QT_V4LAYOUT
+		Q3MultiLineEdit *in_win;
+#else
 		QMultiLineEdit *in_win;
+#endif
 		OutputWin *out_win;
 		OdbcTest *odbctest;
 		QString txt;
@@ -86,7 +103,11 @@ class dExecDirect : public QDialog
 		QPushButton *ok, *cancel, *help;
 		QComboBox *handles, *str, *name_len;
 		QLabel *l_handle, *l_str, *l_name_len;
+#ifdef QT_V4LAYOUT
+		Q3MultiLineEdit *in_win;
+#else
 		QMultiLineEdit *in_win;
+#endif
 		OutputWin *out_win;
 		OdbcTest *odbctest;
 		QString txt;
@@ -108,7 +129,11 @@ class dNumParams : public QDialog
 		QComboBox *handles;
 		QCheckBox *valid;
 		QLabel *l_handle;
+#ifdef QT_V4LAYOUT
+		Q3MultiLineEdit *in_win;
+#else
 		QMultiLineEdit *in_win;
+#endif
 		OutputWin *out_win;
 		OdbcTest *odbctest;
 		QString txt;
@@ -130,7 +155,11 @@ class dCancel : public QDialog
 		QPushButton *ok, *cancel, *help;
 		QComboBox *handles;
 		QLabel *l_handle;
+#ifdef QT_V4LAYOUT
+		Q3MultiLineEdit *in_win;
+#else
 		QMultiLineEdit *in_win;
+#endif
 		OutputWin *out_win;
 		OdbcTest *odbctest;
 		QString txt;
@@ -151,7 +180,11 @@ class dCloseCursor : public QDialog
 		QPushButton *ok, *cancel, *help;
 		QComboBox *handles;
 		QLabel *l_handle;
+#ifdef QT_V4LAYOUT
+		Q3MultiLineEdit *in_win;
+#else
 		QMultiLineEdit *in_win;
+#endif
 		OutputWin *out_win;
 		OdbcTest *odbctest;
 		QString txt;
@@ -174,7 +207,11 @@ class dGetCursorName : public QDialog
 		QLabel *l_handle, *l_option, *l_buffer_len;
 		QCheckBox *name_valid, *cursor_valid;
 		QLineEdit *buffer_len;
+#ifdef QT_V4LAYOUT
+		Q3MultiLineEdit *in_win;
+#else
 		QMultiLineEdit *in_win;
+#endif
 		OutputWin *out_win;
 		OdbcTest *odbctest;
 		QString txt;
@@ -197,7 +234,11 @@ class dFreeStmt : public QDialog
 		QPushButton *ok, *cancel, *help;
 		QComboBox *handles, *option;
 		QLabel *l_handle, *l_option;
+#ifdef QT_V4LAYOUT
+		Q3MultiLineEdit *in_win;
+#else
 		QMultiLineEdit *in_win;
+#endif
 		OutputWin *out_win;
 		OdbcTest *odbctest;
 		QString txt;
@@ -218,7 +259,11 @@ class dSetCursorName : public QDialog
 		QPushButton *ok, *cancel, *help;
 		QComboBox *handles, *str, *name_len;
 		QLabel *l_handle, *l_str, *l_name_len;
+#ifdef QT_V4LAYOUT
+		Q3MultiLineEdit *in_win;
+#else
 		QMultiLineEdit *in_win;
+#endif
 		OutputWin *out_win;
 		OdbcTest *odbctest;
 		QString txt;
@@ -244,7 +289,11 @@ class dDescribeParam : public QDialog
 		QCheckBox *digit_valid;
 		QCheckBox *size_valid;
 		QCheckBox *null_valid;
+#ifdef QT_V4LAYOUT
+		Q3MultiLineEdit *in_win;
+#else
 		QMultiLineEdit *in_win;
+#endif
 		OutputWin *out_win;
 		OdbcTest *odbctest;
 		QString txt;
@@ -271,7 +320,11 @@ class dParamData : public QDialog
 		QComboBox *handles;
 		QLabel *l_handle;
 		QCheckBox *value_valid;
+#ifdef QT_V4LAYOUT
+		Q3MultiLineEdit *in_win;
+#else
 		QMultiLineEdit *in_win;
+#endif
 		OutputWin *out_win;
 		OdbcTest *odbctest;
 		QString txt;
@@ -296,7 +349,11 @@ class dParamOption : public QDialog
 		QLineEdit *crow_num;
 		QLabel *l_param_num, *l_crow_num;
 		QCheckBox *pirow_valid;
+#ifdef QT_V4LAYOUT
+		Q3MultiLineEdit *in_win;
+#else
 		QMultiLineEdit *in_win;
+#endif
 		OutputWin *out_win;
 		OdbcTest *odbctest;
 		QString txt;
@@ -318,7 +375,11 @@ class dPutData : public QDialog
 		QPushButton *ok, *cancel, *help;
 		QComboBox *handles, *data_ptr, *str_len;
 		QLabel *l_handle, *l_data_ptr, *l_str_len;
+#ifdef QT_V4LAYOUT
+		Q3MultiLineEdit *in_win;
+#else
 		QMultiLineEdit *in_win;
+#endif
 		OutputWin *out_win;
 		OdbcTest *odbctest;
 		QString txt;
@@ -344,7 +405,11 @@ class dBindParameter : public QDialog
         QLineEdit *column_size, *decimal_digits, *buffer_length, *param_num;
         QLabel *l_column_size, *l_decimal_digits, *l_buffer_length;
 		QCheckBox *len_data_at_exec;
+#ifdef QT_V4LAYOUT
+		Q3MultiLineEdit *in_win;
+#else
 		QMultiLineEdit *in_win;
+#endif
 		OutputWin *out_win;
 		OdbcTest *odbctest;
 		QString txt;
@@ -370,7 +435,11 @@ class dBindParam : public QDialog
         QLineEdit *column_size, *decimal_digits, *param_num;
         QLabel *l_column_size, *l_decimal_digits;
 		QCheckBox *len_data_at_exec;
+#ifdef QT_V4LAYOUT
+		Q3MultiLineEdit *in_win;
+#else
 		QMultiLineEdit *in_win;
+#endif
 		OutputWin *out_win;
 		OdbcTest *odbctest;
 		QString txt;
@@ -389,7 +458,11 @@ class dAllocStmt : public QDialog
 
 	protected:
 		QPushButton *ok, *cancel, *help;
+#ifdef QT_V4LAYOUT
+		Q3MultiLineEdit *in_win;
+#else
 		QMultiLineEdit *in_win;
+#endif
 		QCheckBox *handle_valid;
         QComboBox *handles;
         QLabel *l_handles;

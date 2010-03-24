@@ -27,9 +27,15 @@
  *
  **********************************************************************
  *
- * $Id: SQLGetDiagRecW.c,v 1.7 2002/12/05 17:44:31 lurcher Exp $
+ * $Id: SQLGetDiagRecW.c,v 1.9 2007/11/26 11:37:23 lurcher Exp $
  *
  * $Log: SQLGetDiagRecW.c,v $
+ * Revision 1.9  2007/11/26 11:37:23  lurcher
+ * Sync up before tag
+ *
+ * Revision 1.8  2007/02/28 15:37:48  lurcher
+ * deal with drivers that call internal W functions and end up in the driver manager. controlled by the --enable-handlemap configure arg
+ *
  * Revision 1.7  2002/12/05 17:44:31  lurcher
  *
  * Display unknown return values in return logging
@@ -386,7 +392,7 @@ SQLRETURN SQLGetDiagRecW( SQLSMALLINT handle_type,
                     \n\t\t\tMessage Text = %s",
                         __get_return_status( ret, s2 ),
                         ts1 = unicode_to_ansi_alloc( sqlstate, SQL_NTS, NULL ),
-                        __ptr_as_string( s0, native ),
+                        __iptr_as_string( s0, native ),
                         __sdata_as_string( s1, SQL_CHAR, 
                             text_length_ptr, ts2 = unicode_to_ansi_alloc( message_text, SQL_NTS, NULL )));
 
@@ -423,6 +429,40 @@ SQLRETURN SQLGetDiagRecW( SQLSMALLINT handle_type,
                     LOG_INFO, 
                     "Error: SQL_INVALID_HANDLE" );
 
+#ifdef WITH_HANDLE_REDIRECT
+		{
+			DMHDBC parent_connection;
+
+			parent_connection = find_parent_handle( connection, SQL_HANDLE_DBC );
+
+			if ( parent_connection ) {
+        		dm_log_write( __FILE__, 
+                	__LINE__, 
+                    	LOG_INFO, 
+                    	LOG_INFO, 
+                    	"Info: found parent handle" );
+
+				if ( CHECK_SQLGETDIAGRECW( parent_connection ))
+				{
+        			dm_log_write( __FILE__, 
+                		__LINE__, 
+                   		 	LOG_INFO, 
+                   		 	LOG_INFO, 
+                   		 	"Info: calling redirected driver function" );
+
+					return SQLGETDIAGRECW( parent_connection, 
+							handle_type,
+							connection, 
+        					rec_number,
+        					sqlstate,
+        					native,
+        					message_text,
+        					buffer_length,
+        					text_length_ptr );
+				}
+			}
+		}
+#endif
             return SQL_INVALID_HANDLE;
         }
 
@@ -475,7 +515,7 @@ SQLRETURN SQLGetDiagRecW( SQLSMALLINT handle_type,
                     \n\t\t\tMessage Text = %s",
                         __get_return_status( ret, s2 ),
                         ts1 = unicode_to_ansi_alloc( sqlstate, SQL_NTS, connection ),
-                        __ptr_as_string( s0, native ),
+                        __iptr_as_string( s0, native ),
                         __sdata_as_string( s1, SQL_CHAR, 
                             text_length_ptr, ts2 = unicode_to_ansi_alloc( message_text, SQL_NTS, connection )));
 
@@ -512,6 +552,40 @@ SQLRETURN SQLGetDiagRecW( SQLSMALLINT handle_type,
                     LOG_INFO, 
                     "Error: SQL_INVALID_HANDLE" );
 
+#ifdef WITH_HANDLE_REDIRECT
+		{
+			DMHSTMT parent_statement;
+
+			parent_statement = find_parent_handle( statement, SQL_HANDLE_STMT );
+
+			if ( parent_statement ) {
+        		dm_log_write( __FILE__, 
+                	__LINE__, 
+                    	LOG_INFO, 
+                    	LOG_INFO, 
+                    	"Info: found parent handle" );
+
+				if ( CHECK_SQLGETDIAGRECW( parent_statement -> connection ))
+				{
+        			dm_log_write( __FILE__, 
+                		__LINE__, 
+                   		 	LOG_INFO, 
+                   		 	LOG_INFO, 
+                   		 	"Info: calling redirected driver function" );
+
+					return SQLGETDIAGRECW( parent_statement -> connection, 
+							handle_type,
+							statement,
+        					rec_number,
+        					sqlstate,
+        					native,
+        					message_text,
+        					buffer_length,
+        					text_length_ptr );
+				}
+			}
+		}
+#endif
             return SQL_INVALID_HANDLE;
         }
 
@@ -564,7 +638,7 @@ SQLRETURN SQLGetDiagRecW( SQLSMALLINT handle_type,
                     \n\t\t\tMessage Text = %s",
                         __get_return_status( ret, s2 ),
                         ts1 = unicode_to_ansi_alloc( sqlstate, SQL_NTS, statement -> connection ),
-                        __ptr_as_string( s0, native ),
+                        __iptr_as_string( s0, native ),
                         __sdata_as_string( s1, SQL_CHAR, 
                             text_length_ptr, ts2 = unicode_to_ansi_alloc( message_text, SQL_NTS, statement -> connection )));
 
@@ -601,6 +675,40 @@ SQLRETURN SQLGetDiagRecW( SQLSMALLINT handle_type,
                     LOG_INFO, 
                     "Error: SQL_INVALID_HANDLE" );
 
+#ifdef WITH_HANDLE_REDIRECT
+		{
+			DMHDESC parent_desc;
+
+			parent_desc = find_parent_handle( descriptor, SQL_HANDLE_DESC );
+
+			if ( parent_desc ) {
+        		dm_log_write( __FILE__, 
+                	__LINE__, 
+                    	LOG_INFO, 
+                    	LOG_INFO, 
+                    	"Info: found parent handle" );
+
+				if ( CHECK_SQLGETDIAGRECW( parent_desc -> connection ))
+				{
+        			dm_log_write( __FILE__, 
+                		__LINE__, 
+                   		 	LOG_INFO, 
+                   		 	LOG_INFO, 
+                   		 	"Info: calling redirected driver function" );
+
+					return SQLGETDIAGRECW( parent_desc -> connection, 
+							handle_type,
+							descriptor,
+        					rec_number,
+        					sqlstate,
+        					native,
+        					message_text,
+        					buffer_length,
+        					text_length_ptr );
+				}
+			}
+		}
+#endif
             return SQL_INVALID_HANDLE;
         }
 
@@ -653,7 +761,7 @@ SQLRETURN SQLGetDiagRecW( SQLSMALLINT handle_type,
                     \n\t\t\tMessage Text = %s",
                         __get_return_status( ret, s2 ),
                         ts1 = unicode_to_ansi_alloc( sqlstate, SQL_NTS, descriptor -> connection ),
-                        __ptr_as_string( s0, native ),
+                        __iptr_as_string( s0, native ),
                         __sdata_as_string( s1, SQL_CHAR, 
                             text_length_ptr, ts2 = unicode_to_ansi_alloc( message_text, SQL_NTS, descriptor -> connection )));
 

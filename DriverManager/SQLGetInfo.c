@@ -27,9 +27,24 @@
  *
  **********************************************************************
  *
- * $Id: SQLGetInfo.c,v 1.7 2004/11/22 17:02:49 lurcher Exp $
+ * $Id: SQLGetInfo.c,v 1.12 2008/09/29 14:02:45 lurcher Exp $
  *
  * $Log: SQLGetInfo.c,v $
+ * Revision 1.12  2008/09/29 14:02:45  lurcher
+ * Fix missing dlfcn group option
+ *
+ * Revision 1.11  2007/01/02 10:29:18  lurcher
+ * Fix descriptor leak with unicode only driver
+ *
+ * Revision 1.10  2006/08/31 12:44:52  lurcher
+ * Check in for 2.2.12 release
+ *
+ * Revision 1.9  2006/01/06 18:44:35  lurcher
+ * Couple of unicode fixes
+ *
+ * Revision 1.8  2005/10/06 08:50:58  lurcher
+ * Fix problem with SQLDrivers not returning first entry
+ *
  * Revision 1.7  2004/11/22 17:02:49  lurcher
  * Fix unicode/ansi conversion in the SQLGet functions
  *
@@ -150,7 +165,7 @@
 
 #include "drivermanager.h"
 
-static char const rcsid[]= "$RCSfile: SQLGetInfo.c,v $ $Revision: 1.7 $";
+static char const rcsid[]= "$RCSfile: SQLGetInfo.c,v $ $Revision: 1.12 $";
 
 SQLRETURN SQLGetInfoA( SQLHDBC connection_handle,
            SQLUSMALLINT info_type,
@@ -165,7 +180,7 @@ SQLRETURN SQLGetInfoA( SQLHDBC connection_handle,
                 string_length );
 }
 
-SQLRETURN SQLGetInfo( SQLHDBC connection_handle,
+SQLRETURN __SQLGetInfo( SQLHDBC connection_handle,
            SQLUSMALLINT info_type,
            SQLPOINTER info_value,
            SQLSMALLINT buffer_length,
@@ -174,95 +189,10 @@ SQLRETURN SQLGetInfo( SQLHDBC connection_handle,
     DMHDBC connection = (DMHDBC)connection_handle;
     SQLRETURN ret = SQL_SUCCESS;
     int type;
+	SQLUSMALLINT sval;
     char txt[ 30 ], *cptr;
     SQLPOINTER *ptr;
     SQLCHAR s1[ 100 + LOG_MESSAGE_LEN ];
-
-    /*
-     * check connection
-     */
-
-    if ( !__validate_dbc( connection ))
-    {
-        dm_log_write( __FILE__, 
-                    __LINE__, 
-                    LOG_INFO, 
-                    LOG_INFO, 
-                    "Error: SQL_INVALID_HANDLE" );
-
-        return SQL_INVALID_HANDLE;
-    }
-
-    function_entry( connection );
-
-    if ( log_info.log_flag )
-    {
-        sprintf( connection -> msg, "\n\t\tEntry:\
-            \n\t\t\tConnection = %p\
-            \n\t\t\tInfo Type = %s (%d)\
-            \n\t\t\tInfo Value = %p\
-            \n\t\t\tBuffer Length = %d\
-            \n\t\t\tStrLen = %p",
-                connection,
-                __info_as_string( s1, info_type ),
-                info_type,
-                info_value, 
-                (int)buffer_length,
-                (void*)string_length );
-
-        dm_log_write( __FILE__, 
-                __LINE__, 
-                LOG_INFO, 
-                LOG_INFO, 
-                connection -> msg );
-    }
-
-    thread_protect( SQL_HANDLE_DBC, connection );
-
-    if ( info_type != SQL_ODBC_VER &&
-            connection -> state == STATE_C2 )
-    {
-        dm_log_write( __FILE__, 
-                __LINE__, 
-                LOG_INFO, 
-                LOG_INFO, 
-                "Error: 08003" );
-
-        __post_internal_error( &connection -> error,
-                ERROR_08003, NULL,
-                connection -> environment -> requested_version );
-
-        return function_return( SQL_HANDLE_DBC, connection, SQL_ERROR );
-    }
-    else if ( connection -> state == STATE_C3 )
-    {
-        dm_log_write( __FILE__, 
-                __LINE__, 
-                LOG_INFO, 
-                LOG_INFO, 
-                "Error: 08003" );
-
-        __post_internal_error( &connection -> error,
-                ERROR_08003, NULL,
-                connection -> environment -> requested_version );
-
-        return function_return( SQL_HANDLE_DBC, connection, SQL_ERROR );
-    }
-
-    if ( buffer_length < 0 )
-    {
-        dm_log_write( __FILE__, 
-                __LINE__, 
-                LOG_INFO, 
-                LOG_INFO, 
-                "Error: HY090" );
-
-        __post_internal_error( &connection -> error,
-                ERROR_HY090, NULL,
-                connection -> environment -> requested_version );
-
-        return function_return( SQL_HANDLE_DBC, connection, SQL_ERROR );
-    }
 
     switch ( info_type )
     {
@@ -360,6 +290,11 @@ SQLRETURN SQLGetInfo( SQLHDBC connection_handle,
         cptr = connection -> cli_year;
         break;
 
+	  case SQL_ATTR_DRIVER_THREADING:
+		type = 3;
+		sval = connection -> threading_level;
+		break;
+
       default:
         /*
          * pass all the others on
@@ -426,7 +361,8 @@ SQLRETURN SQLGetInfo( SQLHDBC connection_handle,
               case SQL_OUTER_JOINS:
                 if ( info_value && buffer_length > 0 )
                 {
-                    s1 = malloc( sizeof( SQLWCHAR ) * ( buffer_length + 1 ));
+					buffer_length = sizeof( SQLWCHAR ) * ( buffer_length + 1 );
+                    s1 = malloc( buffer_length );
                 }
                 break;
             }
@@ -480,11 +416,11 @@ SQLRETURN SQLGetInfo( SQLHDBC connection_handle,
               case SQL_OUTER_JOINS:
                 if ( SQL_SUCCEEDED( ret ) && info_value && s1 )
                 {
-                    unicode_to_ansi_copy( info_value, s1, SQL_NTS, connection );
+                    unicode_to_ansi_copy( info_value, buffer_length, s1, SQL_NTS, connection );
                 }
-				if ( SQL_SUCCEEDED( ret ) && string_length ) 
+				if ( SQL_SUCCEEDED( ret ) && string_length && info_value ) 
 				{
-					*string_length /= sizeof( SQL_WCHAR );	
+					*string_length = strlen(info_value);
 				}
                 break;
             }
@@ -518,19 +454,6 @@ SQLRETURN SQLGetInfo( SQLHDBC connection_handle,
                     string_length );
         }
 
-        if ( log_info.log_flag )
-        {
-            sprintf( connection -> msg, 
-                    "\n\t\tExit:[%s]",
-                        __get_return_status( ret, s1 ));
-
-            dm_log_write( __FILE__, 
-                    __LINE__, 
-                    LOG_INFO, 
-                    LOG_INFO, 
-                    connection -> msg );
-        }
-
         return function_return( SQL_HANDLE_DBC, connection, ret );
     }
 
@@ -561,6 +484,119 @@ SQLRETURN SQLGetInfo( SQLHDBC connection_handle,
         if ( string_length )
             *string_length = sizeof( SQLPOINTER );
     }
+	else if ( type == 3 ) 
+	{
+        if ( info_value )
+            *((SQLUSMALLINT *)info_value) = sval;
+
+        if ( string_length )
+            *string_length = sizeof( SQLUSMALLINT );
+	}
+
+    return function_return( SQL_HANDLE_DBC, connection, ret );
+}
+
+SQLRETURN SQLGetInfo( SQLHDBC connection_handle,
+           SQLUSMALLINT info_type,
+           SQLPOINTER info_value,
+           SQLSMALLINT buffer_length,
+           SQLSMALLINT *string_length )
+{
+    DMHDBC connection = (DMHDBC)connection_handle;
+    SQLRETURN ret = SQL_SUCCESS;
+    int type;
+	SQLUSMALLINT sval;
+    char txt[ 30 ], *cptr;
+    SQLPOINTER *ptr;
+    SQLCHAR s1[ 100 + LOG_MESSAGE_LEN ];
+
+    /*
+     * check connection
+     */
+
+    if ( !__validate_dbc( connection ))
+    {
+        dm_log_write( __FILE__, 
+                    __LINE__, 
+                    LOG_INFO, 
+                    LOG_INFO, 
+                    "Error: SQL_INVALID_HANDLE" );
+
+        return SQL_INVALID_HANDLE;
+    }
+
+    function_entry( connection );
+
+    if ( log_info.log_flag )
+    {
+        sprintf( connection -> msg, "\n\t\tEntry:\
+            \n\t\t\tConnection = %p\
+            \n\t\t\tInfo Type = %s (%d)\
+            \n\t\t\tInfo Value = %p\
+            \n\t\t\tBuffer Length = %d\
+            \n\t\t\tStrLen = %p",
+                connection,
+                __info_as_string( s1, info_type ),
+                info_type,
+                info_value, 
+                (int)buffer_length,
+                (void*)string_length );
+
+        dm_log_write( __FILE__, 
+                __LINE__, 
+                LOG_INFO, 
+                LOG_INFO, 
+                connection -> msg );
+    }
+
+    thread_protect( SQL_HANDLE_DBC, connection );
+
+    if ( info_type != SQL_ODBC_VER &&
+            connection -> state == STATE_C2 )
+    {
+        dm_log_write( __FILE__, 
+                __LINE__, 
+                LOG_INFO, 
+                LOG_INFO, 
+                "Error: 08003" );
+
+        __post_internal_error( &connection -> error,
+                ERROR_08003, NULL,
+                connection -> environment -> requested_version );
+
+        return function_return( SQL_HANDLE_DBC, connection, SQL_ERROR );
+    }
+    else if ( connection -> state == STATE_C3 )
+    {
+        dm_log_write( __FILE__, 
+                __LINE__, 
+                LOG_INFO, 
+                LOG_INFO, 
+                "Error: 08003" );
+
+        __post_internal_error( &connection -> error,
+                ERROR_08003, NULL,
+                connection -> environment -> requested_version );
+
+        return function_return( SQL_HANDLE_DBC, connection, SQL_ERROR );
+    }
+
+    if ( buffer_length < 0 )
+    {
+        dm_log_write( __FILE__, 
+                __LINE__, 
+                LOG_INFO, 
+                LOG_INFO, 
+                "Error: HY090" );
+
+        __post_internal_error( &connection -> error,
+                ERROR_HY090, NULL,
+                connection -> environment -> requested_version );
+
+        return function_return( SQL_HANDLE_DBC, connection, SQL_ERROR );
+    }
+
+	ret = __SQLGetInfo(connection_handle, info_type, info_value, buffer_length, string_length);
 
     if ( log_info.log_flag )
     {

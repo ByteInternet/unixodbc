@@ -27,9 +27,14 @@
  *
  **********************************************************************
  *
- * $Id: SQLSetParam.c,v 1.5 2003/10/30 18:20:46 lurcher Exp $
+ * $Id: SQLSetParam.c,v 1.6 2005/04/26 08:40:35 lurcher Exp $
  *
  * $Log: SQLSetParam.c,v $
+ * Revision 1.6  2005/04/26 08:40:35  lurcher
+ *
+ * Add data type mapping for SQLSetPos.
+ * Remove out of date macro in sqlext.h
+ *
  * Revision 1.5  2003/10/30 18:20:46  lurcher
  *
  * Fix broken thread protection
@@ -126,7 +131,7 @@
 
 #include "drivermanager.h"
 
-static char const rcsid[]= "$RCSfile: SQLSetParam.c,v $ $Revision: 1.5 $";
+static char const rcsid[]= "$RCSfile: SQLSetParam.c,v $ $Revision: 1.6 $";
 
 SQLRETURN SQLSetParam( SQLHSTMT statement_handle,
            SQLUSMALLINT parameter_number,
@@ -233,8 +238,8 @@ SQLRETURN SQLSetParam( SQLHSTMT statement_handle,
         ret = SQLSETPARAM( statement -> connection,
                 statement -> driver_stmt,
                 parameter_number,
-                value_type,
-                parameter_type,
+                __map_type(MAP_C_DM2D,statement->connection,value_type),
+                __map_type(MAP_SQL_DM2D,statement->connection,parameter_type),
                 length_precision,
                 parameter_scale,
                 parameter_value,
@@ -246,8 +251,8 @@ SQLRETURN SQLSetParam( SQLHSTMT statement_handle,
                 statement -> driver_stmt,
                 parameter_number,
                 SQL_PARAM_INPUT_OUTPUT,
-                value_type,
-                parameter_type,
+                __map_type(MAP_C_DM2D,statement->connection,value_type),
+                __map_type(MAP_SQL_DM2D,statement->connection,parameter_type),
                 length_precision,
                 parameter_scale,
                 parameter_value,
@@ -259,8 +264,8 @@ SQLRETURN SQLSetParam( SQLHSTMT statement_handle,
         ret = SQLBINDPARAM( statement -> connection,
                 statement -> driver_stmt,
                 parameter_number,
-                value_type,
-                parameter_type,
+                __map_type(MAP_C_DM2D,statement->connection,value_type),
+                __map_type(MAP_SQL_DM2D,statement->connection,parameter_type),
                 length_precision,
                 parameter_scale,
                 parameter_value,

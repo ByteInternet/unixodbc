@@ -35,7 +35,11 @@ CStats::CStats( QWidget* parent, const char* name )
 
     plabelHelp = new QLabel( pframeHelp, "Label_1" );
     plabelHelp->setText( "These are the number of active ODBC; environments, connections, statements and descriptors." );
+#ifdef QT_V4LAYOUT
+    plabelHelp->setAlignment( Qt::AlignLeft | Qt::WordBreak );
+#else
     plabelHelp->setAlignment( AlignLeft | WordBreak );
+#endif
 
     playoutHelp->addWidget( plabelIcon );
     playoutHelp->addWidget( plabelHelp, 10 );

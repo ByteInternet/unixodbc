@@ -27,9 +27,18 @@
  *
  **********************************************************************
  *
- * $Id: SQLGetDescRecW.c,v 1.7 2004/11/22 17:02:49 lurcher Exp $
+ * $Id: SQLGetDescRecW.c,v 1.10 2008/08/29 08:01:39 lurcher Exp $
  *
  * $Log: SQLGetDescRecW.c,v $
+ * Revision 1.10  2008/08/29 08:01:39  lurcher
+ * Alter the way W functions are passed to the driver
+ *
+ * Revision 1.9  2007/04/02 10:50:19  lurcher
+ * Fix some 64bit problems (only when sizeof(SQLLEN) == 8 )
+ *
+ * Revision 1.8  2007/02/28 15:37:48  lurcher
+ * deal with drivers that call internal W functions and end up in the driver manager. controlled by the --enable-handlemap configure arg
+ *
  * Revision 1.7  2004/11/22 17:02:49  lurcher
  * Fix unicode/ansi conversion in the SQLGet functions
  *
@@ -126,6 +135,43 @@ SQLRETURN SQLGetDescRecW( SQLHDESC descriptor_handle,
                     LOG_INFO, 
                     "Error: SQL_INVALID_HANDLE" );
 
+#ifdef WITH_HANDLE_REDIRECT
+		{
+			DMHDESC parent_desc;
+
+			parent_desc = find_parent_handle( descriptor, SQL_HANDLE_DESC );
+
+			if ( parent_desc ) {
+        		dm_log_write( __FILE__, 
+                	__LINE__, 
+                    	LOG_INFO, 
+                    	LOG_INFO, 
+                    	"Info: found parent handle" );
+
+				if ( CHECK_SQLGETDESCRECW( parent_desc -> connection ))
+				{
+        			dm_log_write( __FILE__, 
+                		__LINE__, 
+                   		 	LOG_INFO, 
+                   		 	LOG_INFO, 
+                   		 	"Info: calling redirected driver function" );
+
+                	return  SQLGETDESCRECW( parent_desc -> connection,
+							descriptor,
+							rec_number,
+							name,
+							buffer_length,
+							string_length,
+							type,
+							sub_type,
+							length,
+							precision,
+							scale,
+							nullable );
+				}
+			}
+		}
+#endif
         return SQL_INVALID_HANDLE;
     }
 
@@ -166,7 +212,8 @@ SQLRETURN SQLGetDescRecW( SQLHDESC descriptor_handle,
 
     thread_protect( SQL_HANDLE_DESC, descriptor );
 
-    if ( descriptor -> connection -> unicode_driver )
+    if ( descriptor -> connection -> unicode_driver ||
+		    CHECK_SQLGETDESCRECW( descriptor -> connection ))
     {
         if ( !CHECK_SQLGETDESCRECW( descriptor -> connection ))
         {
@@ -263,7 +310,7 @@ SQLRETURN SQLGetDescRecW( SQLHDESC descriptor_handle,
                         string_length, name ),
                     __sptr_as_string( s2, type ),
                     __sptr_as_string( s3, sub_type ),
-                    __ptr_as_string( s4, (void*)length ),
+                    __ptr_as_string( s4, length ),
                     __sptr_as_string( s5, precision ),
                     __sptr_as_string( s6, scale ),
                     __sptr_as_string( s7, nullable ));

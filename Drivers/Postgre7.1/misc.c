@@ -253,8 +253,9 @@ my_strcat(char *buf, char *fmt, char *s, int len)
 void remove_newlines(char *string)
 {
 	unsigned int i;
+	size_t stlen=strlen(string);
 
-	for(i=0; i < strlen(string); i++) {
+	for(i=0; i < stlen; i++) {
 		if((string[i] == '\n') ||
 		   (string[i] == '\r')) {
 			string[i] = ' ';

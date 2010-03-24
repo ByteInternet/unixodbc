@@ -13,10 +13,15 @@
 BOOL SQLRemoveTranslator(		LPCSTR	pszTranslator,
 								LPDWORD	pnUsageCount )
 {
+    inst_logClear();
 
 	return FALSE;
 }
 
+BOOL INSTAPI SQLRemoveTranslatorW(LPCWSTR lpszTranslator,
+                                 LPDWORD lpdwUsageCount)
+{
+    inst_logClear();
 
-
-
+	return FALSE;
+}

@@ -192,7 +192,11 @@ RETCODE result;
     case SQL_DBMS_VER: /* ODBC 1.0 */
 		/* The ODBC spec wants ##.##.#### ...whatever... so prepend the driver */
 		/* version number to the dbms version string */
+#ifdef HAVE_SNPRINTF
+		snprintf(tmp, sizeof( tmp ), "%s %s", POSTGRESDRIVERVERSION, conn->pg_version);
+#else
 		sprintf(tmp, "%s %s", POSTGRESDRIVERVERSION, conn->pg_version);
+#endif
 		p = tmp;
         break;
 

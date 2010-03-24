@@ -27,9 +27,15 @@
  *
  **********************************************************************
  *
- * $Id: SQLGetConnectAttr.c,v 1.11 2004/11/22 17:02:48 lurcher Exp $
+ * $Id: SQLGetConnectAttr.c,v 1.13 2008/09/29 14:02:45 lurcher Exp $
  *
  * $Log: SQLGetConnectAttr.c,v $
+ * Revision 1.13  2008/09/29 14:02:45  lurcher
+ * Fix missing dlfcn group option
+ *
+ * Revision 1.12  2006/03/08 09:18:41  lurcher
+ * fix silly typo that was using sizeof( SQL_WCHAR ) instead of SQLWCHAR
+ *
  * Revision 1.11  2004/11/22 17:02:48  lurcher
  * Fix unicode/ansi conversion in the SQLGet functions
  *
@@ -151,7 +157,7 @@
 
 #include "drivermanager.h"
 
-static char const rcsid[]= "$RCSfile: SQLGetConnectAttr.c,v $ $Revision: 1.11 $";
+static char const rcsid[]= "$RCSfile: SQLGetConnectAttr.c,v $ $Revision: 1.13 $";
 
 SQLRETURN SQLGetConnectAttrA( SQLHDBC connection_handle,
            SQLINTEGER attribute,
@@ -610,11 +616,11 @@ SQLRETURN SQLGetConnectAttr( SQLHDBC connection_handle,
                       case SQL_ATTR_TRANSLATE_LIB:
                         if ( SQL_SUCCEEDED( ret ) && value && s1 )
                         {
-                            unicode_to_ansi_copy( value, s1, SQL_NTS, connection );
+                            unicode_to_ansi_copy( value, buffer_length, s1, SQL_NTS, connection );
                         }
 						if ( SQL_SUCCEEDED( ret ) && string_length ) 
 						{
-							*string_length /= sizeof( SQL_WCHAR );	
+							*string_length /= sizeof( SQLWCHAR );	
 						}
                         break;
                     }
@@ -669,11 +675,11 @@ SQLRETURN SQLGetConnectAttr( SQLHDBC connection_handle,
                   case SQL_ATTR_TRANSLATE_LIB:
                     if ( SQL_SUCCEEDED( ret ) && value && s1 )
                     {
-                        unicode_to_ansi_copy( value, s1, SQL_NTS, connection );
+                        unicode_to_ansi_copy( value, buffer_length, s1, SQL_NTS, connection );
                     }
 					if ( SQL_SUCCEEDED( ret ) && string_length ) 
 					{
-						*string_length /= sizeof( SQL_WCHAR );	
+						*string_length /= sizeof( SQLWCHAR );	
 					}
                     break;
                 }

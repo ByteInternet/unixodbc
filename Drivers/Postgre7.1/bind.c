@@ -296,7 +296,7 @@ static char* const func = "SQLDescribeParam";
 
 RETCODE SQL_API SQLParamOptions(
         HSTMT      hstmt,
-        SQLULEN    crow,
+        SQLULEN     crow,
         SQLULEN FAR *pirow)
 {
 static char* const func = "SQLParamOptions";
@@ -346,8 +346,9 @@ static char* const func = "SQLNumParams";
 		SC_log_error(func, "", stmt);
 		return SQL_ERROR;
 	} else {
+		size_t stlen=strlen(stmt->statement);
 
-		for(i=0; i < strlen(stmt->statement); i++) {
+		for(i=0; i < stlen; i++) {
 
 			if(stmt->statement[i] == '?' && !in_quote)
 				(*pcpar)++;

@@ -27,9 +27,15 @@
  *
  **********************************************************************
  *
- * $Id: SQLGetConnectOptionW.c,v 1.6 2003/10/30 18:20:46 lurcher Exp $
+ * $Id: SQLGetConnectOptionW.c,v 1.8 2008/08/29 08:01:38 lurcher Exp $
  *
  * $Log: SQLGetConnectOptionW.c,v $
+ * Revision 1.8  2008/08/29 08:01:38  lurcher
+ * Alter the way W functions are passed to the driver
+ *
+ * Revision 1.7  2007/02/28 15:37:48  lurcher
+ * deal with drivers that call internal W functions and end up in the driver manager. controlled by the --enable-handlemap configure arg
+ *
  * Revision 1.6  2003/10/30 18:20:46  lurcher
  *
  * Fix broken thread protection
@@ -137,6 +143,35 @@ SQLRETURN SQLGetConnectOptionW( SQLHDBC connection_handle,
                     LOG_INFO, 
                     "Error: SQL_INVALID_HANDLE" );
 
+#ifdef WITH_HANDLE_REDIRECT
+		{
+			DMHDBC parent_connection;
+
+			parent_connection = find_parent_handle( connection, SQL_HANDLE_DBC );
+
+			if ( parent_connection ) {
+        		dm_log_write( __FILE__, 
+                	__LINE__, 
+                    	LOG_INFO, 
+                    	LOG_INFO, 
+                    	"Info: found parent handle" );
+
+				if ( CHECK_SQLGETCONNECTOPTIONW( parent_connection ))
+				{
+        			dm_log_write( __FILE__, 
+                		__LINE__, 
+                   		 	LOG_INFO, 
+                   		 	LOG_INFO, 
+                   		 	"Info: calling redirected driver function" );
+
+					return SQLGETCONNECTOPTIONW( parent_connection, 
+							connection,
+							option,
+							value );
+				}
+			}
+		}
+#endif
         return SQL_INVALID_HANDLE;
     }
 
@@ -265,7 +300,9 @@ SQLRETURN SQLGetConnectOptionW( SQLHDBC connection_handle,
         /*
          * call the driver
          */
-        if ( connection -> unicode_driver )
+        if ( connection -> unicode_driver ||
+			CHECK_SQLGETCONNECTOPTIONW( connection ) ||
+			CHECK_SQLGETCONNECTATTRW( connection ))
         {
             if ( CHECK_SQLGETCONNECTOPTIONW( connection ))
             {

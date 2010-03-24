@@ -17,7 +17,11 @@
 #include "save.xpm"
 
 classConnectionFrame::classConnectionFrame( SQLHDBC hDbc, QString qsDataSource, QWidget *parent, const char *name )
+#ifdef QT_V4LAYOUT
+	: Q3MainWindow( parent, name, 0 )
+#else
 	: QMainWindow( parent, name, 0 )
+#endif
 {
     QString         qsCaption;
 
@@ -32,15 +36,31 @@ classConnectionFrame::classConnectionFrame( SQLHDBC hDbc, QString qsDataSource, 
     menubarMain = new QMenuBar( this );
     menubarMain->setFrameStyle( QFrame::NoFrame );
 
+#ifdef QT_V4LAYOUT
+    Q3PopupMenu *pFile = new Q3PopupMenu();
+#else
     QPopupMenu *pFile = new QPopupMenu();
+#endif
+#ifdef QT_V4LAYOUT
+    pFile->insertItem( QPixmap( new_xpm ), tr("&New"),  this, SLOT(New()), Qt::CTRL+Qt::Key_N );
+    pFile->insertItem( QPixmap( open_xpm ), tr("&Open"),  this, SLOT(Open()), Qt::CTRL+Qt::Key_O );
+    pFile->insertItem( QPixmap( save_xpm ), tr("&Save"), this, SLOT(Save()), Qt::CTRL+Qt::Key_S );
+    pFile->insertItem( tr("Save &As"), this, SLOT(SaveAs()), Qt::CTRL+Qt::Key_A );
+    pFile->insertItem( QPixmap( run_xpm ), tr("&Run"), this, SLOT(Exec()), Qt::CTRL+Qt::Key_R );
+#else
     pFile->insertItem( QPixmap( new_xpm ), tr("&New"),  this, SLOT(New()), CTRL+Key_N );
     pFile->insertItem( QPixmap( open_xpm ), tr("&Open"),  this, SLOT(Open()), CTRL+Key_O );
     pFile->insertItem( QPixmap( save_xpm ), tr("&Save"), this, SLOT(Save()), CTRL+Key_S );
     pFile->insertItem( tr("Save &As"), this, SLOT(SaveAs()), CTRL+Key_A );
     pFile->insertItem( QPixmap( run_xpm ), tr("&Run"), this, SLOT(Exec()), CTRL+Key_R );
+#endif
     menubarMain->insertItem( tr("&File"), pFile );
     
+#ifdef QT_V4LAYOUT
+    pView = new Q3PopupMenu();
+#else
     pView = new QPopupMenu();
+#endif
     nView = nViewGUI    = pView->insertItem( tr("GUI Table"), this, SLOT(setViewGUI()) );
     nViewText           = pView->insertItem( tr("Text Table"), this, SLOT(setViewText()) );
     nViewTextDelimited  = pView->insertItem( tr("Text Delimited"), this, SLOT(setViewTextDelimited()) );
@@ -52,8 +72,13 @@ classConnectionFrame::classConnectionFrame( SQLHDBC hDbc, QString qsDataSource, 
     menubarMain->setSeparator( QMenuBar::InWindowsStyle );
 
     // SETUP TOOLBAR
+#ifdef QT_V4LAYOUT
+    toolbarMain = new Q3ToolBar( this );
+    addToolBar( toolbarMain, tr( "ToolBar" ), Qt::Top, FALSE );
+#else
     toolbarMain = new QToolBar( this );
     addToolBar( toolbarMain, tr( "ToolBar" ), Top, FALSE );
+#endif
 
     QToolButton *toolbutton = new QToolButton( QPixmap( new_xpm ), QString(tr("New")), QString(""), this, SLOT(New()), toolbarMain );
     toolbutton = new QToolButton( QPixmap( open_xpm ), QString(tr("Open")), QString(""), this, SLOT(Open()), toolbarMain );
@@ -65,7 +90,11 @@ classConnectionFrame::classConnectionFrame( SQLHDBC hDbc, QString qsDataSource, 
 //    statusbarMain = new QStatusBar( this );
 
     // RESIZE
+#ifdef QT_V4LAYOUT
+	connect( parent, SIGNAL(changedSize(int,int)), SLOT(Resize(int,int)) );
+#else
 	connect( parent, SIGNAL(changedSize(int,int)), SLOT(resize(int,int)) );
+#endif
 	resize( parent->size() );
 	setMinimumSize( 50, 50 );
 	setMaximumSize( 32767, 32767 );
@@ -142,4 +171,7 @@ void classConnectionFrame::setViewTextDelimited()
     pView->setItemChecked( nView, true );
 }
 
-
+void classConnectionFrame::Resize( int x, int y )
+{
+	resize( x, y );
+}

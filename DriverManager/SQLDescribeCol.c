@@ -27,9 +27,21 @@
  *
  **********************************************************************
  *
- * $Id: SQLDescribeCol.c,v 1.8 2003/10/30 18:20:45 lurcher Exp $
+ * $Id: SQLDescribeCol.c,v 1.12 2008/09/29 14:02:44 lurcher Exp $
  *
  * $Log: SQLDescribeCol.c,v $
+ * Revision 1.12  2008/09/29 14:02:44  lurcher
+ * Fix missing dlfcn group option
+ *
+ * Revision 1.11  2008/05/20 13:43:46  lurcher
+ * Vms fixes
+ *
+ * Revision 1.10  2007/04/02 10:50:18  lurcher
+ * Fix some 64bit problems (only when sizeof(SQLLEN) == 8 )
+ *
+ * Revision 1.9  2007/01/02 10:27:50  lurcher
+ * Fix descriptor leak with unicode only driver
+ *
  * Revision 1.8  2003/10/30 18:20:45  lurcher
  *
  * Fix broken thread protection
@@ -150,7 +162,7 @@
 
 #include "drivermanager.h"
 
-static char const rcsid[]= "$RCSfile: SQLDescribeCol.c,v $ $Revision: 1.8 $";
+static char const rcsid[]= "$RCSfile: SQLDescribeCol.c,v $ $Revision: 1.12 $";
 
 SQLRETURN SQLDescribeColA( SQLHSTMT statement_handle,
            SQLUSMALLINT column_number,
@@ -403,7 +415,7 @@ SQLRETURN SQLDescribeCol( SQLHSTMT statement_handle,
 
         if ( SQL_SUCCEEDED( ret ) && column_name && s1 )
         {
-            unicode_to_ansi_copy((char*) column_name, s1, SQL_NTS, statement -> connection );
+            unicode_to_ansi_copy((char*) column_name, buffer_length, s1, SQL_NTS, statement -> connection );
         }
 
         if ( s1 )
@@ -455,7 +467,13 @@ SQLRETURN SQLDescribeCol( SQLHSTMT statement_handle,
 
     if ( log_info.log_flag )
     {
-        sprintf( statement -> msg, 
+		if ( !SQL_SUCCEEDED( ret )) {
+        	sprintf( statement -> msg, 
+                "\n\t\tExit:[%s]",
+                    __get_return_status( ret, s6 ));
+		}
+		else {
+        	sprintf( statement -> msg, 
                 "\n\t\tExit:[%s]\
                 \n\t\t\tColumn Name = %s\
                 \n\t\t\tData Type = %s\
@@ -466,9 +484,10 @@ SQLRETURN SQLDescribeCol( SQLHSTMT statement_handle,
                     __sdata_as_string( s1, SQL_CHAR, 
                         name_length, column_name ),
                     __sptr_as_string( s2, data_type ),
-                    __ptr_as_string( s3, (void*)column_size ),
+                    __ptr_as_string( s3, (SQLLEN*)column_size ),
                     __sptr_as_string( s4, decimal_digits ),
                     __sptr_as_string( s5, nullable ));
+		}
 
         dm_log_write( __FILE__, 
                 __LINE__, 

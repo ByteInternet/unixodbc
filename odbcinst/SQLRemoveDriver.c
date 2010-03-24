@@ -19,6 +19,9 @@ BOOL SQLRemoveDriver(			LPCSTR	pszDriver,
 	char	szValue[INI_MAX_PROPERTY_VALUE+1];
 	char	szODBCFile[ODBC_FILENAME_MAX+1];
     char    szIniName[ INI_MAX_OBJECT_NAME + 1 ];
+	char	b1[ 256 ], b2[ 256 ];
+
+    inst_logClear();
 
 	/* SANITY CHECKS */
 	if ( pszDriver == NULL )
@@ -40,9 +43,9 @@ BOOL SQLRemoveDriver(			LPCSTR	pszDriver,
 	(*pnUsageCount) = 0;
 
 #ifdef VMS
-    sprintf( szIniName, "%sODBCINST.INI", odbcinst_system_file_path() );
+    sprintf( szIniName, "%s:%s", odbcinst_system_file_path( b1 ), odbcinst_system_file_name( b2 ) );
 #else
-    sprintf( szIniName, "%s/odbcinst.ini", odbcinst_system_file_path() );
+    sprintf( szIniName, "%s/%s", odbcinst_system_file_path( b1 ), odbcinst_system_file_name( b2 ) );
 #endif
 
 	/* PROCESS ODBC INST INI FILE */
@@ -106,5 +109,18 @@ BOOL SQLRemoveDriver(			LPCSTR	pszDriver,
 	return TRUE;
 }
 
+BOOL INSTAPI SQLRemoveDriverW(LPCWSTR lpszDriver,
+                             BOOL fRemoveDSN,
+                             LPDWORD lpdwUsageCount)
+{
+	BOOL ret;
+	char *drv = _single_string_alloc_and_copy( lpszDriver );
 
+    inst_logClear();
 
+	ret = SQLRemoveDriver( drv, fRemoveDSN, lpdwUsageCount );
+
+	free( drv );
+
+	return ret;
+}

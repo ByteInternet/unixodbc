@@ -231,6 +231,7 @@ Int2 pgtype_to_sqltype(StatementClass *stmt, Int4 type)
 	case PG_TYPE_TIME:			return SQL_TIME;
 	case PG_TYPE_ABSTIME:		
 	case PG_TYPE_DATETIME:		
+	case PG_TYPE_TIMESTAMP_NO_TMZONE:
 	case PG_TYPE_TIMESTAMP:		return SQL_TIMESTAMP;
 	case PG_TYPE_MONEY:			return SQL_FLOAT;
 	case PG_TYPE_BOOL:			return globals.bools_as_char ? SQL_CHAR : SQL_BIT;
@@ -266,6 +267,7 @@ Int2 pgtype_to_ctype(StatementClass *stmt, Int4 type)
 	case PG_TYPE_TIME:			return SQL_C_TIME;
 	case PG_TYPE_ABSTIME:		
 	case PG_TYPE_DATETIME:
+	case PG_TYPE_TIMESTAMP_NO_TMZONE:
 	case PG_TYPE_TIMESTAMP:		return SQL_C_TIMESTAMP;
 	case PG_TYPE_MONEY:			return SQL_C_FLOAT;
 	case PG_TYPE_BOOL:			return globals.bools_as_char ? SQL_C_CHAR : SQL_C_BIT;
@@ -737,8 +739,10 @@ char *pgtype_literal_suffix(StatementClass *stmt, Int4 type)
 char *pgtype_create_params(StatementClass *stmt, Int4 type)
 {
 	switch(type) {
+	case PG_TYPE_BPCHAR:
 	case PG_TYPE_CHAR:
 	case PG_TYPE_VARCHAR:		return "max. length";
+	case PG_TYPE_NUMERIC:		return "precision, scale";
 	default:					return NULL;
 	}
 }

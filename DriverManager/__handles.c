@@ -27,9 +27,15 @@
  *
  **********************************************************************
  *
- * $Id: __handles.c,v 1.8 2004/09/28 08:44:46 lurcher Exp $
+ * $Id: __handles.c,v 1.10 2007/02/28 15:37:49 lurcher Exp $
  *
  * $Log: __handles.c,v $
+ * Revision 1.10  2007/02/28 15:37:49  lurcher
+ * deal with drivers that call internal W functions and end up in the driver manager. controlled by the --enable-handlemap configure arg
+ *
+ * Revision 1.9  2006/05/31 17:35:34  lurcher
+ * Add unicode ODBCINST entry points
+ *
  * Revision 1.8  2004/09/28 08:44:46  lurcher
  * Fix memory leak in pthread descriptor code
  *
@@ -210,7 +216,7 @@
 #include <uodbc_stats.h>
 #endif
 
-static char const rcsid[]= "$RCSfile: __handles.c,v $ $Revision: 1.8 $";
+static char const rcsid[]= "$RCSfile: __handles.c,v $ $Revision: 1.10 $";
 
 /*
  * these are used to enable us to check if a handle is
@@ -748,8 +754,8 @@ void __release_dbc( DMHDBC connection )
 }
 
 /*
- *  * get the statement root, for use in SQLEndTran and SQLTransact
- *   */
+ *  get the statement root, for use in SQLEndTran and SQLTransact
+ */
 
 DMHSTMT __get_stmt_root( void )
 {
@@ -1253,6 +1259,72 @@ void thread_release( int type, void *handle )
         }
         break;
     }
+}
+
+#endif
+
+#ifdef WITH_HANDLE_REDIRECT
+
+/*
+ * try and find a handle that has the suplied handle as the driver handle
+ * there will be threading issues with this, so be carefull. 
+ * However it will normally only get used with "broken" drivers.
+ */
+
+
+void *find_parent_handle( DRV_SQLHANDLE drv_hand, int type )
+{
+	void *found_handle = NULL;
+
+    mutex_entry( &mutex_lists );
+
+	switch( type ) {
+		case SQL_HANDLE_DBC:
+			{
+				DMHDBC hand = connection_root;
+				while( hand ) {
+					if ( hand -> driver_dbc == drv_hand ) {
+						found_handle = hand;
+						break;
+					}
+					hand = hand -> next_class_list;
+				}
+			}
+			break;
+
+		case SQL_HANDLE_STMT:
+			{
+				DMHSTMT hand = statement_root;
+				while( hand ) {
+					if ( hand -> driver_stmt == drv_hand ) {
+						found_handle = hand;
+						break;
+					}
+					hand = hand -> next_class_list;
+				}
+			}
+			break;
+
+		case SQL_HANDLE_DESC:
+			{
+				DMHDESC hand = descriptor_root;
+				while( hand ) {
+					if ( hand -> driver_desc == drv_hand ) {
+						found_handle = hand;
+						break;
+					}
+					hand = hand -> next_class_list;
+				}
+			}
+			break;
+
+		default:
+			break;
+	}
+
+    mutex_exit( &mutex_lists );
+
+	return found_handle;
 }
 
 #endif

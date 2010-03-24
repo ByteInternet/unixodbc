@@ -14,7 +14,12 @@ CCredits::CCredits( QWidget* parent, const char* name )
     QGridLayout	*layoutTop  = new QGridLayout( this, 2, 1 );
     layoutTop->setSpacing( 5 );
 
+#ifdef QT_V4LAYOUT
+#define QListBoxPixmap		Q3ListBoxPixmap
+    Q3ListBox    *list      = new Q3ListBox( this );
+#else
     QListBox    *list       = new QListBox( this );
+#endif
 
     setCaption( "unixODBC - Credits" );
 

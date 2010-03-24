@@ -3,7 +3,7 @@
  *
  **************************************************
  *
- * This library should only be used to by odbcinst!
+ * This library should only be used by odbcinst!
  *
  * This code was created by Peter Harvey @ CodeByDesign.
  * Released under LGPL 26.OCT.01
@@ -16,13 +16,21 @@
 
 #include <odbcinstext.h>
 
+#ifdef QT_V4LAYOUT
+#define QT3_SUPPORT
+#include <Qt/qdir.h>
+#include <Qt/qwidget.h>
+#include <Qt/qnamespace.h>
+#else
 #include <qdir.h>
 #include <qwidget.h>
 #if QT_VERSION<300
 #include <qnamespace.h>
 #endif
+#endif
 
 #include "CODBCConfig.h"
+#include "CODBCCreate.h"
 
 static BOOL SQLManage( HWND hWnd )
 {
@@ -39,18 +47,43 @@ static BOOL SQLManage( HWND hWnd )
 
     QWidget *pwidget = (QWidget*)hWnd;
 
-    if ( !pwidget )
-        return false;
-
 #if QT_VERSION<300
-    CODBCConfig odbcconfig( pwidget, "ODBCConfig", Qt::WType_Modal );
+	CODBCConfig odbcconfig( pwidget, "ODBCConfig", Qt::WType_Modal );
 #else
-    CODBCConfig odbcconfig( pwidget, "ODBCConfig", Qt::WType_Dialog | Qt::WShowModal );
+	CODBCConfig odbcconfig( pwidget, "ODBCConfig", Qt::WType_Dialog | Qt::WShowModal );
 #endif
-    odbcconfig.exec();
+	odbcconfig.exec();
 
     return true;
 }
+
+static BOOL SQLCreate( HWND hWnd, LPCSTR dsn )
+{
+    //
+    // This will allow us to call this from a non QT app
+    // 
+    if ( !qApp )
+    {
+        int argc = 1;
+        char *argv[] = { "odbcinstQ", NULL };
+
+        static QApplication a( argc, argv );
+    }
+
+    QWidget *pwidget = (QWidget*)hWnd;
+
+#if QT_VERSION<300
+	CODBCCreate odbccreate( pwidget, "ODBCCreate" );
+#else
+	CODBCCreate odbccreate( pwidget, "ODBCCreate" );
+#endif
+	odbccreate.setDsn( dsn );
+	
+	odbccreate.exec();
+
+    return odbccreate.getRetCode();
+}
+
 
 #ifdef __cplusplus
 extern "C" {
@@ -59,6 +92,21 @@ extern "C" {
 BOOL QTSQLManageDataSources( HWND hWnd )
 {
     return SQLManage( hWnd );
+}
+
+BOOL QTSQLCreateDataSources( HWND hWnd, LPCSTR lpszDS )
+{
+    return SQLCreate( hWnd, lpszDS );
+}
+
+BOOL ODBCManageDataSources( HWND hWnd )
+{
+    return SQLManage( hWnd );
+}
+
+BOOL ODBCCreateDataSource( HWND hWnd, LPCSTR lpszDS )
+{
+    return SQLCreate( hWnd, lpszDS );
 }
 
 #ifdef __cplusplus

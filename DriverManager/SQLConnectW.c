@@ -27,9 +27,15 @@
  *
  **********************************************************************
  *
- * $Id: SQLConnectW.c,v 1.12 2003/10/30 18:20:45 lurcher Exp $
+ * $Id: SQLConnectW.c,v 1.14 2008/09/29 14:02:44 lurcher Exp $
  *
  * $Log: SQLConnectW.c,v $
+ * Revision 1.14  2008/09/29 14:02:44  lurcher
+ * Fix missing dlfcn group option
+ *
+ * Revision 1.13  2007/02/28 15:37:47  lurcher
+ * deal with drivers that call internal W functions and end up in the driver manager. controlled by the --enable-handlemap configure arg
+ *
  * Revision 1.12  2003/10/30 18:20:45  lurcher
  *
  * Fix broken thread protection
@@ -137,6 +143,40 @@ SQLRETURN SQLConnectW( SQLHDBC connection_handle,
                     LOG_INFO, 
                     LOG_INFO, 
                     "Error: SQL_INVALID_HANDLE" );
+
+#ifdef WITH_HANDLE_REDIRECT
+		{
+			DMHDBC parent_connection;
+
+			parent_connection = find_parent_handle( connection, SQL_HANDLE_DBC );
+
+			if ( parent_connection ) {
+        		dm_log_write( __FILE__, 
+                	__LINE__, 
+                    	LOG_INFO, 
+                    	LOG_INFO, 
+                    	"Info: found parent handle" );
+
+				if ( CHECK_SQLCONNECTW( parent_connection ))
+				{
+        			dm_log_write( __FILE__, 
+                		__LINE__, 
+                   		 	LOG_INFO, 
+                   		 	LOG_INFO, 
+                   		 	"Info: calling redirected driver function" );
+
+					return SQLCONNECTW( parent_connection, 
+							connection_handle, 
+							server_name, 
+							name_length1,
+							user_name,
+							name_length2,
+							authentication,
+							name_length3 );
+				}
+			}
+		}
+#endif
 
         return SQL_INVALID_HANDLE;
     }
@@ -271,7 +311,7 @@ SQLRETURN SQLConnectW( SQLHDBC connection_handle,
 
     connection -> pooled_connection = NULL;
 
-    unicode_to_ansi_copy((char*) ansi_dsn, dsn, sizeof( ansi_dsn ),  NULL );
+    unicode_to_ansi_copy((char*) ansi_dsn, sizeof( ansi_dsn ), dsn, sizeof( ansi_dsn ),  NULL );
 
     if ( !__find_lib_name((char*) ansi_dsn, lib_name, driver_name ))
     {
@@ -353,17 +393,17 @@ SQLRETURN SQLConnectW( SQLHDBC connection_handle,
         if ( user_name )
         {
             if ( name_length2 == SQL_NTS )
-                unicode_to_ansi_copy((char*) ansi_user, user_name, sizeof( ansi_user ), connection);
+                unicode_to_ansi_copy((char*) ansi_user, sizeof( ansi_user ),user_name, sizeof( ansi_user ), connection);
             else
-                unicode_to_ansi_copy((char*) ansi_user, user_name, name_length2, connection );
+                unicode_to_ansi_copy((char*) ansi_user, sizeof( ansi_user ),user_name, name_length2, connection );
         }
 
         if ( authentication )
         {
             if ( name_length3 == SQL_NTS )
-                unicode_to_ansi_copy((char*) ansi_pwd, authentication, sizeof( ansi_pwd ), connection);
+                unicode_to_ansi_copy((char*) ansi_pwd, sizeof( ansi_pwd ), authentication, sizeof( ansi_pwd ), connection);
             else
-                unicode_to_ansi_copy((char*) ansi_pwd, authentication, name_length3, connection );
+                unicode_to_ansi_copy((char*) ansi_pwd, sizeof( ansi_pwd ), authentication, name_length3, connection );
         }
 
         /*

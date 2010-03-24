@@ -26,9 +26,12 @@
  *
  **********************************************************************
  *
- * $Id: SQLExecDirect.c,v 1.9 2003/10/30 18:20:45 lurcher Exp $
+ * $Id: SQLExecDirect.c,v 1.10 2006/04/11 10:22:56 lurcher Exp $
  *
  * $Log: SQLExecDirect.c,v $
+ * Revision 1.10  2006/04/11 10:22:56  lurcher
+ * Fix a data type check
+ *
  * Revision 1.9  2003/10/30 18:20:45  lurcher
  *
  * Fix broken thread protection
@@ -165,7 +168,7 @@
 
 #include "drivermanager.h"
 
-static char const rcsid[]= "$RCSfile: SQLExecDirect.c,v $ $Revision: 1.9 $";
+static char const rcsid[]= "$RCSfile: SQLExecDirect.c,v $ $Revision: 1.10 $";
 
 SQLRETURN SQLExecDirectA( SQLHSTMT statement_handle,
            SQLCHAR *statement_text,
@@ -210,15 +213,15 @@ SQLRETURN SQLExecDirect( SQLHSTMT statement_handle,
 
         if ( statement_text && text_length == SQL_NTS )
         {
-            s1 = malloc( strlen((char*) statement_text ) + 101 );
+            s1 = malloc( strlen((char*) statement_text ) + LOG_MESSAGE_LEN );
         }
         else if ( statement_text )
         {
-            s1 = malloc( text_length + 101 );
+            s1 = malloc( text_length + LOG_MESSAGE_LEN );
         }
         else
         {
-            s1 = malloc( 101 );
+            s1 = malloc( LOG_MESSAGE_LEN );
         }
 
         sprintf( statement -> msg, "\n\t\tEntry:\

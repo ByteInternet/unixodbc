@@ -23,8 +23,13 @@ int strcasecmp( char *, char * );
 #include "checkOk.xpm"
 #include "checkCancel.xpm"
 
+#ifdef QT_V4LAYOUT
+CProperties::CProperties( QWidget* parent, const char* name, HODBCINSTPROPERTY hTheFirstProperty )
+	: Q3MainWindow( parent, name, 0 )
+#else
 CProperties::CProperties( QWidget* parent, const char* name, HODBCINSTPROPERTY hTheFirstProperty )
 	: QMainWindow( parent, name, 0 )
+#endif
 {
     HODBCINSTPROPERTY 	hProperty;
 	int				    nProperty;
@@ -35,8 +40,13 @@ CProperties::CProperties( QWidget* parent, const char* name, HODBCINSTPROPERTY h
 	pTopLayout		= new QVBoxLayout( pMainWidget );
 
     // SETUP TOOLBAR
+#ifdef QT_V4LAYOUT
+    toolbarMain = new Q3ToolBar( this );
+    addToolBar( toolbarMain, tr( "ToolBar" ), Qt::Top, FALSE );
+#else
     toolbarMain = new QToolBar( this );
     addToolBar( toolbarMain, tr( "ToolBar" ), Top, FALSE );
+#endif
     new QToolButton( QPixmap( checkOk_xpm ), QString(tr("Save and Exit")), QString(""), this, SLOT(pbOk_Clicked()), toolbarMain );
     new QToolButton( QPixmap( checkCancel_xpm ), QString(tr("Cancel any changes and Exit")), QString(""), this, SLOT(pbCancel_Clicked()), toolbarMain );
     QWhatsThis::whatsThisButton ( toolbarMain );
@@ -88,7 +98,11 @@ CProperties::CProperties( QWidget* parent, const char* name, HODBCINSTPROPERTY h
 			break;
 		case ODBCINST_PROMPTTYPE_LISTBOX:
 			{
+#ifdef QT_V4LAYOUT
+				Q3ComboBox *pComboBox = new Q3ComboBox( pMainWidget );
+#else
 				QComboBox *pComboBox = new QComboBox( pMainWidget );
+#endif
                 if ( hProperty->pszHelp )
                     QWhatsThis::add( pComboBox, hProperty->pszHelp );
 				pComboBox->insertStrList( (const char **)hProperty->aPromptData );
@@ -102,7 +116,11 @@ CProperties::CProperties( QWidget* parent, const char* name, HODBCINSTPROPERTY h
 			break;
 		case ODBCINST_PROMPTTYPE_COMBOBOX:
 			{
+#ifdef QT_V4LAYOUT
+				Q3ComboBox *pComboBox = new Q3ComboBox( true, pMainWidget );
+#else
 				QComboBox *pComboBox = new QComboBox( true, pMainWidget );
+#endif
                 if ( hProperty->pszHelp )
                     QWhatsThis::add( pComboBox, hProperty->pszHelp );
 				pComboBox->insertStrList( (const char **)hProperty->aPromptData );
@@ -195,7 +213,11 @@ void CProperties::pbOk_Clicked()
 		case ODBCINST_PROMPTTYPE_LISTBOX:
 		case ODBCINST_PROMPTTYPE_COMBOBOX:
 			{
+#ifdef QT_V4LAYOUT
+				strncpy( hProperty->szValue, ((Q3ComboBox *)hProperty->pWidget)->currentText(), INI_MAX_PROPERTY_VALUE );
+#else
 				strncpy( hProperty->szValue, ((QComboBox *)hProperty->pWidget)->currentText(), INI_MAX_PROPERTY_VALUE );
+#endif
 			}
 			break;
 		case ODBCINST_PROMPTTYPE_FILENAME:
@@ -221,7 +243,11 @@ void CProperties::pbCancel_Clicked()
     emit Cancel();
 }
 
+#ifdef QT_V4LAYOUT
+void CProperties::setCurrentItem( Q3ComboBox *pComboBox, char *pszItem )
+#else
 void CProperties::setCurrentItem( QComboBox *pComboBox, char *pszItem )
+#endif
 {
     QString stringItem;
 	int n 			= 0;

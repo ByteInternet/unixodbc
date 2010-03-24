@@ -13,14 +13,18 @@
 #ifndef CFileDSN_included
 #define CFileDSN_included
 
-#include <qwidget.h>
-#if (QT_VERSION>=300)
-#include <qpushbutton.h>
+#ifdef QT_V4LAYOUT
+#define QT3_SUPPORT
+#include <Qt/qwidget.h>
+#include <Qt/qpushbutton.h>
+#include <Qt/qpixmap.h>
+#include <Qt/qlayout.h>
 #else
+#include <qwidget.h>
 #include <qpushbt.h>
-#endif
 #include <qpixmap.h>
 #include <qlayout.h>
+#endif
 
 #include "CFileList.h"
 

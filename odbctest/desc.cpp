@@ -21,9 +21,12 @@
  *
  **********************************************************************
  *
- * $Id: desc.cpp,v 1.2 2001/12/13 13:00:34 lurcher Exp $
+ * $Id: desc.cpp,v 1.3 2007/02/12 11:49:37 lurcher Exp $
  *
  * $Log: desc.cpp,v $
+ * Revision 1.3  2007/02/12 11:49:37  lurcher
+ * Add QT4 support to existing GUI parts
+ *
  * Revision 1.2  2001/12/13 13:00:34  lurcher
  *
  * Remove most if not all warnings on 64 bit platforms
@@ -77,9 +80,15 @@
  **********************************************************************/
 
 #include <stdlib.h>
+#ifdef QT_V4LAYOUT
+#include <Qt/qapplication.h>
+#include <Qt/qmessagebox.h>
+#include <Qt/qlineedit.h>
+#else
 #include <qapplication.h>
 #include <qmessagebox.h>
 #include <qlineedit.h>
+#endif
 #include <sql.h>
 #include <sqlext.h>
 #include "odbctest.h"

@@ -21,9 +21,15 @@
  *
  **********************************************************************
  *
- * $Id: odbctest.cpp,v 1.3 2002/03/01 14:57:32 lurcher Exp $
+ * $Id: odbctest.cpp,v 1.5 2008/05/30 12:04:56 lurcher Exp $
  *
  * $Log: odbctest.cpp,v $
+ * Revision 1.5  2008/05/30 12:04:56  lurcher
+ * Fix a couple of build problems and get ready for the next release
+ *
+ * Revision 1.4  2007/02/12 11:49:37  lurcher
+ * Add QT4 support to existing GUI parts
+ *
  * Revision 1.3  2002/03/01 14:57:32  lurcher
  *
  * alter default size of odbctest
@@ -118,6 +124,18 @@
  *
  **********************************************************************/
 
+#ifdef QT_V4LAYOUT
+#include <Qt/q3mainwindow.h>
+#include <Qt/q3popupmenu.h>
+#include <Qt/qmenudata.h>
+#include <Qt/qmenubar.h>
+#include <Qt/qapplication.h>
+#include <Qt/qmessagebox.h>
+#include <Qt/qsplitter.h>
+#include <Qt/qnamespace.h>
+#include <Qt/q3multilineedit.h>
+#include <Qt/qtextedit.h>
+#else
 #include <qmainwindow.h>
 #include <qpopupmenu.h>
 #include <qmenudata.h>
@@ -130,31 +148,52 @@
 #if (QT_VERSION>=300)
 #include <qtextedit.h>
 #endif
+#endif
 #include <sql.h>
 #include <sqlext.h>
 #include "odbctest.h"
 
 #if (QT_VERSION<300)
 
+#ifdef QT_V4LAYOUT
+QTextEdit::QTextEdit (QWidget *parent, const char *name )
+    :Q3MultiLineEdit( parent, name )
+{
+    Q3MultiLineEdit::setMaxLines( 1 );
+}
+#else
 QTextEdit::QTextEdit (QWidget *parent, const char *name )
     :QMultiLineEdit( parent, name )
 {
     QMultiLineEdit::setMaxLines( 1 );
 }
+#endif
 
 void QTextEdit::maxLines( int n )
 {
+#ifdef QT_V4LAYOUT
+    Q3MultiLineEdit::setMaxLines( n );
+#else
     QMultiLineEdit::setMaxLines( n );
+#endif
 }
 
 void QTextEdit::setMaxLength( int x )
 {
+#ifdef QT_V4LAYOUT
+    Q3MultiLineEdit::setMaxLineLength( 1 );
+#else
     QMultiLineEdit::setMaxLineLength( 1 );
+#endif
 }
 
 void QTextEdit::append( const char *str )
 {
+#ifdef QT_V4LAYOUT
+    Q3MultiLineEdit::append( str );
+#else
     QMultiLineEdit::append( str );
+#endif
     setCursorPosition( numLines() + 1, 0 );
 }
 
@@ -418,14 +457,30 @@ void OdbcTest::dumpError( int type, SQLHANDLE hnd )
 }
 
 OdbcTest::OdbcTest( QWidget *parent, const char *name )
+#ifdef QT_V4LAYOUT
+    : Q3MainWindow( parent, name )
+#else
     : QMainWindow( parent, name )
+#endif
 {
+#ifdef QT_V4LAYOUT
+    Q3PopupMenu *file = new Q3PopupMenu( this );
+#else
     QPopupMenu *file = new QPopupMenu( this );
+#endif
 	int id;
 
+#ifdef QT_V4LAYOUT
+    file->insertItem( "E&xit", qApp, SLOT(quit()), Qt::CTRL+Qt::Key_Q );
+#else
     file->insertItem( "E&xit", qApp, SLOT(quit()), CTRL+Key_Q );
+#endif
 
+#ifdef QT_V4LAYOUT
+    Q3PopupMenu* diag = new Q3PopupMenu( this );
+#else
     QPopupMenu* diag = new QPopupMenu( this );
+#endif
     diag->insertItem( "SQLGetDiag&Rec...", this, SLOT(sqlgetdiagrec()) );
     diag->insertItem( "SQLGetDiag&Field...", this, SLOT(sqlgetdiagfield()) );
     diag->insertItem( "SQL&Error...", this, SLOT(sqlerror()) );
@@ -433,7 +488,11 @@ OdbcTest::OdbcTest( QWidget *parent, const char *name )
     id = diag->insertItem( "Errors &All", this, SLOT(errorall()) );
 	diag->setItemEnabled( id, FALSE );
 
+#ifdef QT_V4LAYOUT
+    Q3PopupMenu* env = new Q3PopupMenu( this );
+#else
     QPopupMenu* env = new QPopupMenu( this );
+#endif
     env->insertItem( "SQL&AllocEnv...", this, SLOT(sqlallocenv()) );
     env->insertItem( "SQL&AllocHandle...", this, SLOT(sqlallochandle()) );
     env->insertItem( "SQLDataS&ources...", this, SLOT(sqldatasources()) );
@@ -448,7 +507,11 @@ OdbcTest::OdbcTest( QWidget *parent, const char *name )
     id = env->insertItem( "Dri&vers All", this, SLOT(driversall()) );
 	env->setItemEnabled( id, FALSE );
 
+#ifdef QT_V4LAYOUT
+    Q3PopupMenu* conn = new Q3PopupMenu( this );
+#else
     QPopupMenu* conn = new QPopupMenu( this );
+#endif
     conn->insertItem( "SQL&AllocConnect...", this, SLOT(sqlallocconnect()) );
     conn->insertItem( "SQL&BrowseConnect...", this, SLOT(sqlbrowseconnect()) );
     conn->insertItem( "SQL&Connect...", this, SLOT(sqlconnect()) );
@@ -460,15 +523,23 @@ OdbcTest::OdbcTest( QWidget *parent, const char *name )
     conn->insertItem( "SQLN&ativeSQL...", this, SLOT(sqlnativesql()) );
 	conn->setItemEnabled( id, FALSE );
     conn->insertSeparator();
+#ifdef QT_V4LAYOUT
+    conn->insertItem( "F&ull Connect...", this, SLOT(fullconnect()), Qt::CTRL+Qt::Key_F );
+    id = conn->insertItem( "Fu&ll Disconnect", this, SLOT(fulldisconnect()), Qt::CTRL+Qt::Key_D );
+#else
     conn->insertItem( "F&ull Connect...", this, SLOT(fullconnect()), CTRL+Key_F );
-    id = conn->insertItem( "Fu&ll Disconnect", this, SLOT(fulldisconnect()),
-CTRL+Key_D );
+    id = conn->insertItem( "Fu&ll Disconnect", this, SLOT(fulldisconnect()), CTRL+Key_D );
+#endif
 	conn->setItemEnabled( id, FALSE );
     conn->insertItem( "G&et Info All", this, SLOT(getinfoall()) );
     id = conn->insertItem( "Get &Functions All", this, SLOT(getfunctionsall()) );
 	conn->setItemEnabled( id, FALSE );
 
+#ifdef QT_V4LAYOUT
+    Q3PopupMenu* desc = new Q3PopupMenu( this );
+#else
     QPopupMenu* desc = new QPopupMenu( this );
+#endif
     desc->insertItem( "SQLCop&yDesc...", this, SLOT(sqlcopydesc()) );
     desc->insertItem( "SQLGetDesc&Field...", this, SLOT(sqlgetdescfield()) );
     desc->insertItem( "SQLG&etDescRec...", this, SLOT(sqlgetdescrec()) );
@@ -480,7 +551,11 @@ CTRL+Key_D );
     id = desc->insertItem( "Get Descriptors All", this, SLOT(getdescriptorsall()) );
 	desc->setItemEnabled( id, FALSE );
 
+#ifdef QT_V4LAYOUT
+    Q3PopupMenu* stmt = new Q3PopupMenu( this );
+#else
     QPopupMenu* stmt = new QPopupMenu( this );
+#endif
     stmt->insertItem( "SQL&AllocStmt...", this, SLOT(sqlallocstmt()) );
     id = stmt->insertItem( "S&QLBindParam...", this, SLOT(sqlbindparam()) );
 	stmt->setItemEnabled( id, FALSE );
@@ -507,7 +582,11 @@ CTRL+Key_D );
     id = stmt->insertItem( "S&how Cursor Settings...", this, SLOT(showcursorsettings()) );
 	stmt->setItemEnabled( id, FALSE );
 
+#ifdef QT_V4LAYOUT
+    Q3PopupMenu* attr = new Q3PopupMenu( this );
+#else
     QPopupMenu* attr = new QPopupMenu( this );
+#endif
     attr->insertItem( "SQLSet&StmtAttr...", this, SLOT(sqlsetstmtattr()) );
     attr->insertItem( "SQLGetS&tmtAttr...", this, SLOT(sqlgetstmtattr()) );
     attr->insertItem( "SQLSetStmt&Option...", this, SLOT(sqlsetstmtoption()) );
@@ -524,7 +603,11 @@ CTRL+Key_D );
     id = attr->insertItem( "Set &Cursor Attributes...", this, SLOT(setcursoratributes()) );
 	attr->setItemEnabled( id, FALSE );
 
+#ifdef QT_V4LAYOUT
+    Q3PopupMenu* results = new Q3PopupMenu( this );
+#else
     QPopupMenu* results = new QPopupMenu( this );
+#endif
     id = results->insertItem( "SQL&BindCol...", this, SLOT(sqlbindcol()) );
 	results->setItemEnabled( id, FALSE );
     results->insertItem( "SQLBul&kOperations...", this, SLOT(sqlbulkoperations()) );
@@ -554,7 +637,11 @@ CTRL+Key_D );
     id = results->insertItem( "Display Rowset", this, SLOT(displayrowset()) );
 	results->setItemEnabled( id, FALSE );
 
+#ifdef QT_V4LAYOUT
+    Q3PopupMenu* catalog = new Q3PopupMenu( this );
+#else
     QPopupMenu* catalog = new QPopupMenu( this );
+#endif
     catalog->insertItem( "SQL&Columns...", this, SLOT(sqlcolumns()) );
     catalog->insertItem( "SQL&ColumnPrivileges...", this, SLOT(sqlcolumnprivileges()) );
     catalog->insertItem( "SQL&GetTypeInfo...", this, SLOT(sqlgettypeinfo()) );
@@ -567,7 +654,11 @@ CTRL+Key_D );
     catalog->insertItem( "SQL&Tables...", this, SLOT(sqltables()) );
     catalog->insertItem( "SQLT&ablePrivileges...", this, SLOT(sqltableprivileges()) );
 
+#ifdef QT_V4LAYOUT
+    Q3PopupMenu* datasources = new Q3PopupMenu( this );
+#else
     QPopupMenu* datasources = new QPopupMenu( this );
+#endif
     datasources->insertItem( "SQL&ManageDataSources...", this, SLOT(sqlmanagedatasources()) );
     datasources->insertItem( "SQL&RemoveDefaultDataSource...", this, SLOT(sqlremovedefaultdatasource()) );
     datasources->insertItem( "SQL&ConfigDataSource...", this, SLOT(sqlconfigdatasource()) );
@@ -576,7 +667,11 @@ CTRL+Key_D );
     datasources->insertItem( "SQLR&emoveDSNFromIni...", this, SLOT(sqlremovedsnfromini()) );
     datasources->insertItem( "SQLWriteDSNTo&Ini...", this, SLOT(sqlwritedsntoini()) );
 
+#ifdef QT_V4LAYOUT
+    Q3PopupMenu* drivers = new Q3PopupMenu( this );
+#else
     QPopupMenu* drivers = new QPopupMenu( this );
+#endif
     id = drivers->insertItem( "SQLRemo&veDrivers...", this, SLOT(sqlremovedrivers()) );
 	drivers->setItemEnabled( id, FALSE );
     id = drivers->insertItem( "S&QLConfigDrivers...", this, SLOT(sqlconfigdrivers()) );
@@ -588,19 +683,31 @@ CTRL+Key_D );
     id = drivers->insertItem( "SQLGetInstalledDrivers...", this, SLOT(sqlgetinstalleddrivers()) );
 	drivers->setItemEnabled( id, FALSE );
 
+#ifdef QT_V4LAYOUT
+    Q3PopupMenu* drivermanager = new Q3PopupMenu( this );
+#else
     QPopupMenu* drivermanager = new QPopupMenu( this );
+#endif
     id = drivermanager->insertItem( "SQL&RemoveDriverManager...", this, SLOT(sqlremovedrivermanager()) );
 	drivermanager->setItemEnabled( id, FALSE );
     id = drivermanager->insertItem( "SQL&InstallDriverManager...", this, SLOT(sqlinstalldrivermanager()) );
 	drivermanager->setItemEnabled( id, FALSE );
 
+#ifdef QT_V4LAYOUT
+    Q3PopupMenu* filedsn = new Q3PopupMenu( this );
+#else
     QPopupMenu* filedsn = new QPopupMenu( this );
+#endif
     id = filedsn->insertItem( "SQL&ReadFileDSN...", this, SLOT(sqlreadfiledsn()) );
 	filedsn->setItemEnabled( id, FALSE );
     id = filedsn->insertItem( "SQL&WriteFileDSN...", this, SLOT(sqlwritefiledsn()) );
 	filedsn->setItemEnabled( id, FALSE );
 
+#ifdef QT_V4LAYOUT
+    Q3PopupMenu* profilestrings = new Q3PopupMenu( this );
+#else
     QPopupMenu* profilestrings = new QPopupMenu( this );
+#endif
     id = profilestrings->insertItem( "SQL&WritePrivateProfileString...", 
 		this, SLOT(sqlwriteprivateprofilestring()) );
 	profilestrings->setItemEnabled( id, FALSE );
@@ -608,7 +715,11 @@ CTRL+Key_D );
 		this, SLOT(sqlgetprivateprofilestring()) );
 	profilestrings->setItemEnabled( id, FALSE );
 
+#ifdef QT_V4LAYOUT
+    Q3PopupMenu* translator = new Q3PopupMenu( this );
+#else
     QPopupMenu* translator = new QPopupMenu( this );
+#endif
     id = translator->insertItem( "SQL&InstallTranslator...", 
 		this, SLOT(sqlinstalltranslator()) );
 	translator->setItemEnabled( id, FALSE );
@@ -622,7 +733,11 @@ CTRL+Key_D );
 		this, SLOT(sqlgettranslator()) );
 	translator->setItemEnabled( id, FALSE );
 
+#ifdef QT_V4LAYOUT
+    Q3PopupMenu* configmode = new Q3PopupMenu( this );
+#else
     QPopupMenu* configmode = new QPopupMenu( this );
+#endif
     id = configmode->insertItem( "SQL&SetConfigMode...", 
 		this, SLOT(sqlsetconfigmode()) );
 	configmode->setItemEnabled( id, FALSE );
@@ -630,7 +745,11 @@ CTRL+Key_D );
 		this, SLOT(sqlgetconfigmode()) );
 	configmode->setItemEnabled( id, FALSE );
 
+#ifdef QT_V4LAYOUT
+    Q3PopupMenu* installer = new Q3PopupMenu( this );
+#else
     QPopupMenu* installer = new QPopupMenu( this );
+#endif
     id = installer->insertItem( "&Data Sources...", datasources );
 	installer->setItemEnabled( id, FALSE );
     id = installer->insertItem( "Dri&vers...", drivers );
@@ -646,7 +765,11 @@ CTRL+Key_D );
     id = installer->insertItem( "C&onfig Mode...", configmode );
 	installer->setItemEnabled( id, FALSE );
 
+#ifdef QT_V4LAYOUT
+    Q3PopupMenu* tools = new Q3PopupMenu( this );
+#else
     QPopupMenu* tools = new QPopupMenu( this );
+#endif
     id = tools->insertItem( "&Options..", this, SLOT(options()) );
 	tools->setItemEnabled( id, FALSE );
     id = tools->insertItem( "T&race..", this, SLOT(trace()) );
@@ -657,7 +780,11 @@ CTRL+Key_D );
     tools->insertItem( "&Manage Test &Groups...", this, SLOT(manage_test_groups()) );
     tools->insertItem( "Run Auto &Tests...", this, SLOT(run_auto_tests()) );
 
+#ifdef QT_V4LAYOUT
+    Q3PopupMenu *help = new Q3PopupMenu( this );
+#else
     QPopupMenu *help = new QPopupMenu( this );
+#endif
     id = help->insertItem( "ODBC Test &Help", this, SLOT(testhelp()) );
 	help->setItemEnabled( id, FALSE );
     id = help->insertItem( "API A&PI Help", this, SLOT(apihelp()) );
@@ -683,10 +810,18 @@ CTRL+Key_D );
 
     this->setGeometry( 0, 0, 500, 250 );
 
+#ifdef QT_V4LAYOUT
+	split = new QSplitter( Qt::Vertical, this, "main" );
+#else
 	split = new QSplitter( QSplitter::Vertical, this, "main" );
+#endif
 	split -> setOpaqueResize( FALSE );
 	setCentralWidget( split );
+#ifdef QT_V4LAYOUT
+    in_win = new Q3MultiLineEdit( split );
+#else
     in_win = new QMultiLineEdit( split );
+#endif
     out_win = new OutputWin( split );
 	out_win -> setReadOnly( TRUE );
 	out_win -> setMaxLines( 1000 );
@@ -811,7 +946,11 @@ Handle::Handle( int t, SQLHANDLE h, QString desc, SQLHANDLE stmt )
     param_array_size = 0;
 }
 
+#ifdef QT_V4LAYOUT
+Handle::Handle( int t, SQLHANDLE h, Q3PtrList<Handle> &list ) 
+#else
 Handle::Handle( int t, SQLHANDLE h, QList<Handle> &list ) 
+#endif
 { 
 	type = t; 
 	handle = h; 

@@ -18,7 +18,33 @@ static const char *aYesNo[] =
 	NULL
 };
 
-
+/*! 
+ * \brief   Builds a property list for pszDriver.
+ *
+ *          Adds common DSN properties (Name,Driver,Description) and then asks the
+ *          drivers setup to load any additional properties.
+ *
+ *          This is used to support editing DSN properties without forcing the driver
+ *          developer to create a UI for the many different UI implementations. The
+ *          driver developer can just implement ODBCINSTGetProperties. This function
+ *          can then call ODBCINSTGetProperties to get properties. The code that calls
+ *          this function can then display the properties in the UI in use.
+ * 
+ * \param   pszDriver       Friendly driver name.
+ * \param   hFirstProperty  Place to store the properties list. The properties (including
+ *                          some of the elements within each HODBCINSTPROPERTY may
+ *                          need to be freed using \sa ODBCINSTDestructProperties.
+ * 
+ * \return  int
+ * \retval  ODBCINST_ERROR      Called failed. No memory was allocated at hFirstProperty. The
+ *                              likely reasons for this; \li failed to lookup setup library name 
+ *                              \li failed to load setup library \li failed to find 
+ *                              ODBCINSTGetProperties symbol in setup library
+ * \retval  ODBCINST_SUCCESS    Success! Do not forget to call ODBCINSTDestructProperties to
+ *                              free memory used by the properties when you are done.
+ *
+ * \sa      ODBCINSTDestructProperties
+ */
 int ODBCINSTConstructProperties( char *pszDriver, HODBCINSTPROPERTY *hFirstProperty )
 {
 	char 				szError[LOG_MSG_MAX+1];
@@ -29,6 +55,7 @@ int ODBCINSTConstructProperties( char *pszDriver, HODBCINSTPROPERTY *hFirstPrope
 	HODBCINSTPROPERTY	hLastProperty;
 	char				szSectionName[INI_MAX_OBJECT_NAME+1];
     char                szIniName[ INI_MAX_OBJECT_NAME + 1 ];
+	char				b1[ 256 ], b2[ 256 ];
 
 	/* SANITY CHECKS */
 	if ( pszDriver == NULL )
@@ -37,9 +64,9 @@ int ODBCINSTConstructProperties( char *pszDriver, HODBCINSTPROPERTY *hFirstPrope
 		return ODBCINST_ERROR;
 	}
 #ifdef VMS
-    sprintf( szIniName, "%sODBCINST.INI", odbcinst_system_file_path());
+    sprintf( szIniName, "%s:%s", odbcinst_system_file_path( b1 ), odbcinst_system_file_name( b2 ));
 #else
-    sprintf( szIniName, "%s/odbcinst.ini", odbcinst_system_file_path());
+    sprintf( szIniName, "%s/%s", odbcinst_system_file_path( b1 ), odbcinst_system_file_name( b2 ));
 #endif
 
 	/* GET DRIVER SETUP FILE NAME FOR GIVEN DRIVER */
@@ -122,6 +149,13 @@ int ODBCINSTConstructProperties( char *pszDriver, HODBCINSTPROPERTY *hFirstPrope
 
 	iniValue( hIni, szDriverSetup );
 	iniClose( hIni );
+
+	if ( szDriverSetup[ 0 ] == '\0' ) 
+	{
+		sprintf( szError, "Could not find Setup property for (%s) in system information", pszDriver );
+		inst_logPushMsg( __FILE__, __FILE__, __LINE__, LOG_CRITICAL, ODBC_ERROR_GENERAL_ERR, szError );
+		return ODBCINST_ERROR;
+	}
 
     /*
      * initialize libtool

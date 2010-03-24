@@ -12,6 +12,10 @@
 #ifndef CDSNList_included
 #define CDSNList_included
 
+#ifdef QT_V4LAYOUT
+#define QT3_SUPPORT
+#endif
+
 #include <sys/types.h>
 #include <pwd.h>
 #include <unistd.h>
@@ -32,6 +36,14 @@
 #define ODBC_HELP_DSN_DESC "DSN description. A long, perhaps more meaningfull name."
 #define ODBC_HELP_DSN_UNKNOWN "No help for this DSN property. Please check with the vendor of the driver... perhaps their web site"
 
+#ifdef QT_V4LAYOUT
+#define LView			Q3ListView
+#define LViewItem		Q3ListViewItem
+#else
+#define LView			QListView
+#define LViewItem		QListViewItem
+#endif
+
 class CDSNList : public QListView
 {
     Q_OBJECT
@@ -46,10 +58,10 @@ public slots:
 	void Add();
 	void Edit();
 	void Delete();
-    void DoubleClick( QListViewItem * itm );
+    void DoubleClick( QListViewItem *itm );
 
 private:
 	int nSource;
 };
-#endif
 
+#endif

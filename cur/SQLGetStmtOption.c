@@ -23,9 +23,12 @@
  *
  **********************************************************************
  *
- * $Id: SQLGetStmtOption.c,v 1.1.1.1 2001/10/17 16:40:15 lurcher Exp $
+ * $Id: SQLGetStmtOption.c,v 1.2 2005/10/27 17:54:49 lurcher Exp $
  *
  * $Log: SQLGetStmtOption.c,v $
+ * Revision 1.2  2005/10/27 17:54:49  lurcher
+ * fix what I suspect is a typo in qt.m4
+ *
  * Revision 1.1.1.1  2001/10/17 16:40:15  lurcher
  *
  * First upload to SourceForge
@@ -69,7 +72,7 @@ SQLRETURN CLGetStmtOption( SQLHSTMT statement_handle,
         break;
 
       case SQL_ROWSET_SIZE:
-        *(( SQLUINTEGER * ) value ) = cl_statement -> rowset_array_size;
+        *(( SQLUINTEGER * ) value ) = cl_statement -> rowset_size;
         break;
 
       case SQL_SIMULATE_CURSOR:

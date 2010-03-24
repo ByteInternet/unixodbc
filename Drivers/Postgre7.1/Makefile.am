@@ -4,7 +4,10 @@ INCLUDES = -I@top_srcdir@/include
 
 libodbcpsql_la_LDFLAGS = \
 	-version-info 2:0:0 \
+	-no-undefined \
 	$(LIBSOCKET) $(LIBNSL) \
+	-export-dynamic \
+	-export-symbols @srcdir@/driver.exp
 	-module
 
 DEFS = -DUNIXODBC @DEFS@
@@ -29,7 +32,8 @@ EXTRA_DIST = \
 	statement.h \
 	tuple.h \
 	tuplelist.h \
-	notice.txt
+	notice.txt \
+	driver.exp
 
 libodbcpsql_la_LIBADD = \
 	../../lst/liblstlc.la \

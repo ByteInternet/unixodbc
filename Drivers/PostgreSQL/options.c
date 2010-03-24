@@ -433,8 +433,9 @@ ConnectionClass *conn = (ConnectionClass *) hdbc;
 		break;
 
 	case SQL_CURRENT_QUALIFIER:	/* don't use qualifiers */
-		if(pvParam)
-			strcpy(pvParam, "");
+		if(pvParam) {
+			((char*)pvParam)[0]='\0';
+		}
 
 		break;
 

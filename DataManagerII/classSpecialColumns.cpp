@@ -12,10 +12,18 @@
 
 #include "classSpecialColumns.h"
 #include "classODBC.h"
+#ifdef QT_V4LAYOUT
+#include <Qt/qpixmap.h>
+#else
 #include <qpixmap.h>
+#endif
 #include "id.xpm"
 
+#ifdef QT_V4LAYOUT
+classSpecialColumns::classSpecialColumns( Q3ListViewItem *pParent, Q3ListViewItem *pAfter, classCanvas *pCanvas, SQLHENV hDbc, const char *pszTable, const char *pszLibrary )
+#else
 classSpecialColumns::classSpecialColumns( QListViewItem *pParent, QListViewItem *pAfter, classCanvas *pCanvas, SQLHENV hDbc, const char *pszTable, const char *pszLibrary )
+#endif
     : classNode( pParent, pAfter, pCanvas ) , hDbc( hDbc ), qsTable( pszTable ), qsLibrary( pszLibrary )
 {
   setText( 0, "SpecialColumns" );
@@ -33,7 +41,11 @@ void classSpecialColumns::setOpen( bool bOpen )
   else
     listColumns.clear() ;
 
+#ifdef QT_V4LAYOUT
+  Q3ListViewItem::setOpen( bOpen );
+#else
   QListViewItem::setOpen( bOpen );
+#endif
 }
 
 void classSpecialColumns::LoadColumns()
@@ -51,7 +63,7 @@ void classSpecialColumns::LoadColumns()
   StatementScoper stmt( hDbc ) ; if ( !stmt() ) return ;
 
   // EXECUTE OUR SQL/CALL
-  if (!SQL_SUCCEEDED(nReturn=SQLSpecialColumns( stmt(), SQL_BEST_ROWID, 0, 0, (SQLCHAR*)qsLibrary.data(), SQL_NTS, (SQLCHAR*)qsTable.data(), SQL_NTS, SQL_SCOPE_SESSION, SQL_NULLABLE ) ) )
+  if (!SQL_SUCCEEDED(nReturn=SQLSpecialColumns( stmt(), SQL_BEST_ROWID, 0, 0, (SQLCHAR*)qsLibrary.ascii(), SQL_NTS, (SQLCHAR*)qsTable.ascii(), SQL_NTS, SQL_SCOPE_SESSION, SQL_NULLABLE ) ) )
     return my_msgBox( "classSpecialColumns", "SQLSpecialColumns", nReturn, NULL, NULL, stmt() ) ;
 
   // GET RESULTS
@@ -66,7 +78,7 @@ void classSpecialColumns::LoadColumns()
     if (!SQL_SUCCEEDED(SQLGetData( stmt(), 5, SQL_C_CHAR, &szColumnSize[0], sizeof(szColumnSize), 0 ) ) )
       strcpy( (char *)szColumnSize, "Unknown" );
 
-    qsDesc.sprintf("Len=%s", QString((char*)szColumnSize).stripWhiteSpace().data() ) ;
+    qsDesc.sprintf("Len=%s", QString((char*)szColumnSize).stripWhiteSpace().ascii() ) ;
     listColumns.append( pColumn = new classColumn( this, pColumn, pCanvas, hDbc, QString((char*)szColumnName).stripWhiteSpace(), QString((char*)szColumnType).stripWhiteSpace(), qsDesc ) ) ;
   }
 }

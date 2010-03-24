@@ -20,12 +20,12 @@
 
 static int __config_mode = ODBC_BOTH_DSN;
 
-__set_config_mode( int mode )
+void __set_config_mode( int mode )
 {
     __config_mode = mode;
 }
 
-__get_config_mode()
+int __get_config_mode( void )
 {
     char *p;
 
@@ -53,8 +53,10 @@ __get_config_mode()
     return __config_mode;
 }
 
-BOOL SQLSetConfigMode(			UWORD	nConfigMode )
+BOOL SQLSetConfigMode( UWORD nConfigMode )
 {
+    inst_logClear();
+
     __set_config_mode( nConfigMode );
     return TRUE;
 }

@@ -23,9 +23,12 @@
  *
  **********************************************************************
  *
- * $Id: SQLBindParameter.c,v 1.1.1.1 2001/10/17 16:40:15 lurcher Exp $
+ * $Id: SQLBindParameter.c,v 1.2 2007/11/13 15:04:57 lurcher Exp $
  *
  * $Log: SQLBindParameter.c,v $
+ * Revision 1.2  2007/11/13 15:04:57  lurcher
+ * Fix 64 bit cursor lib issues
+ *
  * Revision 1.1.1.1  2001/10/17 16:40:15  lurcher
  *
  * First upload to SourceForge
@@ -50,11 +53,11 @@ SQLRETURN CLBindParameter(
     SQLSMALLINT        f_param_type,
     SQLSMALLINT        f_c_type,
     SQLSMALLINT        f_sql_type,
-    SQLUINTEGER        cb_col_def,
+    SQLULEN            cb_col_def,
     SQLSMALLINT        ib_scale,
     SQLPOINTER         rgb_value,
-    SQLINTEGER         cb_value_max,
-    SQLINTEGER         *pcb_value )
+    SQLLEN             cb_value_max,
+    SQLLEN             *pcb_value )
 {
     CLHSTMT cl_statement = (CLHSTMT) statement_handle; 
 

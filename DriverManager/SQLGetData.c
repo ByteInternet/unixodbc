@@ -27,9 +27,18 @@
  *
  **********************************************************************
  *
- * $Id: SQLGetData.c,v 1.11 2004/02/02 10:10:45 lurcher Exp $
+ * $Id: SQLGetData.c,v 1.14 2007/04/02 10:50:19 lurcher Exp $
  *
  * $Log: SQLGetData.c,v $
+ * Revision 1.14  2007/04/02 10:50:19  lurcher
+ * Fix some 64bit problems (only when sizeof(SQLLEN) == 8 )
+ *
+ * Revision 1.13  2006/04/11 10:22:56  lurcher
+ * Fix a data type check
+ *
+ * Revision 1.12  2006/03/08 11:22:13  lurcher
+ * Add check for valid C_TYPE
+ *
  * Revision 1.11  2004/02/02 10:10:45  lurcher
  *
  * Fix some connection pooling problems
@@ -169,7 +178,7 @@
 
 #include "drivermanager.h"
 
-static char const rcsid[]= "$RCSfile: SQLGetData.c,v $ $Revision: 1.11 $";
+static char const rcsid[]= "$RCSfile: SQLGetData.c,v $ $Revision: 1.14 $";
 
 SQLRETURN SQLGetData( SQLHSTMT statement_handle,
            SQLUSMALLINT column_number,
@@ -339,8 +348,26 @@ SQLRETURN SQLGetData( SQLHSTMT statement_handle,
     /*
      * TO_DO assorted checks need adding here, relating to bound columns
      * and what sort of SQLGetData extensions the driver supports
-     * also check that the types are valid
      */
+
+	/*
+	 * check valid C_TYPE
+	 */
+
+	if ( !check_target_type( target_type ))
+	{
+        dm_log_write( __FILE__, 
+                __LINE__, 
+                LOG_INFO, 
+                LOG_INFO, 
+                "Error: HY003" );
+
+        __post_internal_error( &statement -> error,
+                ERROR_HY003, NULL,
+                statement -> connection -> environment -> requested_version );
+
+        return function_return( SQL_HANDLE_STMT, statement, SQL_ERROR );
+	}
 
     if ( !CHECK_SQLGETDATA( statement -> connection ))
     {
@@ -464,7 +491,7 @@ SQLRETURN SQLGetData( SQLHSTMT statement_handle,
                     __get_return_status( ret, s3 ),
                     __data_as_string( s1, target_type, 
                         strlen_or_ind, target_value ),
-                    __ptr_as_string( s2, (void*)strlen_or_ind ));
+                    __ptr_as_string( s2, strlen_or_ind ));
 
         dm_log_write( __FILE__, 
                 __LINE__, 

@@ -18,11 +18,20 @@
 #include <ini.h>
 #include <odbcinstext.h>
 
+#ifdef QT_V4LAYOUT
+#define QT3_SUPPORT
+#include <Qt/qapplication.h>
+#include <Qt/qmessagebox.h>
+#include <Qt/qwidget.h>
+#include <Qt/q3listview.h>
+#include <Qt/qstring.h>
+#else
 #include <qapplication.h>
 #include <qmessagebox.h>
 #include <qwidget.h>
 #include <qlistview.h>
 #include <qstring.h>
+#endif
 
 #include "CDriverPrompt.h"
 #include "CPropertiesFrame.h"
@@ -32,7 +41,15 @@
 #define ODBC_HELP_DSN_DESC "DSN description. A long, perhaps more meaningfull name."
 #define ODBC_HELP_DSN_UNKNOWN "No help for this DSN property. Please check with the vendor of the driver... perhaps their web site"
 
-class CFileList : public QListView
+#ifdef QT_V4LAYOUT
+#define LView			Q3ListView
+#define LViewItem		Q3ListViewItem
+#else
+#define LView			QListView
+#define LViewItem		QListViewItem
+#endif
+
+class CFileList : public LView
 {
     Q_OBJECT
 
@@ -53,5 +70,6 @@ private:
 	int nSource;
     QString cwd;
 };
+
 #endif
 

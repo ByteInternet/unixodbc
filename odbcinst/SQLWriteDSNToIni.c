@@ -79,5 +79,19 @@ BOOL SQLWriteDSNToIni(			LPCSTR	pszDSN,
 	return TRUE;
 }
 
+BOOL INSTAPI SQLWriteDSNToIniW        (LPCWSTR     lpszDSN,
+                                      LPCWSTR     lpszDriver)
+{
+	char *drv, *dsn;
+	BOOL ret;
 
+	dsn = _single_string_alloc_and_copy( lpszDSN );
+	drv = _single_string_alloc_and_copy( lpszDriver );
 
+	ret = SQLWriteDSNToIni( dsn, drv );
+
+	free( dsn );
+	free( drv );
+
+	return ret;
+}

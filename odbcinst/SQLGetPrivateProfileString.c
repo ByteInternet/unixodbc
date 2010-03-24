@@ -21,9 +21,70 @@
 
 #ifdef ENABLE_INI_CACHING
 
+#ifdef HAVE_LIBPTH
+
+#include <pth.h>
+
+static pth_mutex_t mutex_ini = PTH_MUTEX_INIT;
+static int pth_init_called = 0;
+
+static int mutex_entry( pth_mutex_t *mutex )
+{
+    if ( !pth_init_called )
+    {
+        pth_init();
+        pth_init_called = 1;
+    }
+    return pth_mutex_acquire( mutex, 0, NULL );
+}
+
+static int mutex_exit( pth_mutex_t *mutex )
+{
+    return pth_mutex_release( mutex );
+}
+
+#elif HAVE_LIBPTHREAD
+
+#include <pthread.h>
+
+static pthread_mutex_t mutex_ini = PTHREAD_MUTEX_INITIALIZER;
+
+static int mutex_entry( pthread_mutex_t *mutex )
+{
+    return pthread_mutex_lock( mutex );
+}
+
+static int mutex_exit( pthread_mutex_t *mutex )
+{
+    return pthread_mutex_unlock( mutex );
+}
+
+#elif HAVE_LIBTHREAD
+
+#include <thread.h>
+
+static mutex_t mutex_ini;
+
+static int mutex_entry( mutex_t *mutex )
+{
+    return mutex_lock( mutex );
+}
+
+static int mutex_exit( mutex_t *mutex )
+{
+    return mutex_unlock( mutex );
+}
+
+#else
+
+#define mutex_entry(x)
+#define mutex_exit(x)
+
+#endif
+
 static struct ini_cache *ini_cache_head = NULL;
 
-int check_ini_cache( int *ret,
+static int _check_ini_cache( int *ret,
                      LPCSTR  pszSection,
                      LPCSTR  pszEntry,
                      LPCSTR  pszDefault,
@@ -40,7 +101,7 @@ int check_ini_cache( int *ret,
         return 0;
     }
 
-    SQLGetConfigMode( &config_mode );
+    config_mode = __get_config_mode();
 
     /*
      * look for expired entries, remove one each call
@@ -136,7 +197,7 @@ int check_ini_cache( int *ret,
     return 0;
 }
 
-int save_ini_cache( int ret,
+static int _save_ini_cache( int ret,
                     LPCSTR  pszSection,
                     LPCSTR  pszEntry,
                     LPCSTR  pszDefault,
@@ -172,7 +233,7 @@ int save_ini_cache( int ret,
     ini_cache -> buffer_size = nRetBuffer;
     ini_cache -> ret_value = ret;
 
-    SQLGetConfigMode( &config_mode );
+    config_mode = __get_config_mode();
     ini_cache -> config_mode = config_mode;
 
     ini_cache -> timestamp = tstamp;
@@ -183,9 +244,62 @@ int save_ini_cache( int ret,
     return 0;
 }
 
+/*
+ * wrappers to provide therad safety
+ */
+
+static int check_ini_cache( int *ret,
+                     LPCSTR  pszSection,
+                     LPCSTR  pszEntry,
+                     LPCSTR  pszDefault,
+                     LPSTR   pRetBuffer,
+                     int     nRetBuffer,
+                     LPCSTR  pszFileName )
+{
+	int rval;
+
+	mutex_entry( &mutex_ini );
+
+	rval = _check_ini_cache( ret, pszSection, pszEntry, pszDefault,
+			pRetBuffer, nRetBuffer, pszFileName );
+
+	mutex_exit( &mutex_ini );
+
+	return rval;
+}
+
+static int save_ini_cache( int ret,
+                    LPCSTR  pszSection,
+                    LPCSTR  pszEntry,
+                    LPCSTR  pszDefault,
+                    LPSTR   pRetBuffer,
+                    int     nRetBuffer,
+                    LPCSTR  pszFileName )
+{
+	int rval, cval;
+
+	mutex_entry( &mutex_ini );
+
+	/*
+	 * check its not been inserted since the last check
+	 */
+
+	if ( !_check_ini_cache( &cval, pszSection, pszEntry, pszDefault,
+			pRetBuffer, nRetBuffer, pszFileName )) {
+
+		rval = _save_ini_cache( ret, pszSection, pszEntry, pszDefault,
+			pRetBuffer, nRetBuffer, pszFileName );
+	}
+
+	mutex_exit( &mutex_ini );
+
+	return rval;
+}
+
+
 #else
 
-int check_ini_cache( int *ret,
+static int check_ini_cache( int *ret,
                      LPCSTR  pszSection,
                      LPCSTR  pszEntry,
                      LPCSTR  pszDefault,
@@ -196,7 +310,7 @@ int check_ini_cache( int *ret,
     return 0;
 }
 
-int save_ini_cache( int ret,
+static int save_ini_cache( int ret,
                     LPCSTR  pszSection,
                     LPCSTR  pszEntry,
                     LPCSTR  pszDefault,
@@ -225,6 +339,8 @@ int SQLGetPrivateProfileString( LPCSTR  pszSection,
     int     ini_done = 0;
     int     ret;
 
+    inst_logClear();
+
     if ( check_ini_cache( &ret, pszSection, pszEntry, pszDefault, pRetBuffer, nRetBuffer, pszFileName ))
     {
         return ret;
@@ -238,7 +354,7 @@ int SQLGetPrivateProfileString( LPCSTR  pszSection,
     }
     if ( pszSection != NULL && pszEntry != NULL && pszDefault == NULL )
     {
-        inst_logPushMsg( __FILE__, __FILE__, __LINE__, LOG_CRITICAL, ODBC_ERROR_GENERAL_ERR, "" );
+        inst_logPushMsg( __FILE__, __FILE__, __LINE__, LOG_CRITICAL, ODBC_ERROR_GENERAL_ERR, "need default value - try empty string" );
         return -1;
     }
 
@@ -255,13 +371,14 @@ int SQLGetPrivateProfileString( LPCSTR  pszSection,
 
             if ( ret == -1 )
             {
-                /*
-                 * Copy default value
-                 */
+                /* try to use any default provided */
                 if ( pRetBuffer && nRetBuffer > 0 )
                 {
-                    strncpy( pRetBuffer, pszDefault, nRetBuffer );
-                    pRetBuffer[ nRetBuffer - 1 ] = '\0';
+                    if ( pszDefault )
+                    {
+                        strncpy( pRetBuffer, pszDefault, nRetBuffer );
+                        pRetBuffer[ nRetBuffer - 1 ] = '\0';
+                    }
                 }
             }
             else
@@ -293,8 +410,7 @@ int SQLGetPrivateProfileString( LPCSTR  pszSection,
     }
     else
     {
-        nConfigMode     = ODBC_BOTH_DSN;
-        SQLGetConfigMode( &nConfigMode );
+        nConfigMode     = __get_config_mode();
         nBufPos         = 0;
         szFileName[0]   = '\0';
 
@@ -407,7 +523,7 @@ int SQLGetPrivateProfileString( LPCSTR  pszSection,
              * (NG) this seems to be ignoring the length of pRetBuffer !!!
              */
             /* strncpy( pRetBuffer, pszDefault, INI_MAX_PROPERTY_VALUE ); */
-            if ( pRetBuffer && nRetBuffer > 0 )
+            if ( pRetBuffer && nRetBuffer > 0 && pszDefault )
             {
                 strncpy( pRetBuffer, pszDefault, nRetBuffer );
                 pRetBuffer[ nRetBuffer - 1 ] = '\0';
@@ -416,8 +532,11 @@ int SQLGetPrivateProfileString( LPCSTR  pszSection,
         else
         {
             iniValue( hIni, szValue );
-            strncpy( pRetBuffer, szValue, nRetBuffer );
-            pRetBuffer[ nRetBuffer - 1 ] = '\0';
+	    if ( pRetBuffer ) 
+	    {
+	        strncpy( pRetBuffer, szValue, nRetBuffer );
+	        pRetBuffer[ nRetBuffer - 1 ] = '\0';
+	    }
             nBufPos = strlen( szValue );
         }
     }
@@ -431,4 +550,66 @@ int SQLGetPrivateProfileString( LPCSTR  pszSection,
     return ret;
 }
 
+int  INSTAPI SQLGetPrivateProfileStringW( LPCWSTR lpszSection,
+                                        LPCWSTR lpszEntry,
+                                        LPCWSTR lpszDefault,
+                                        LPWSTR  lpszRetBuffer,
+                                        int    cbRetBuffer,
+                                        LPCWSTR lpszFilename)
+{
+	int ret;
+	char *sect;
+	char *entry;
+	char *def;
+	char *buf;
+	char *name;
 
+    inst_logClear();
+
+	sect = lpszSection ? _single_string_alloc_and_copy( lpszSection ) : (char*)NULL;
+	entry = lpszEntry ? _single_string_alloc_and_copy( lpszEntry ) : (char*)NULL;
+	def = lpszDefault ? _single_string_alloc_and_copy( lpszDefault ) : (char*)NULL;
+	name = lpszFilename ? _single_string_alloc_and_copy( lpszFilename ) : (char*)NULL;
+
+	if ( lpszRetBuffer ) 
+	{
+		if ( cbRetBuffer > 0 )
+		{
+			buf = calloc( cbRetBuffer + 1, 1 );
+		}
+		else
+		{
+			buf = NULL;
+		}
+	}
+	else
+	{
+		buf = NULL;
+	}
+
+	ret = SQLGetPrivateProfileString( sect, entry, def, buf, cbRetBuffer, name );
+
+	if ( sect )
+		free( sect );
+	if ( entry )
+		free( entry );
+	if ( def )
+		free( def );
+	if ( name )
+		free( name );
+
+	if ( ret > 0 )
+	{
+		if ( buf && lpszRetBuffer )
+		{
+			_single_copy_to_wide( lpszRetBuffer, buf, ret + 1 );
+		}
+	}
+
+	if ( buf )
+	{
+		free( buf );
+	}
+
+	return ret;
+}

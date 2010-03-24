@@ -23,9 +23,15 @@
  *
  **********************************************************************
  *
- * $Id: SQLError.c,v 1.1.1.1 2001/10/17 16:40:15 lurcher Exp $
+ * $Id: SQLError.c,v 1.3 2008/01/02 15:10:33 lurcher Exp $
  *
  * $Log: SQLError.c,v $
+ * Revision 1.3  2008/01/02 15:10:33  lurcher
+ * Fix problems trying to use the cursor lib on a non select statement
+ *
+ * Revision 1.2  2005/09/05 09:49:48  lurcher
+ * New QT detection macros added
+ *
  * Revision 1.1.1.1  2001/10/17 16:40:15  lurcher
  *
  * First upload to SourceForge
@@ -60,6 +66,11 @@ SQLRETURN CLError( SQLHENV environment_handle,
     if ( statement_handle )
     {
         CLHSTMT cl_statement = (CLHSTMT) statement_handle; 
+
+		if ( cl_statement -> driver_stmt_closed ) 
+		{
+			return SQL_NO_DATA;
+		}
 
         if ( CHECK_SQLERROR( cl_statement -> cl_connection ))
         {

@@ -27,9 +27,24 @@
  *
  **********************************************************************
  *
- * $Id: SQLSetStmtAttr.c,v 1.9 2003/10/30 18:20:46 lurcher Exp $
+ * $Id: SQLSetStmtAttr.c,v 1.14 2007/12/17 13:13:03 lurcher Exp $
  *
  * $Log: SQLSetStmtAttr.c,v $
+ * Revision 1.14  2007/12/17 13:13:03  lurcher
+ * Fix a couple of descriptor typo's
+ *
+ * Revision 1.13  2007/02/12 11:49:34  lurcher
+ * Add QT4 support to existing GUI parts
+ *
+ * Revision 1.12  2006/04/27 16:39:50  lurcher
+ * fix missing return from SQLSetStmtAttr changes
+ *
+ * Revision 1.11  2006/04/24 08:42:10  lurcher
+ * Handle resetting statement descriptors to implicit values, by passing in NULL or the implicit descrptor  to SQLSetStmtAttr with the attribute SQL_ATTR_APP_PARAM_DESC or SQL_ATTR_APP_ROW_DESC. Also catch trying to call SQLGetDescField on a closed connection
+ *
+ * Revision 1.10  2005/11/23 08:29:16  lurcher
+ * Add cleanup in postgres driver
+ *
  * Revision 1.9  2003/10/30 18:20:46  lurcher
  *
  * Fix broken thread protection
@@ -188,7 +203,7 @@
 
 #include "drivermanager.h"
 
-static char const rcsid[]= "$RCSfile: SQLSetStmtAttr.c,v $ $Revision: 1.9 $";
+static char const rcsid[]= "$RCSfile: SQLSetStmtAttr.c,v $ $Revision: 1.14 $";
 
 SQLRETURN SQLSetStmtAttrA( SQLHSTMT statement_handle,
            SQLINTEGER attribute,
@@ -349,7 +364,8 @@ SQLRETURN SQLSetStmtAttr( SQLHSTMT statement_handle,
         }
     }
 
-    if ( !CHECK_SQLSETSTMTATTR( statement -> connection ) &&
+    if ( (!CHECK_SQLSETSTMTATTR( statement -> connection ) &&
+          !CHECK_SQLSETSTMTATTRW( statement -> connection )) &&
         !CHECK_SQLSETSTMTOPTION( statement -> connection ))
     {
         dm_log_write( __FILE__, 
@@ -372,6 +388,87 @@ SQLRETURN SQLSetStmtAttr( SQLHSTMT statement_handle,
     if ( attribute == SQL_ATTR_APP_ROW_DESC )
     {
         DMHDESC desc = ( DMHDESC ) value;
+
+		/*
+		 * needs to reset to implicit descriptor, this is safe
+		 * without a validate, as the value is either null, or the
+		 * same as a descriptor we know is valid
+		 */
+
+		if ( desc == NULL || desc == statement -> implicit_ard ) 
+		{
+			DRV_SQLHDESC drv_desc = NULL;
+
+			ret = SQL_SUCCESS;
+			
+			if ( desc == statement -> implicit_ard )
+			{
+				drv_desc = statement -> implicit_ard -> driver_desc;
+			}
+
+        	if ( CHECK_SQLSETSTMTATTR( statement -> connection ))
+        	{
+           	 	ret = SQLSETSTMTATTR( statement -> connection,
+           	     	statement -> driver_stmt,
+           	     	attribute,
+           	     	drv_desc,
+           	     	0 );
+        	}
+        	else if ( CHECK_SQLSETSTMTATTRW( statement -> connection ))
+        	{
+            	ret = SQLSETSTMTATTRW( statement -> connection,
+                	statement -> driver_stmt,
+                	attribute,
+                	statement -> implicit_ard -> driver_desc,
+                	0 );
+        	}
+            else
+            {
+                ret = SQLSETSTMTOPTION( statement -> connection,
+                    statement -> driver_stmt,
+                    attribute,
+                    statement -> implicit_ard -> driver_desc );
+            }
+
+			if ( ret != SQL_SUCCESS ) 
+			{
+    			if ( log_info.log_flag )
+    			{
+        			sprintf( statement -> msg, 
+                			"\n\t\tExit:[%s]",
+                    			__get_return_status( ret, s1 ));
+			
+        			dm_log_write( __FILE__, 
+                			__LINE__, 
+                			LOG_INFO, 
+                			LOG_INFO, 
+                			statement -> msg );
+    			}
+			
+    			return function_return( SQL_HANDLE_STMT, statement, ret ); 
+			}
+			
+			/*
+			 * copy DM descriptor
+			 */
+
+			statement -> apd = statement -> implicit_apd;
+
+    		if ( log_info.log_flag )
+    		{
+        		sprintf( statement -> msg, 
+                		"\n\t\tExit:[%s]",
+                    		__get_return_status( ret, s1 ));
+
+        		dm_log_write( __FILE__, 
+                		__LINE__, 
+                		LOG_INFO, 
+                		LOG_INFO, 
+                		statement -> msg );
+    		}
+		
+    		return function_return( SQL_HANDLE_STMT, statement, ret ); 
+		}
 
         if ( !__validate_desc( desc ))
         {
@@ -432,6 +529,87 @@ SQLRETURN SQLSetStmtAttr( SQLHSTMT statement_handle,
     if ( attribute == SQL_ATTR_APP_PARAM_DESC )
     {
         DMHDESC desc = ( DMHDESC ) value;
+
+		/*
+		 * needs to reset to implicit descriptor, this is safe
+		 * without a validate, as the value is either null, or the
+		 * same as a descriptor we know is valid
+		 */
+
+		if ( desc == NULL || desc == statement -> implicit_apd ) 
+		{
+			DRV_SQLHDESC drv_desc = NULL;
+
+			ret = SQL_SUCCESS;
+			
+			if ( desc == statement -> implicit_apd )
+			{
+				drv_desc = statement -> implicit_apd -> driver_desc;
+			}
+
+        	if ( CHECK_SQLSETSTMTATTR( statement -> connection ))
+        	{
+           	 	ret = SQLSETSTMTATTR( statement -> connection,
+           	     	statement -> driver_stmt,
+           	     	attribute,
+                	statement -> implicit_apd -> driver_desc,
+           	     	0 );
+        	}
+        	else if ( CHECK_SQLSETSTMTATTRW( statement -> connection ))
+        	{
+            	ret = SQLSETSTMTATTRW( statement -> connection,
+                	statement -> driver_stmt,
+                	attribute,
+                	statement -> implicit_apd -> driver_desc,
+                	0 );
+        	}
+            else
+            {
+                ret = SQLSETSTMTOPTION( statement -> connection,
+                    statement -> driver_stmt,
+                    attribute,
+                    drv_desc );
+            }
+
+			if ( ret != SQL_SUCCESS ) 
+			{
+    			if ( log_info.log_flag )
+    			{
+        			sprintf( statement -> msg, 
+                			"\n\t\tExit:[%s]",
+                    			__get_return_status( ret, s1 ));
+			
+        			dm_log_write( __FILE__, 
+                			__LINE__, 
+                			LOG_INFO, 
+                			LOG_INFO, 
+                			statement -> msg );
+    			}
+			
+    			return function_return( SQL_HANDLE_STMT, statement, ret ); 
+			}
+			
+			/*
+			 * copy DM descriptor
+			 */
+
+			statement -> apd = statement -> implicit_apd;
+
+    		if ( log_info.log_flag )
+    		{
+        		sprintf( statement -> msg, 
+                		"\n\t\tExit:[%s]",
+                    		__get_return_status( ret, s1 ));
+
+        		dm_log_write( __FILE__, 
+                		__LINE__, 
+                		LOG_INFO, 
+                		LOG_INFO, 
+                		statement -> msg );
+    		}
+		
+    		return function_return( SQL_HANDLE_STMT, statement, ret ); 
+		}
 
         if ( !__validate_desc( desc ))
         {
@@ -554,6 +732,14 @@ SQLRETURN SQLSetStmtAttr( SQLHSTMT statement_handle,
                     value,
                     string_length );
             }
+            else if ( CHECK_SQLSETSTMTATTRW( statement -> connection ))
+            {
+                SQLSETSTMTATTRW( statement -> connection,
+                    statement -> driver_stmt,
+                    attribute,
+                    value,
+                    string_length );
+            }
             else
             {
                 ret = SQLSETSTMTOPTION( statement -> connection,
@@ -581,6 +767,14 @@ SQLRETURN SQLSetStmtAttr( SQLHSTMT statement_handle,
                     value,
                     string_length );
             }
+            else if ( CHECK_SQLSETSTMTATTRW( statement -> connection ))
+            {
+                SQLSETSTMTATTRW( statement -> connection,
+                    statement -> driver_stmt,
+                    attribute,
+                    value,
+                    string_length );
+            }
             else
             {
                 ret = SQLSETSTMTOPTION( statement -> connection,
@@ -595,13 +789,21 @@ SQLRETURN SQLSetStmtAttr( SQLHSTMT statement_handle,
             statement -> connection -> driver_act_ver == SQL_OV_ODBC2 )
     {
         /*
-         * save this incase we need it in SQLExtendedFetch
+         * save this in case we need it in SQLExtendedFetch
          */
         statement -> row_array_size = (SQLULEN) value;
 
         if ( CHECK_SQLSETSTMTATTR( statement -> connection ))
         {
             ret = SQLSETSTMTATTR( statement -> connection,
+                statement -> driver_stmt,
+                SQL_ROWSET_SIZE,
+                value,
+                string_length );
+        }
+        else if ( CHECK_SQLSETSTMTATTRW( statement -> connection ))
+        {
+            ret = SQLSETSTMTATTRW( statement -> connection,
                 statement -> driver_stmt,
                 SQL_ROWSET_SIZE,
                 value,
@@ -618,6 +820,14 @@ SQLRETURN SQLSetStmtAttr( SQLHSTMT statement_handle,
     else if ( CHECK_SQLSETSTMTATTR( statement -> connection ))
     {
         ret = SQLSETSTMTATTR( statement -> connection,
+                statement -> driver_stmt,
+                attribute,
+                value,
+                string_length );
+    }
+    else if ( CHECK_SQLSETSTMTATTRW( statement -> connection ))
+    {
+        ret = SQLSETSTMTATTRW( statement -> connection,
                 statement -> driver_stmt,
                 attribute,
                 value,

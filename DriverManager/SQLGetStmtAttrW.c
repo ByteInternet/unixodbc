@@ -27,9 +27,15 @@
  *
  **********************************************************************
  *
- * $Id: SQLGetStmtAttrW.c,v 1.3 2003/10/30 18:20:46 lurcher Exp $
+ * $Id: SQLGetStmtAttrW.c,v 1.5 2008/08/29 08:01:39 lurcher Exp $
  *
  * $Log: SQLGetStmtAttrW.c,v $
+ * Revision 1.5  2008/08/29 08:01:39  lurcher
+ * Alter the way W functions are passed to the driver
+ *
+ * Revision 1.4  2007/02/28 15:37:48  lurcher
+ * deal with drivers that call internal W functions and end up in the driver manager. controlled by the --enable-handlemap configure arg
+ *
  * Revision 1.3  2003/10/30 18:20:46  lurcher
  *
  * Fix broken thread protection
@@ -86,6 +92,37 @@ SQLRETURN SQLGetStmtAttrW( SQLHSTMT statement_handle,
                     LOG_INFO, 
                     "Error: SQL_INVALID_HANDLE" );
 
+#ifdef WITH_HANDLE_REDIRECT
+		{
+			DMHSTMT parent_statement;
+
+			parent_statement = find_parent_handle( statement, SQL_HANDLE_STMT );
+
+			if ( parent_statement ) {
+        		dm_log_write( __FILE__, 
+                	__LINE__, 
+                    	LOG_INFO, 
+                    	LOG_INFO, 
+                    	"Info: found parent handle" );
+
+				if ( CHECK_SQLGETSTMTATTRW( parent_statement -> connection ))
+				{
+        			dm_log_write( __FILE__, 
+                		__LINE__, 
+                   		 	LOG_INFO, 
+                   		 	LOG_INFO, 
+                   		 	"Info: calling redirected driver function" );
+
+                	return  SQLGETSTMTATTRW( parent_statement -> connection,
+							statement_handle,
+							attribute,
+							value,
+							buffer_length,
+							string_length );
+				}
+			}
+		}
+#endif
         return SQL_INVALID_HANDLE;
     }
 
@@ -162,7 +199,8 @@ SQLRETURN SQLGetStmtAttrW( SQLHSTMT statement_handle,
      * states S5 - S7 are handled by the driver
      */
 
-    if ( statement -> connection -> unicode_driver )
+    if ( statement -> connection -> unicode_driver ||
+		    CHECK_SQLGETSTMTATTRW( statement -> connection ))
     {
         if ( !CHECK_SQLGETSTMTATTRW( statement -> connection ))
         {

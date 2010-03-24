@@ -27,9 +27,18 @@
  *
  **********************************************************************
  *
- * $Id: SQLBrowseConnect.c,v 1.10 2003/10/30 18:20:45 lurcher Exp $
+ * $Id: SQLBrowseConnect.c,v 1.13 2007/10/19 10:14:05 lurcher Exp $
  *
  * $Log: SQLBrowseConnect.c,v $
+ * Revision 1.13  2007/10/19 10:14:05  lurcher
+ * Pull errors from SQLBrowseConnect when it returns SQL_NEED_DATA
+ *
+ * Revision 1.12  2005/11/21 17:25:43  lurcher
+ * A few DM fixes for Oracle's ODBC driver
+ *
+ * Revision 1.11  2005/10/06 08:50:58  lurcher
+ * Fix problem with SQLDrivers not returning first entry
+ *
  * Revision 1.10  2003/10/30 18:20:45  lurcher
  *
  * Fix broken thread protection
@@ -158,7 +167,7 @@
 
 #include "drivermanager.h"
 
-static char const rcsid[]= "$RCSfile: SQLBrowseConnect.c,v $ $Revision: 1.10 $";
+static char const rcsid[]= "$RCSfile: SQLBrowseConnect.c,v $ $Revision: 1.13 $";
 
 #define BUFFER_LEN      4095
 
@@ -194,6 +203,7 @@ SQLRETURN SQLBrowseConnect(
     char in_str[ BUFFER_LEN ];
     SQLRETURN ret;
     SQLCHAR s1[ 100 + LOG_MESSAGE_LEN ], s2[ 100 + LOG_MESSAGE_LEN];
+	SQLWCHAR *uc_in_str;
     int warnings;
 
     /*
@@ -218,11 +228,13 @@ SQLRETURN SQLBrowseConnect(
         sprintf( connection -> msg, "\n\t\tEntry:\
             \n\t\t\tConnection = %p\
             \n\t\t\tStr In = %s\
-            \n\t\t\tStr Out = %s\
+            \n\t\t\tStr Out = %p\
+            \n\t\t\tStr Out Max = %d\
             \n\t\t\tPtr Conn Str Out = %p",
                 connection,
                 __string_with_length( s1, conn_str_in, len_conn_str_in ), 
-                __string_with_length( s2, conn_str_out, conn_str_out_max ), 
+                conn_str_out, 
+				conn_str_out_max, 
                 ptr_conn_str_out );
 
         dm_log_write( __FILE__, 
@@ -254,6 +266,21 @@ SQLRETURN SQLBrowseConnect(
     }
 
     thread_protect( SQL_HANDLE_DBC, connection );
+
+    if ( len_conn_str_in < 0  &&  len_conn_str_in != SQL_NTS)
+    {
+        dm_log_write( __FILE__, 
+                __LINE__, 
+                LOG_INFO, 
+                LOG_INFO, 
+                "Error: HY090" );
+
+        __post_internal_error( &connection -> error,
+                ERROR_HY090, NULL,
+                connection -> environment -> requested_version );
+
+        return function_return( SQL_HANDLE_DBC, connection, SQL_ERROR );
+    }
 
     /*
      * are we at the start of a connection
@@ -397,7 +424,9 @@ SQLRETURN SQLBrowseConnect(
         }
     }
 
-    ret = SQLBROWSECONNECT( connection,
+    if (CHECK_SQLBROWSECONNECT( connection ))
+    {
+        ret = SQLBROWSECONNECT( connection,
             connection -> driver_dbc,
             in_str,
             strlen( in_str ),
@@ -405,43 +434,59 @@ SQLRETURN SQLBrowseConnect(
             conn_str_out_max,
             ptr_conn_str_out );
 
-    if ( ret == SQL_NEED_DATA )
-    {
-        connection -> state = STATE_C3;
-
-        if ( log_info.log_flag )
-        {
-            sprintf( connection -> msg, 
-                    "\n\t\tExit:[%s]",
-                        __get_return_status( ret, s1 ));
-
-            dm_log_write( __FILE__, 
-                    __LINE__, 
-                    LOG_INFO, 
-                    LOG_INFO, 
-                    connection -> msg );
-        }
-
-        return function_return( SQL_HANDLE_DBC, connection, ret );
+        connection->unicode_driver = 0;
     }
-    else if ( !SQL_SUCCEEDED( ret ))
+    else if (CHECK_SQLBROWSECONNECTW( connection ))
+    {
+        uc_in_str = ansi_to_unicode_alloc((SQLCHAR*)in_str,SQL_NTS,connection);
+        
+        ret = SQLBROWSECONNECTW( connection,
+            connection -> driver_dbc,
+            uc_in_str,
+            strlen( in_str ),
+            conn_str_out,
+            conn_str_out_max,
+            ptr_conn_str_out );
+        
+        if(uc_in_str)
+             free(uc_in_str);
+
+        connection->unicode_driver = 1;
+        
+    }
+    else
+    {
+        dm_log_write( __FILE__,
+                      __LINE__,
+                      LOG_INFO,
+                      LOG_INFO,
+                      "Error: IM001" );
+
+        __disconnect_part_one( connection );
+        __post_internal_error( &connection -> error,
+                               ERROR_IM001, NULL,
+                               connection -> environment -> requested_version );
+          return function_return( SQL_HANDLE_DBC, connection, SQL_ERROR );
+    } 
+
+    if ( !SQL_SUCCEEDED( ret ) || ret == SQL_NEED_DATA )
     {
         SQLCHAR sqlstate[ 6 ];
         SQLINTEGER native_error;
         SQLSMALLINT ind;
         SQLCHAR message_text[ SQL_MAX_MESSAGE_LENGTH + 1 ];
-        SQLRETURN ret;
+        SQLRETURN eret;
         char buf[ 128 ];
 
         /*
          * get the error from the driver before
-         * loseing the connection
+         * looseing the connection
          */
         if ( CHECK_SQLERROR( connection ))
         {
             do
             {
-                ret = SQLERROR( connection,
+                eret = SQLERROR( connection,
                     SQL_NULL_HENV,
                         connection -> driver_dbc,
                         SQL_NULL_HSTMT,
@@ -452,7 +497,7 @@ SQLRETURN SQLBrowseConnect(
                         &ind );
 
 
-                if ( SQL_SUCCEEDED( ret ))
+                if ( SQL_SUCCEEDED( eret ))
                 {
                     __post_internal_error_ex( &connection -> error,
                             sqlstate,
@@ -466,7 +511,7 @@ SQLRETURN SQLBrowseConnect(
                     dm_log_write_diag( connection -> msg );
                 }
             }
-            while( SQL_SUCCEEDED( ret ));
+            while( SQL_SUCCEEDED( eret ));
         }
         else if ( CHECK_SQLGETDIAGREC( connection ))
         {
@@ -474,7 +519,7 @@ SQLRETURN SQLBrowseConnect(
 
             do
             {
-                ret = SQLGETDIAGREC( connection,
+                eret = SQLGETDIAGREC( connection,
                         SQL_HANDLE_DBC,
                         connection -> driver_dbc,
                         rec ++,
@@ -484,7 +529,7 @@ SQLRETURN SQLBrowseConnect(
                         sizeof( message_text ),
                         &ind );
 
-                if ( SQL_SUCCEEDED( ret ))
+                if ( SQL_SUCCEEDED( eret ))
                 {
                     __post_internal_error_ex( &connection -> error,
                             sqlstate,
@@ -498,22 +543,18 @@ SQLRETURN SQLBrowseConnect(
                     dm_log_write_diag( connection -> msg );
                 }
             }
-            while( SQL_SUCCEEDED( ret ));
+            while( SQL_SUCCEEDED( eret ));
         }
 
-        sprintf( connection -> msg,
-                "\n\t\tExit:[%s]",
-            __get_return_status( ret, s1 ));
-
-        dm_log_write( __FILE__,
-                __LINE__,
-                LOG_INFO,
-                LOG_INFO,
-                connection -> msg );
-
-        __disconnect_part_one( connection );
-
-        connection -> state = STATE_C2;
+    	if ( ret != SQL_NEED_DATA ) 
+		{
+        	__disconnect_part_one( connection );
+        	connection -> state = STATE_C2;
+		}
+		else 
+		{
+       		connection -> state = STATE_C3;
+		}
     }
     else
     {

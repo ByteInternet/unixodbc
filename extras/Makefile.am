@@ -5,6 +5,7 @@ INCLUDES = -I@top_srcdir@/include
 EXTRA_DIST = vms.c
 
 libodbcextraslc_la_SOURCES = \
-    strcasecmp.c
+    strcasecmp.c \
+    snprintf.c
 
-libodbcextraslc_la_LDFLAGS = 
+libodbcextraslc_la_LDFLAGS = -no-undefined 

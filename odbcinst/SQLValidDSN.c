@@ -12,8 +12,10 @@
 
 #define SQL_MAX_DSN_LENGTH 32
 
-BOOL SQLValidDSN(				LPCSTR	pszDSN )
+BOOL SQLValidDSN( LPCSTR	pszDSN )
 {
+    inst_logClear();
+
 	if ( pszDSN == NULL )
 		return FALSE;
 
@@ -66,6 +68,18 @@ BOOL SQLValidDSN(				LPCSTR	pszDSN )
 	return TRUE;
 }
 
+BOOL INSTAPI SQLValidDSNW(LPCWSTR lpszDSN)
+{
+	char *dsn;
+	BOOL ret;
 
+    inst_logClear();
 
+	dsn = _single_string_alloc_and_copy( lpszDSN );
 
+	ret = SQLValidDSN( dsn );
+
+	free( dsn );
+
+	return ret;
+}

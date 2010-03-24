@@ -65,7 +65,11 @@ void classLogin::pbOk_Clicked()
     SQLRETURN   nReturn;
 
     /* OK - Try to login */
+#ifdef QT_V4LAYOUT
+    strncpy( (char *)szDSN, qsDataSourceName.ascii(), 100 );
+#else
     strncpy( (char *)szDSN, qsDataSourceName.data(), 100 );
+#endif
     strncpy( (char *)szUID, txtUID->text(), 100 );
     strncpy( (char *)szPWD, txtPWD->text(), 100 );
 

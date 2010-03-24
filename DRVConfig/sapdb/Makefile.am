@@ -1,8 +1,8 @@
 lib_LTLIBRARIES = libsapdbS.la
 
-INCLUDES = -I@top_srcdir@/include $(INCLTDL)
+INCLUDES = -I@top_srcdir@/include $(LTDLINCL)
 
-libsapdbS_la_LDFLAGS = -version-info 1:0:0 -module
+libsapdbS_la_LDFLAGS = -no-undefined  -version-info 1:0:0 -module
 
 DEFS = -DUNIXODBC @DEFS@
 

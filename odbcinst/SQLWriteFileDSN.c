@@ -17,7 +17,6 @@ BOOL SQLWriteFileDSN(			LPCSTR	pszFileName,
 {
 	HINI	hIni;
 	char	szFileName[ODBC_FILENAME_MAX+1];
-	char	szFilePath[ODBC_FILENAME_MAX+1];
 
 	if ( pszFileName[0] == '/' )
 	{
@@ -25,9 +24,10 @@ BOOL SQLWriteFileDSN(			LPCSTR	pszFileName,
 	}
 	else
 	{	
-        sprintf( szFileName, "%s/ODBCDataSources", odbcinst_system_file_path());
-        SQLGetPrivateProfileString( "ODBC", "FILEDSNPATH", szFileName, szFilePath, sizeof( szFilePath ), "odbcinst.ini" );
-        sprintf( szFileName, "%s/%s", szFilePath, pszFileName );
+		char szPath[ODBC_FILENAME_MAX+1];
+		*szPath = '\0';
+		_odbcinst_FileINI( szPath );
+		sprintf( szFileName, "%s/%s", szPath, pszFileName );
 	}
 
     if ( strlen( szFileName ) < 4 || strcmp( szFileName + strlen( szFileName ) - 4, ".dsn" ))
@@ -94,5 +94,32 @@ BOOL SQLWriteFileDSN(			LPCSTR	pszFileName,
 	return TRUE;
 }
 
+BOOL INSTAPI SQLWriteFileDSNW(LPCWSTR  lpszFileName,
+                              LPCWSTR  lpszAppName,
+                              LPCWSTR  lpszKeyName,
+                              LPCWSTR  lpszString)
+{
+	BOOL ret;
+	char *file;
+	char *app;
+	char *key;
+	char *str;
 
+	file = lpszFileName ? _single_string_alloc_and_copy( lpszFileName ) : (char*)NULL;
+	app = lpszAppName ? _single_string_alloc_and_copy( lpszAppName ) : (char*)NULL;
+	key = lpszKeyName ? _single_string_alloc_and_copy( lpszKeyName ) : (char*)NULL;
+	str = lpszString ? _single_string_alloc_and_copy( lpszString ) : (char*)NULL;
 
+	ret = SQLWriteFileDSN( file, app, key, str );
+
+	if ( file )
+		free( file );
+	if ( app )
+		free( app );
+	if ( key )
+		free( key );
+	if ( str )
+		free( str );
+
+	return ret;
+}

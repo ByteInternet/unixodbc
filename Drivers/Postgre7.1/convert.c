@@ -430,8 +430,10 @@ struct tm tp;
 			mylog("DEFAULT: len = %d, ptr = '%s'\n", len, ptr);
 
 			if (stmt->current_col >= 0) {
-				if (stmt->bindings[stmt->current_col].data_left == 0)
+				if (stmt->bindings[stmt->current_col].data_left == 0) {
+					free( tempBuf );
 					return COPY_NO_DATA_FOUND;
+				}
 				else if (stmt->bindings[stmt->current_col].data_left > 0) {
 					ptr += len - stmt->bindings[stmt->current_col].data_left;
 					len = stmt->bindings[stmt->current_col].data_left;
@@ -960,7 +962,7 @@ int lobj_fd, retval;
 
 		case SQL_C_SLONG:
 		case SQL_C_LONG:
-#if (SIZEOF_LONG == 4)
+#if (SIZEOF_LONG_INT == 4)
 			sprintf(param_string, "%ld",
 #else
 			sprintf(param_string, "%d",
@@ -981,7 +983,7 @@ int lobj_fd, retval;
 			break;
 
 		case SQL_C_ULONG:
-#if (SIZEOF_LONG == 4)
+#if (SIZEOF_LONG_INT == 4)
 			sprintf(param_string, "%lu",
 #else
 			sprintf(param_string, "%u",
@@ -1387,9 +1389,9 @@ char key[33];
 char *
 convert_money(char *s)
 {
-size_t i = 0, out = 0;
+size_t i = 0, out = 0, slen=strlen(s);
 
-	for (i = 0; i < strlen(s); i++) {
+	for (i = 0; i < slen; i++) {
 		if (s[i] == '$' || s[i] == ',' || s[i] == ')')
 			; /* skip these characters */
 		else if (s[i] == '(')
@@ -1565,11 +1567,11 @@ int i, y=0, val;
 int
 convert_from_pgbinary(unsigned char *value, unsigned char *rgbValue, int cbValueMax)
 {
-size_t i;
 int o=0;
+size_t i, valen=strlen((char*)value);;
 
 	
-	for (i = 0; i < strlen((char*)value) && o < cbValueMax; ) 
+	for (i = 0; i < valen && o < cbValueMax; ) 
     {
 		if (value[i] == '\\') 
         {
@@ -1637,8 +1639,9 @@ void
 encode(char *in, char *out)
 {
 	unsigned int i, o = 0;
+	size_t inlen=strlen(in);
 
-	for (i = 0; i < strlen(in); i++) {
+	for (i = 0; i < inlen; i++) {
 		if ( in[i] == '+') {
 			sprintf(&out[o], "%%2B");
 			o += 3;
@@ -1661,8 +1664,9 @@ void
 decode(char *in, char *out)
 {
 unsigned int i, o = 0;
+size_t stlen=strlen(in);
 
-	for (i = 0; i < strlen(in); i++) { 
+	for(i=0; i < stlen; i++) {
 		if (in[i] == '+')
 			out[o++] = ' ';
 		else if (in[i] == '%') {

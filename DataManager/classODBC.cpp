@@ -12,13 +12,21 @@
 #include "classODBC.h"
 #include "ODBC.xpm"
 
+#ifdef QT_V4LAYOUT
+classODBC::classODBC( Q3ListView *pParent, classCanvas *pCanvas )
+#else
 classODBC::classODBC( QListView *pParent, classCanvas *pCanvas )
+#endif
     : classNode( pParent, pCanvas )
 {
 	Init();
 }
 
+#ifdef QT_V4LAYOUT
+classODBC::classODBC( Q3ListViewItem *pParent, classCanvas *pCanvas )
+#else
 classODBC::classODBC( QListViewItem *pParent, classCanvas *pCanvas )
+#endif
     : classNode( pParent, pCanvas )
 {
 	Init();
@@ -61,16 +69,28 @@ void classODBC::setOpen( bool o )
 		pDataSourcesSystem	= new classDataSources( this, pDrivers, pCanvas, classDataSources::System, hEnv );
 		pDataSourcesUser	= new classDataSources( this, pDataSourcesSystem, pCanvas, classDataSources::User, hEnv );
     }
+#ifdef QT_V4LAYOUT
+    Q3ListViewItem::setOpen( o );
+#else
     QListViewItem::setOpen( o );
+#endif
 }
 
 void classODBC::setup()
 {
     setExpandable( TRUE );
+#ifdef QT_V4LAYOUT
+    Q3ListViewItem::setup();
+#else
     QListViewItem::setup();
+#endif
 }
 
+#ifdef QT_V4LAYOUT
+void classODBC::selectionChanged( Q3ListViewItem *p )
+#else
 void classODBC::selectionChanged( QListViewItem *p )
+#endif
 {
 	if ( pDrivers ) pDrivers->selectionChanged( p );
 	if ( pDataSourcesUser ) pDataSourcesUser->selectionChanged( p );

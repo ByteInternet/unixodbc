@@ -1,13 +1,16 @@
 if QT
+if QT4
+
+else
 
 bin_PROGRAMS = DataManager
 
-INCLUDES = -I@top_srcdir@/include @QT_INCLUDES@
+INCLUDES = -I@top_srcdir@/include $(QT_CXXFLAGS)
 
-DataManager_LDADD = @X_LDFLAGS@ \
-	@QT_LDFLAGS@ \
-	@USER_LDFLAGS@ \
-	@LIB_QT@ \
+DataManager_LDADD = \
+	$(QT_LDFLAGS) \
+	$(QT_LIBS) \
+	../ini/libinilc.la \
 	../odbcinst/libodbcinst.la \
 	../DriverManager/libodbc.la 
 
@@ -66,12 +69,23 @@ mclassBrowseFrame.cpp: @srcdir@/classBrowseFrame.h
 mclassBrowse.cpp: @srcdir@/classBrowse.h
 	@MOC@ @srcdir@/classBrowse.h -o mclassBrowse.cpp
 
+CLEANFILES = \
+	mclassDataManager.cpp \
+	mclassCanvas.cpp \
+	mclassLogin.cpp \
+	mclassISQL.cpp \
+	mclassConnectionFrame.cpp \
+	mclassBrowseFrame.cpp \
+	mclassBrowse.cpp
+
+endif
 endif
 
 EXTRA_DIST = \
 	classCanvas.h \
 	classColumn.h \
 	classDataManager.h \
+	classDataManager4.h \
 	classDataSource.h \
 	classDataSources.h \
 	classDriver.h \
@@ -112,3 +126,4 @@ EXTRA_DIST = \
 	table.xpm \
 	tables.xpm \
 	ODBC.xpm
+

@@ -12,6 +12,19 @@
 #ifndef classBrowse_included
 #define classBrowse_included
 
+#ifdef QT_V4LAYOUT
+#include <Qt/qwidget.h>
+#include <Qt/qevent.h>
+#include <Qt/qlayout.h>
+#include <Qt/q3table.h>
+#include <Qt/q3header.h>
+#include <Qt/qlabel.h>
+#include <Qt/qmessagebox.h>
+#include <Qt/qwmatrix.h>
+#include <Qt/qwhatsthis.h>
+#include <Qt/qfile.h>
+#include <Qt/qfiledialog.h>
+#else
 #include <qwidget.h>
 #include <qlayout.h>
 #include <qtable.h>
@@ -22,6 +35,7 @@
 #include <qwhatsthis.h>
 #include <qfile.h>
 #include <qfiledialog.h>
+#endif
 
 #include <sqlext.h>
 
@@ -51,8 +65,13 @@ public slots:
 
 protected:
     QVBoxLayout     *layoutMain;
+#ifdef QT_V4LAYOUT
+    Q3Table          *tableQuery;
+    Q3Table          *tableData;
+#else
     QTable          *tableQuery;
     QTable          *tableData;
+#endif
 	SQLHDBC 		hDbc;
     QString     	qsTable;
     QString         qsSQL;
@@ -63,7 +82,11 @@ protected:
     void ExecHeader( SQLHSTMT hStmt, SWORD nColumns );
     int  ExecBody( SQLHSTMT hStmt, SWORD nColumns );
     bool CreateSQL();
+#ifdef QT_V4LAYOUT
+    void ClearCells( Q3Table *table );
+#else
     void ClearCells( QTable *table );
+#endif
 };
 
 #endif

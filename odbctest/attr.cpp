@@ -21,9 +21,18 @@
  *
  **********************************************************************
  *
- * $Id: attr.cpp,v 1.4 2003/12/01 16:37:17 lurcher Exp $
+ * $Id: attr.cpp,v 1.7 2007/11/29 12:00:37 lurcher Exp $
  *
  * $Log: attr.cpp,v $
+ * Revision 1.7  2007/11/29 12:00:37  lurcher
+ * Add 64 bit type changes to SQLExtendedFetch etc
+ *
+ * Revision 1.6  2007/02/12 11:49:37  lurcher
+ * Add QT4 support to existing GUI parts
+ *
+ * Revision 1.5  2007/01/02 10:27:50  lurcher
+ * Fix descriptor leak with unicode only driver
+ *
  * Revision 1.4  2003/12/01 16:37:17  lurcher
  *
  * Fix a bug in SQLWritePrivateProfileString
@@ -90,9 +99,15 @@
  **********************************************************************/
 
 #include <stdlib.h>
+#ifdef QT_V4LAYOUT
+#include <Qt/qapplication.h>
+#include <Qt/qmessagebox.h>
+#include <Qt/qlineedit.h>
+#else
 #include <qapplication.h>
 #include <qmessagebox.h>
 #include <qlineedit.h>
+#endif
 #include <sql.h>
 #include <sqlext.h>
 #include "odbctest.h"
@@ -1464,7 +1479,7 @@ void dSetStmtOption::Ok()
 	SQLHANDLE in_handle = SQL_NULL_HSTMT;
 	SQLINTEGER attribute;
 	SQLINTEGER ival;
-	SQLROWCOUNT vptr;
+	SQLULEN vptr;
 	const char *tptr;
 	attr_value *ptr;
 	SQLINTEGER string_length;
@@ -1508,7 +1523,7 @@ void dSetStmtOption::Ok()
 
 	if ( !ptr -> text )
 	{
-		vptr = (SQLROWCOUNT) atoi( tptr );
+		vptr = (SQLULEN) atoi( tptr );
 		txt.sprintf( "    vParam: %d", atoi( tptr ));
 		if ( attribute == SQL_ROWSET_SIZE )
 		{
@@ -1517,7 +1532,7 @@ void dSetStmtOption::Ok()
 	}
 	else
 	{
-		vptr = (SQLROWCOUNT) ptr -> value;
+		vptr = (SQLULEN) ptr -> value;
 		txt.sprintf( "    vParam: %s=%d", ptr -> text, ptr -> value );
 		if ( attribute == SQL_ROWSET_SIZE )
 		{
@@ -2596,7 +2611,7 @@ void dSetConnectOption::Ok()
 		// This can't be done on 64 bit with old definitions...
 		if ( conn_opt_options[ types -> currentItem() ].data_type == SQL_CHAR )
 		{
-#if (SIZEOF_LONG == 8)
+#if (SIZEOF_LONG_INT == 8)
 #ifndef DO_YOU_KNOW_WHAT_YOUR_ARE_DOING
 			fprintf( stderr, "unable to do this on this processor with 32 bit build options...\n" );
 #else
@@ -2612,7 +2627,7 @@ void dSetConnectOption::Ok()
             }
             else
             {
-#if (SIZEOF_LONG == 8)
+#if (SIZEOF_LONG_INT == 8)
 #ifndef DO_YOU_KNOW_WHAT_YOUR_ARE_DOING
 			    fprintf( stderr, "unable to do this on this processor with 32 bit build options...\n" );
 #else
@@ -2711,7 +2726,7 @@ void dGetConnectOption::Ok()
 	SQLHANDLE in_handle = SQL_NULL_HENV;
 	SQLINTEGER attribute, value;
 	SQLPOINTER vptr;
-    Handle *hand = odbctest->extract_handle_list( SQL_HANDLE_STMT, handles );
+    Handle *hand = odbctest->extract_handle_list( SQL_HANDLE_DBC, handles );
 	int index = types->currentItem();
 	char *buf = NULL;
 	int i;
@@ -2722,9 +2737,9 @@ void dGetConnectOption::Ok()
 	odbctest -> out_win -> insertLineLimited( "SQLGetConnectOption():" );
 	odbctest -> out_win -> insertLineLimited( "  In:" );
 	if ( in_handle )
-		txt.sprintf( "    hstmt: %p", in_handle );
+		txt.sprintf( "    hdbc: %p", in_handle );
 	else
-		txt.sprintf( "    hstmt: SQL_NULL_HDBC" );
+		txt.sprintf( "    hdbc: SQL_NULL_HDBC" );
 	odbctest -> out_win -> insertLineLimited( txt );
 
 	attribute = conn_gopt_options[ types -> currentItem() ].attr;

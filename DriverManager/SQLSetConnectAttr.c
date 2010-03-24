@@ -27,9 +27,12 @@
  *
  **********************************************************************
  *
- * $Id: SQLSetConnectAttr.c,v 1.15 2005/03/01 15:50:50 lurcher Exp $
+ * $Id: SQLSetConnectAttr.c,v 1.16 2006/04/11 10:22:56 lurcher Exp $
  *
  * $Log: SQLSetConnectAttr.c,v $
+ * Revision 1.16  2006/04/11 10:22:56  lurcher
+ * Fix a data type check
+ *
  * Revision 1.15  2005/03/01 15:50:50  lurcher
  * Add Eric's SQLSetConnectAttr patch
  *
@@ -203,7 +206,7 @@
 
 #include "drivermanager.h"
 
-static char const rcsid[]= "$RCSfile: SQLSetConnectAttr.c,v $ $Revision: 1.15 $";
+static char const rcsid[]= "$RCSfile: SQLSetConnectAttr.c,v $ $Revision: 1.16 $";
 
 SQLRETURN SQLSetConnectAttrA( SQLHDBC connection_handle,
            SQLINTEGER attribute,
@@ -487,6 +490,7 @@ SQLRETURN SQLSetConnectAttr( SQLHDBC connection_handle,
             else
             {
                 sa -> int_attr = ( SQLLEN ) value;
+                sa -> str_len = string_length;
             }
             sa -> next = connection -> save_attr;
             connection -> save_attr = sa;

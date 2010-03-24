@@ -27,9 +27,12 @@
  *
  **********************************************************************
  *
- * $Id: SQLNativeSql.c,v 1.7 2003/10/30 18:20:46 lurcher Exp $
+ * $Id: SQLNativeSql.c,v 1.8 2008/09/29 14:02:45 lurcher Exp $
  *
  * $Log: SQLNativeSql.c,v $
+ * Revision 1.8  2008/09/29 14:02:45  lurcher
+ * Fix missing dlfcn group option
+ *
  * Revision 1.7  2003/10/30 18:20:46  lurcher
  *
  * Fix broken thread protection
@@ -127,7 +130,7 @@
 
 #include "drivermanager.h"
 
-static char const rcsid[]= "$RCSfile: SQLNativeSql.c,v $ $Revision: 1.7 $";
+static char const rcsid[]= "$RCSfile: SQLNativeSql.c,v $ $Revision: 1.8 $";
 
 SQLRETURN SQLNativeSqlA(
     SQLHDBC            hdbc,
@@ -310,7 +313,7 @@ SQLRETURN SQLNativeSql(
 
         if ( SQL_SUCCEEDED( ret ) && s2 && sz_sql_str )
         {
-            unicode_to_ansi_copy((char*) sz_sql_str, s2, SQL_NTS, connection );
+            unicode_to_ansi_copy((char*) sz_sql_str, cb_sql_str_max, s2, SQL_NTS, connection );
         }
 
         if ( s1 )

@@ -972,6 +972,16 @@ char cmdbuffer[MAX_MESSAGE_LEN+1];	/*// QR_set_command() dups this string so don
 
 				while( ! clear) {
 					id = SOCK_get_char(sock);
+					if ((SOCK_get_errcode(sock) != 0) || (id == EOF)) {
+						self->errornumber = CONNECTION_NO_RESPONSE;
+						self->errormsg = "No response from the backend";
+						if (res) {
+							QR_Destructor(res);
+						}
+						mylog("send_query: id=%d error=%s \n", id, self->errormsg);
+						CC_set_no_trans(self);
+						return NULL;
+					}
 					switch(id) {
 					case 'I':
 						(void) SOCK_get_char(sock);

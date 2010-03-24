@@ -27,9 +27,15 @@
  *
  **********************************************************************
  *
- * $Id: SQLBrowseConnectW.c,v 1.10 2003/10/30 18:20:45 lurcher Exp $
+ * $Id: SQLBrowseConnectW.c,v 1.12 2007/10/19 10:14:05 lurcher Exp $
  *
  * $Log: SQLBrowseConnectW.c,v $
+ * Revision 1.12  2007/10/19 10:14:05  lurcher
+ * Pull errors from SQLBrowseConnect when it returns SQL_NEED_DATA
+ *
+ * Revision 1.11  2007/02/28 15:37:46  lurcher
+ * deal with drivers that call internal W functions and end up in the driver manager. controlled by the --enable-handlemap configure arg
+ *
  * Revision 1.10  2003/10/30 18:20:45  lurcher
  *
  * Fix broken thread protection
@@ -144,6 +150,39 @@ SQLRETURN SQLBrowseConnectW(
                     LOG_INFO, 
                     LOG_INFO, 
                     "Error: SQL_INVALID_HANDLE" );
+
+#ifdef WITH_HANDLE_REDIRECT
+		{
+			DMHDBC parent_connection;
+
+			parent_connection = find_parent_handle( connection, SQL_HANDLE_DBC );
+
+			if ( parent_connection ) {
+        		dm_log_write( __FILE__, 
+                	__LINE__, 
+                    	LOG_INFO, 
+                    	LOG_INFO, 
+                    	"Info: found parent handle" );
+
+				if ( CHECK_SQLBROWSECONNECTW( parent_connection ))
+				{
+        			dm_log_write( __FILE__, 
+                		__LINE__, 
+                   		 	LOG_INFO, 
+                   		 	LOG_INFO, 
+                   		 	"Info: calling redirected driver function" );
+
+					return SQLBROWSECONNECTW( parent_connection, 
+							connection, 
+							conn_str_in,
+							len_conn_str_in,
+							conn_str_out,
+							conn_str_out_max,
+							ptr_conn_str_out );
+				}
+			}
+		}
+#endif
 
         return SQL_INVALID_HANDLE;
     }
@@ -415,25 +454,7 @@ SQLRETURN SQLBrowseConnectW(
         connection -> unicode_driver = 0;
     }
 
-    if ( ret == SQL_NEED_DATA )
-    {
-        connection -> state = STATE_C3;
-        if ( log_info.log_flag )
-        {
-            sprintf( connection -> msg, 
-                    "\n\t\tExit:[%s]",
-                        __get_return_status( ret, s1 ));
-
-            dm_log_write( __FILE__, 
-                    __LINE__, 
-                    LOG_INFO, 
-                    LOG_INFO, 
-                    connection -> msg );
-        }
-
-        return function_return( SQL_HANDLE_DBC, connection, ret );
-    }
-    else if ( !SQL_SUCCEEDED( ret ))
+    if ( !SQL_SUCCEEDED( ret ) || ret == SQL_NEED_DATA )
     {
         if ( connection -> unicode_driver )
         {
@@ -441,7 +462,7 @@ SQLRETURN SQLBrowseConnectW(
             SQLINTEGER native_error;
             SQLSMALLINT ind;
             SQLWCHAR message_text[ SQL_MAX_MESSAGE_LENGTH + 1 ];
-            SQLRETURN ret;
+            SQLRETURN eret;
 
             /*
              * get the error from the driver before
@@ -452,7 +473,7 @@ SQLRETURN SQLBrowseConnectW(
             {
                 do
                 {
-                    ret = SQLERRORW( connection,
+                    eret = SQLERRORW( connection,
                             SQL_NULL_HENV,
                             connection -> driver_dbc,
                             SQL_NULL_HSTMT,
@@ -463,7 +484,7 @@ SQLRETURN SQLBrowseConnectW(
                             &ind );
 
 
-                    if ( SQL_SUCCEEDED( ret ))
+                    if ( SQL_SUCCEEDED( eret ))
                     {
                         __post_internal_error_ex_w( &connection -> error,
                                 sqlstate,
@@ -472,7 +493,7 @@ SQLRETURN SQLBrowseConnectW(
                                 SUBCLASS_ODBC, SUBCLASS_ODBC );
                     }
                 }
-                while( SQL_SUCCEEDED( ret ));
+                while( SQL_SUCCEEDED( eret ));
             }
             else if ( CHECK_SQLGETDIAGRECW( connection ))
             {
@@ -480,7 +501,7 @@ SQLRETURN SQLBrowseConnectW(
 
                 do
                 {
-                    ret = SQLGETDIAGRECW( connection,
+                    eret = SQLGETDIAGRECW( connection,
                             SQL_HANDLE_DBC,
                             connection -> driver_dbc,
                             rec ++,
@@ -490,7 +511,7 @@ SQLRETURN SQLBrowseConnectW(
                             sizeof( message_text ),
                             &ind );
 
-                    if ( SQL_SUCCEEDED( ret ))
+                    if ( SQL_SUCCEEDED( eret ))
                     {
                         __post_internal_error_ex_w( &connection -> error,
                                 sqlstate,
@@ -499,11 +520,18 @@ SQLRETURN SQLBrowseConnectW(
                                 SUBCLASS_ODBC, SUBCLASS_ODBC );
                     }
                 }
-                while( SQL_SUCCEEDED( ret ));
+                while( SQL_SUCCEEDED( eret ));
             }
 
-            __disconnect_part_one( connection );
-            connection -> state = STATE_C2;
+    		if ( ret != SQL_NEED_DATA ) 
+			{
+        		__disconnect_part_one( connection );
+        		connection -> state = STATE_C2;
+			}
+			else 
+			{
+       			connection -> state = STATE_C3;
+			}
         }
         else
         {
@@ -511,7 +539,7 @@ SQLRETURN SQLBrowseConnectW(
             SQLINTEGER native_error;
             SQLSMALLINT ind;
             SQLCHAR message_text[ SQL_MAX_MESSAGE_LENGTH + 1 ];
-            SQLRETURN ret;
+            SQLRETURN eret;
 
             /*
              * get the error from the driver before
@@ -521,7 +549,7 @@ SQLRETURN SQLBrowseConnectW(
             {
                 do
                 {
-                    ret = SQLERROR( connection,
+                    eret = SQLERROR( connection,
                         SQL_NULL_HENV,
                             connection -> driver_dbc,
                             SQL_NULL_HSTMT,
@@ -532,7 +560,7 @@ SQLRETURN SQLBrowseConnectW(
                             &ind );
 
 
-                    if ( SQL_SUCCEEDED( ret ))
+                    if ( SQL_SUCCEEDED( eret ))
                     {
                         __post_internal_error_ex( &connection -> error,
                                 sqlstate,
@@ -541,7 +569,7 @@ SQLRETURN SQLBrowseConnectW(
                                 SUBCLASS_ODBC, SUBCLASS_ODBC );
                     }
                 }
-                while( SQL_SUCCEEDED( ret ));
+                while( SQL_SUCCEEDED( eret ));
             }
             else if ( CHECK_SQLGETDIAGREC( connection ))
             {
@@ -549,7 +577,7 @@ SQLRETURN SQLBrowseConnectW(
 
                 do
                 {
-                    ret = SQLGETDIAGRECW( connection,
+                    eret = SQLGETDIAGRECW( connection,
                             SQL_HANDLE_DBC,
                             connection -> driver_dbc,
                             rec ++,
@@ -559,7 +587,7 @@ SQLRETURN SQLBrowseConnectW(
                             sizeof( message_text ),
                             &ind );
 
-                    if ( SQL_SUCCEEDED( ret ))
+                    if ( SQL_SUCCEEDED( eret ))
                     {
                         __post_internal_error_ex( &connection -> error,
                                 sqlstate,
@@ -568,21 +596,18 @@ SQLRETURN SQLBrowseConnectW(
                                 SUBCLASS_ODBC, SUBCLASS_ODBC );
                     }
                 }
-                while( SQL_SUCCEEDED( ret ));
+                while( SQL_SUCCEEDED( eret ));
             }
 
-            sprintf( connection -> msg,
-                    "\n\t\tExit:[%s]",
-                __get_return_status( ret, s1 ));
-
-            dm_log_write( __FILE__,
-                    __LINE__,
-                    LOG_INFO,
-                    LOG_INFO,
-                    connection -> msg );
-
-            __disconnect_part_one( connection );
-            connection -> state = STATE_C2;
+    		if ( ret != SQL_NEED_DATA ) 
+			{
+        		__disconnect_part_one( connection );
+        		connection -> state = STATE_C2;
+			}
+			else 
+			{
+       			connection -> state = STATE_C3;
+			}
         }
     }
     else

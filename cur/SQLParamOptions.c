@@ -23,9 +23,12 @@
  *
  **********************************************************************
  *
- * $Id: SQLParamOptions.c,v 1.1.1.1 2001/10/17 16:40:15 lurcher Exp $
+ * $Id: SQLParamOptions.c,v 1.2 2007/02/12 11:49:35 lurcher Exp $
  *
  * $Log: SQLParamOptions.c,v $
+ * Revision 1.2  2007/02/12 11:49:35  lurcher
+ * Add QT4 support to existing GUI parts
+ *
  * Revision 1.1.1.1  2001/10/17 16:40:15  lurcher
  *
  * First upload to SourceForge
@@ -45,9 +48,9 @@
 #include "cursorlibrary.h"
 
 SQLRETURN CLParamOptions(
-    SQLHSTMT           statement_handle,
-    SQLUINTEGER        crow,
-    SQLUINTEGER        *pirow )
+    SQLHSTMT       statement_handle,
+    SQLULEN        crow,
+    SQLULEN        *pirow )
 {
     CLHSTMT cl_statement = (CLHSTMT) statement_handle; 
 

@@ -23,9 +23,12 @@
  *
  **********************************************************************
  *
- * $Id: SQLDescribeCol.c,v 1.1.1.1 2001/10/17 16:40:15 lurcher Exp $
+ * $Id: SQLDescribeCol.c,v 1.2 2007/11/13 15:04:57 lurcher Exp $
  *
  * $Log: SQLDescribeCol.c,v $
+ * Revision 1.2  2007/11/13 15:04:57  lurcher
+ * Fix 64 bit cursor lib issues
+ *
  * Revision 1.1.1.1  2001/10/17 16:40:15  lurcher
  *
  * First upload to SourceForge
@@ -50,7 +53,7 @@ SQLRETURN CLDescribeCol( SQLHSTMT statement_handle,
            SQLSMALLINT buffer_length,
            SQLSMALLINT *name_length,
            SQLSMALLINT *data_type,
-           SQLUINTEGER *column_size,
+           SQLULEN *column_size,
            SQLSMALLINT *decimal_digits,
            SQLSMALLINT *nullable )
 {

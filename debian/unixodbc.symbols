@@ -3,6 +3,8 @@ libgtrtst.so.1 unixodbc #MINVER#
  szLogPrintf@Base 2.2.4-11
  szMessageBox@Base 2.2.4-11
 libodbc.so.1 unixodbc #MINVER#
+ ODBCGetTryWaitValue@Base 2.2.14p2
+ ODBCSetTryWaitValue@Base 2.2.14p2
  ODBCSharedTraceFlag@Base 2.2.11
  SQLAllocConnect@Base 2.2.11
  SQLAllocEnv@Base 2.2.11
@@ -143,6 +145,8 @@ libodbc.so.1 unixodbc #MINVER#
  SQLSetStmtAttrA@Base 2.2.11
  SQLSetStmtAttrW@Base 2.2.11
  SQLSetStmtOption@Base 2.2.11
+ SQLSetStmtOptionA@Base 2.2.12
+ SQLSetStmtOptionW@Base 2.2.12
  SQLSpecialColumns@Base 2.2.11
  SQLSpecialColumnsA@Base 2.2.11
  SQLSpecialColumnsW@Base 2.2.11

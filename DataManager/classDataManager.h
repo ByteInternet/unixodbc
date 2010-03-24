@@ -38,7 +38,7 @@ public:
     void resizeEvent( QResizeEvent * );
 
 public slots:
-    void ItemMenu(QListViewItem*,const QPoint&,int);
+    void ItemMenu( QListViewItem*,const QPoint&,int);
     void ItemChanged(QListViewItem*);
 
 protected slots:
@@ -47,7 +47,7 @@ protected slots:
 
 protected:
 	QSplitter	*splSplitter;
-    QListView	*lvwBrowser;
+    LView	*lvwBrowser;
     classCanvas	*pCanvas;
 
 	classODBC	*pODBC;

@@ -24,6 +24,16 @@
 #ifndef classCanvas_included
 #define classCanvas_included
 
+#ifdef QT_V4LAYOUT
+#include <Qt/qevent.h>
+#include <Qt/qpixmap.h>
+#include <Qt/qmessagebox.h>
+#include <Qt/qwidget.h>
+#include <Qt/qlistview.h>
+#include <Qt/qframe.h>
+#include <Qt/qlayout.h>
+#include <Qt/qlabel.h>
+#else
 #include <qkeycode.h>
 #include <qpixmap.h>
 #include <qmessagebox.h>
@@ -32,6 +42,7 @@
 #include <qframe.h>
 #include <qlayout.h>
 #include <qlabel.h>
+#endif
 
 class classCanvas : public QLabel
 {

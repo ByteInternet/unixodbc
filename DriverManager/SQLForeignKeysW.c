@@ -27,9 +27,15 @@
  *
  **********************************************************************
  *
- * $Id: SQLForeignKeysW.c,v 1.6 2004/01/12 09:54:39 lurcher Exp $
+ * $Id: SQLForeignKeysW.c,v 1.8 2008/08/29 08:01:38 lurcher Exp $
  *
  * $Log: SQLForeignKeysW.c,v $
+ * Revision 1.8  2008/08/29 08:01:38  lurcher
+ * Alter the way W functions are passed to the driver
+ *
+ * Revision 1.7  2007/02/28 15:37:48  lurcher
+ * deal with drivers that call internal W functions and end up in the driver manager. controlled by the --enable-handlemap configure arg
+ *
  * Revision 1.6  2004/01/12 09:54:39  lurcher
  *
  * Fix problem where STATE_S5 stops metadata calls
@@ -109,6 +115,45 @@ SQLRETURN SQLForeignKeysW(
                     LOG_INFO, 
                     "Error: SQL_INVALID_HANDLE" );
 
+#ifdef WITH_HANDLE_REDIRECT
+		{
+			DMHSTMT parent_statement;
+
+			parent_statement = find_parent_handle( statement, SQL_HANDLE_STMT );
+
+			if ( parent_statement ) {
+        		dm_log_write( __FILE__, 
+                	__LINE__, 
+                    	LOG_INFO, 
+                    	LOG_INFO, 
+                    	"Info: found parent handle" );
+
+				if ( CHECK_SQLFOREIGNKEYSW( parent_statement -> connection ))
+				{
+        			dm_log_write( __FILE__, 
+                		__LINE__, 
+                   		 	LOG_INFO, 
+                   		 	LOG_INFO, 
+                   		 	"Info: calling redirected driver function" );
+
+                	return  SQLFOREIGNKEYSW( parent_statement -> connection,
+							statement,
+							szpk_catalog_name, 
+							cbpk_catalog_name,
+							szpk_schema_name,
+							cbpk_schema_name,
+							szpk_table_name,
+							cbpk_table_name,
+							szfk_catalog_name,
+							cbfk_catalog_name,
+							szfk_schema_name,
+							cbfk_schema_name,
+							szfk_table_name,
+							cbfk_table_name );
+				}
+			}
+		}
+#endif
         return SQL_INVALID_HANDLE;
     }
     
@@ -220,7 +265,8 @@ SQLRETURN SQLForeignKeysW(
      * TO_DO Check the SQL_ATTR_METADATA_ID settings
      */
 
-    if ( statement -> connection -> unicode_driver )
+    if ( statement -> connection -> unicode_driver ||
+		    CHECK_SQLFOREIGNKEYSW( statement -> connection ))
     {
         if ( !CHECK_SQLFOREIGNKEYSW( statement -> connection ))
         {

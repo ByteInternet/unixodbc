@@ -1,10 +1,10 @@
 lib_LTLIBRARIES = libtemplate.la
 
-INCLUDES = -I@top_srcdir@/include -I. $(INCLTDL)
+INCLUDES = -I@top_srcdir@/include -I. $(LTDLINCL)
 
 DEFS = -DUNIXODBC @DEFS@
 
-libtemplate_la_LDFLAGS = -version-info 1:0:0 
+libtemplate_la_LDFLAGS = -no-undefined  -version-info 1:0:0 
 
 EXTRA_DIST = \
 	driver.h \

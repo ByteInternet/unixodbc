@@ -24,11 +24,9 @@
 
 BOOL _odbcinst_ConfigModeINI( char *pszFileName )
 {
-	UWORD	nConfigMode;
+	UWORD nConfigMode = __get_config_mode();
 
 	pszFileName[0] = '\0';
-    if ( SQLGetConfigMode( &nConfigMode ) == FALSE )
-		return FALSE;
 
 	switch ( nConfigMode )
 	{

@@ -27,9 +27,18 @@
  *
  **********************************************************************
  *
- * $Id: SQLDriverConnect.c,v 1.19 2004/10/22 09:10:19 lurcher Exp $
+ * $Id: SQLDriverConnect.c,v 1.22 2008/09/29 14:02:44 lurcher Exp $
  *
  * $Log: SQLDriverConnect.c,v $
+ * Revision 1.22  2008/09/29 14:02:44  lurcher
+ * Fix missing dlfcn group option
+ *
+ * Revision 1.21  2008/08/29 08:01:38  lurcher
+ * Alter the way W functions are passed to the driver
+ *
+ * Revision 1.20  2007/03/05 09:49:23  lurcher
+ * Get it to build on VMS again
+ *
  * Revision 1.19  2004/10/22 09:10:19  lurcher
  * Fix a couple of problems with FILEDSN's
  *
@@ -282,7 +291,7 @@
 #include <string.h>
 #include "drivermanager.h"
 
-static char const rcsid[]= "$RCSfile: SQLDriverConnect.c,v $ $Revision: 1.19 $";
+static char const rcsid[]= "$RCSfile: SQLDriverConnect.c,v $ $Revision: 1.22 $";
 
 /*
  * connection pooling stuff
@@ -924,7 +933,7 @@ SQLRETURN SQLDriverConnect(
 						if ( strcmp( cp -> keyword, "FILEDSN" ) &&
 							strcmp( cp -> keyword, "FILEDSN" ) )
 						{
-							if ( strlen( conn_str_in ) > 0 )
+							if ( strlen((char*) conn_str_in ) > 0 )
 							{
                 				sprintf( str1, ";%s=%s", cp -> keyword, cp -> attribute );
 							}
@@ -950,7 +959,7 @@ SQLRETURN SQLDriverConnect(
                         {
                             char str1[ 256 ];
 
-							if ( strlen( conn_str_in ) > 0 )
+							if ( strlen((char*) conn_str_in ) > 0 )
 							{
                             	sprintf( str1, ";%s=%s", cp -> keyword, cp -> attribute );
 							}
@@ -1262,7 +1271,7 @@ SQLRETURN SQLDriverConnect(
 
             return function_return( SQL_HANDLE_DBC, connection, ret_from_connect );
         }
-        connection -> unicode_driver = 0;
+	connection -> unicode_driver = 0;
     }
     else
     {
@@ -1420,7 +1429,7 @@ SQLRETURN SQLDriverConnect(
         {
             if ( conn_str_out && s1 )
             {
-                unicode_to_ansi_copy((char*) conn_str_out, s1, SQL_NTS, connection );
+                unicode_to_ansi_copy((char*) conn_str_out, conn_str_out_max, s1, SQL_NTS, connection );
             }
         }
 
@@ -1497,31 +1506,31 @@ SQLRETURN SQLDriverConnect(
 
     if ( strlen( savefile ))
     {
-	    char *str = strdup( conn_str_out );
-	    strcpy( conn_str_out, "SAVEFILE=" );
-	    strcat( conn_str_out, savefile );
-	    strcat( conn_str_out, ";" );
-	    strcat( conn_str_out, str );
+	    char *str = strdup((char*) conn_str_out );
+	    strcpy((char*) conn_str_out, "SAVEFILE=" );
+	    strcat((char*) conn_str_out, savefile );
+	    strcat((char*) conn_str_out, ";" );
+	    strcat((char*) conn_str_out, str );
 	    free( str );
 
 	    if ( ptr_conn_str_out ) 
 	    {
-		    *ptr_conn_str_out = strlen( conn_str_out );
+		    *ptr_conn_str_out = strlen((char*) conn_str_out );
 	    }
     }
 
     if ( strlen( save_filedsn ))
     {
-	    char *str = strdup( conn_str_out );
-	    strcpy( conn_str_out, "FILEDSN=" );
-	    strcat( conn_str_out, save_filedsn );
-	    strcat( conn_str_out, ";" );
-	    strcat( conn_str_out, str );
+	    char *str = strdup((char*) conn_str_out );
+	    strcpy((char*) conn_str_out, "FILEDSN=" );
+	    strcat((char*) conn_str_out, save_filedsn );
+	    strcat((char*) conn_str_out, ";" );
+	    strcat((char*) conn_str_out, str );
 	    free( str );
 
 	    if ( ptr_conn_str_out ) 
 	    {
-		    *ptr_conn_str_out = strlen( conn_str_out );
+		    *ptr_conn_str_out = strlen((char*) conn_str_out );
 	    }
     }
 

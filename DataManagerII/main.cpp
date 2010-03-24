@@ -10,9 +10,19 @@
  * Peter Harvey         - pharvey@codebydesign.com
  **************************************************/
 
-#include <qapplication.h>
+#ifdef QT_V4LAYOUT
+#include <Qt/qapplication.h>
+#include <Qt/qdir.h>
+#else
+#include <qapp.h>
 #include <qdir.h>
+#endif
+
+#ifdef QT_V4LAYOUT
+#include "classDataManager4.h"
+#else
 #include "classDataManager.h"
+#endif
 
 int main( int argc, char **argv )
 {

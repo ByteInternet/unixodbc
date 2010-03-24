@@ -31,7 +31,9 @@
 #ifdef HAVE_SYS_STAT_H
 #include <sys/stat.h>
 #endif
+#ifdef HAVE_UNISTD_H
 #include <unistd.h>
+#endif
 #include <stdarg.h>
 #include <errno.h>
 
@@ -103,17 +105,13 @@ char *uo_fgets( char *buffer, int n, FILE *stream )
     return(c) ? buffer : NULL;
 }
 
-int uo_fprintf( FILE *stream, const char *fmt, ...)
+int uo_vfprintf( FILE *stream, const char *fmt, va_list ap)
 {
     int fp = (int)stream;
     long lNeededSize = 256;
     char* szBuffer = NULL;
     long lBufSize = 0;
     int r = 0;
-    va_list ap;
-
-
-    va_start(ap, fmt);
 
     do
     {
@@ -130,12 +128,25 @@ int uo_fprintf( FILE *stream, const char *fmt, ...)
     }
     while ( lNeededSize > lBufSize );
 
-    va_end(ap);
-
     r = write(fp, szBuffer, (lNeededSize - 1) );
 
     if ( szBuffer )
         free(szBuffer);
+
+    return r;
+}
+
+int uo_fprintf( FILE *stream, const char *fmt, ...)
+{
+    int r;
+    va_list ap;
+
+
+    va_start(ap, fmt);
+
+    r = uo_vfprintf(stream,fmt,ap);
+
+    va_end(ap);
 
     return r;
 }

@@ -6,6 +6,12 @@
 README
 ---------------------------------------------------------------
 
+It seems at least with 10.5 of OSX, that we can just configure as
+normal (--enable-gui=no) and build, no special instructions are
+needed.
+
+---------------------------------------------------------------
+
 Building With GNU Auto Tools (by Nick):
 
 	It looks as if Darwin (Mac OSX) doesn't support the normal

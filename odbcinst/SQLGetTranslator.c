@@ -20,8 +20,22 @@ BOOL SQLGetTranslator(			HWND	hWnd,
 								WORD	*pnPathOut,
 								DWORD	*pnOption )
 {
+    inst_logClear();
 
 	return FALSE;
 }
 
 
+BOOL INSTAPI SQLGetTranslatorW        (HWND       hwnd,
+                                      LPWSTR      lpszName,
+                                      WORD       cbNameMax,
+                                      WORD     *pcbNameOut,
+                                      LPWSTR      lpszPath,
+                                      WORD       cbPathMax,
+                                      WORD     *pcbPathOut,
+                                      DWORD    *pvOption)
+{
+    inst_logClear();
+
+	return FALSE;
+}

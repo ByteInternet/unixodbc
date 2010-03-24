@@ -12,18 +12,26 @@
 #ifndef CAbout_included
 #define CAbout_included
 
+#ifdef QT_V4LAYOUT
+#define QT3_SUPPORT
+#include <Qt/qwidget.h>
+#include <Qt/qpixmap.h>
+#include <Qt/qlayout.h>
+#include <Qt/qmessagebox.h>
+#include <Qt/qlabel.h>
+#include <Qt/qpushbutton.h>
+#include <Qt/qframe.h>
+#include <Qt/qmovie.h>
+#else
 #include <qwidget.h>
 #include <qpixmap.h>
 #include <qlayout.h>
 #include <qmessagebox.h>
 #include <qlabel.h>
-#if (QT_VERSION>=300)
-#include <qpushbutton.h>
-#else
 #include <qpushbt.h>
-#endif
 #include <qframe.h>
 #include <qmovie.h>
+#endif
 
 #include "CCredits.h"
 

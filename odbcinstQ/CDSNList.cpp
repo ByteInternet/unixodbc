@@ -10,7 +10,11 @@
  * Peter Harvey		- pharvey@codebydesign.com
  **************************************************/
 
+#ifdef QT_V4LAYOUT
+#include "CDSNList4.h"
+#else
 #include "CDSNList.h"
+#endif
 
 #ifdef HAVE_STRNCASECMP
 #ifdef HAVE_STRINGS
@@ -23,31 +27,59 @@
 int strncasecmp( char *, char *, int );
 #endif
 
+#ifdef QT_V4LAYOUT
+CDSNList::CDSNList( QWidget* parent, const char* name )
+	: Q3ListView( parent, name )
+#else
 CDSNList::CDSNList( QWidget* parent, const char* name )
 	: QListView( parent, name )
+#endif
 {
 	resize( 310,230 );
 	setMinimumSize( 0, 0 );
 	setMaximumSize( 32767, 32767 );
+#ifdef QT_V4LAYOUT
+	setFocusPolicy( Qt::TabFocus );
+	setBackgroundMode( Qt::PaletteBackground );
+#else
 	setFocusPolicy( QWidget::TabFocus );
 	setBackgroundMode( QWidget::PaletteBackground );
+#endif
 	setFrameStyle( QFrame::Box | QFrame::Raised );
+#ifdef QT_V4LAYOUT
+	setResizePolicy( Q3ScrollView::Manual );
+	setVScrollBarMode( Q3ScrollView::Auto );
+	setHScrollBarMode( Q3ScrollView::Auto );
+#else
 	setResizePolicy( QScrollView::Manual );
 	setVScrollBarMode( QScrollView::Auto );
 	setHScrollBarMode( QScrollView::Auto );
+#endif
 	setTreeStepSize( 20 );
 	setMultiSelection( FALSE );
 	setAllColumnsShowFocus( TRUE );
 	setItemMargin( 1 );
 	setRootIsDecorated( FALSE );
 	addColumn( "Name", -1 );
+#ifdef QT_V4LAYOUT
+	setColumnWidthMode( 0, Q3ListView::Maximum );
+#else
 	setColumnWidthMode( 0, QListView::Maximum );
+#endif
 	setColumnAlignment( 0, 1 );
 	addColumn( "Description", -1 );
+#ifdef QT_V4LAYOUT
+	setColumnWidthMode( 1, Q3ListView::Maximum );
+#else
 	setColumnWidthMode( 1, QListView::Maximum );
+#endif
 	setColumnAlignment( 1, 1 );
 	addColumn( "Driver", -1 );
+#ifdef QT_V4LAYOUT
+	setColumnWidthMode( 2, Q3ListView::Maximum );
+#else
 	setColumnWidthMode( 2, QListView::Maximum );
+#endif
 	setColumnAlignment( 2, 1 );
 
 }
@@ -59,7 +91,11 @@ CDSNList::~CDSNList()
 
 void CDSNList::Load( int nSource )
 {
+#ifdef QT_V4LAYOUT
+	Q3ListViewItem	*pListViewItem;
+#else
 	QListViewItem	*pListViewItem;
+#endif
 	QString			qsError;
 	DWORD			nErrorCode;
 	char   			szErrorMsg[101];
@@ -95,7 +131,11 @@ void CDSNList::Load( int nSource )
 			SQLGetPrivateProfileString( szSectionName, "Driver", "", szDriver, INI_MAX_PROPERTY_VALUE, "odbc.ini" );
 #endif
 			SQLGetPrivateProfileString( szSectionName, "Description", "", szDescription, INI_MAX_PROPERTY_VALUE, "odbc.ini" );
+#ifdef QT_V4LAYOUT
+			pListViewItem = new Q3ListViewItem( this, szSectionName, szDescription, szDriver );
+#else
 			pListViewItem = new QListViewItem( this, szSectionName, szDescription, szDriver );
+#endif
 		}
 		SQLSetConfigMode( ODBC_BOTH_DSN );
 	}
@@ -126,6 +166,7 @@ void CDSNList::Add()
 	QString				qsError					= "";
 	DWORD				nErrorCode;
 	char				szErrorMsg[101];
+	char				buffer[ 128 ];
 
 	CDriverPrompt	 *pDriverPrompt;
 	CPropertiesFrame *pProperties;
@@ -157,11 +198,11 @@ void CDSNList::Add()
             }
             else
             {
-                sprintf( szINI, "%s/odbc.ini", odbcinst_system_file_path());
+                sprintf( szINI, "%s/odbc.ini", odbcinst_system_file_path( buffer ));
                 mode = ODBC_ADD_SYS_DSN;
             }
             if ( SQLConfigDataSource(( HWND ) 1, mode,
-                (char*)qsDataSourceDriver.data(), "" ))
+                (char*)qsDataSourceDriver.ascii(), "" ))
                                                                                             {
                 Load( nSource );
                 return;
@@ -169,9 +210,9 @@ void CDSNList::Add()
         }
 
 		// GET PROPERTY LIST FROM DRIVER
-		if ( ODBCINSTConstructProperties( (char*)(qsDataSourceDriver.latin1()), &hFirstProperty ) != ODBCINST_SUCCESS )
+		if ( ODBCINSTConstructProperties( (char*)(qsDataSourceDriver.ascii()), &hFirstProperty ) != ODBCINST_SUCCESS )
 		{
-			qsError.sprintf( "Could not construct a property list for (%s)", qsDataSourceDriver.data() );
+			qsError.sprintf( "Could not construct a property list for (%s)", qsDataSourceDriver.ascii() );
 			QMessageBox::information( this, "ODBC Config",  qsError );
 			return;
 		}
@@ -229,11 +270,16 @@ void CDSNList::Edit()
 	QString				qsDriverFile			= "";
 	QString				qsSetupFile				= "";
 	QString				qsError					= "";
+	char 				buffer[ 128 ];
 
 	CPropertiesFrame		*pProperties;
 	HODBCINSTPROPERTY	hFirstProperty	= NULL;
 	HODBCINSTPROPERTY	hCurProperty	= NULL;
+#ifdef QT_V4LAYOUT
+	Q3ListViewItem		*pListViewItem;
+#else
 	QListViewItem		*pListViewItem;
+#endif
 
 	char				szEntryNames[4096];
 	char				szProperty[INI_MAX_PROPERTY_NAME+1];
@@ -266,7 +312,13 @@ void CDSNList::Edit()
         char attr[ 128 ];
         int mode;
 
-        sprintf( attr, "DSN=%s;", ( const char * ) qsDataSourceName );
+        sprintf( attr, "DSN=%s", ( const char * ) qsDataSourceName );
+
+		/*
+		 * add extra null
+		 */
+
+		attr[ strlen( attr ) ] = '\0';
 
         if( nSource == ODBC_USER_DSN )
         {
@@ -275,12 +327,12 @@ void CDSNList::Edit()
         }
         else
         {
-            sprintf( szINI, "%s/odbc.ini", odbcinst_system_file_path());
+            sprintf( szINI, "%s/odbc.ini", odbcinst_system_file_path( buffer ));
             mode = ODBC_CONFIG_SYS_DSN;
         }
 
         if ( SQLConfigDataSource(( HWND ) 1, mode,
-            (char*)qsDataSourceDriver.data(), attr ))
+            qsDataSourceDriver.ascii(), attr ))
         {
 			SQLSetConfigMode( ODBC_BOTH_DSN );
             Load( nSource );
@@ -290,9 +342,9 @@ void CDSNList::Edit()
     }
 
 	// GET PROPERTY LIST FROM DRIVER
-	if ( ODBCINSTConstructProperties( (char*)qsDataSourceDriver.data(), &hFirstProperty ) != ODBCINST_SUCCESS )
+	if ( ODBCINSTConstructProperties( (char*) qsDataSourceDriver.ascii(), &hFirstProperty ) != ODBCINST_SUCCESS )
 	{
-		qsError.sprintf( "Could not construct a property list for (%s)", qsDataSourceDriver.data() );
+		qsError.sprintf( "Could not construct a property list for (%s)", qsDataSourceDriver.ascii() );
 		QMessageBox::information( this, "ODBC Config",  qsError );
 		while ( SQLInstallerError( 1, &nErrorCode, szErrorMsg, 100, NULL ) == SQL_SUCCESS )
 			QMessageBox::information( this, "ODBC Config",  szErrorMsg );
@@ -304,10 +356,10 @@ void CDSNList::Edit()
 	SQLSetConfigMode( nSource );
 	ODBCINSTSetProperty( hFirstProperty, "Name", (char*)(qsDataSourceName.latin1()) );
     memset( szEntryNames, 0, sizeof( szEntryNames ));
-	SQLGetPrivateProfileString((char*)qsDataSourceName.data(), NULL, NULL, szEntryNames, 4090, "odbc.ini" ); // GET ALL ENTRY NAMES FOR THE SELCTED DATA SOURCE
+	SQLGetPrivateProfileString((char*)qsDataSourceName.ascii(), NULL, NULL, szEntryNames, 4090, "odbc.ini" ); // GET ALL ENTRY NAMES FOR THE SELCTED DATA SOURCE
 	for ( nElement = 0; iniElement( szEntryNames, '\0', '\0', nElement, szProperty, 1000 ) == INI_SUCCESS ; nElement++ )
 	{
-		SQLGetPrivateProfileString((char*) qsDataSourceName.data(), szProperty, "", szValue, INI_MAX_PROPERTY_VALUE, szINI ); // GET VALUE FOR EACH ENTRY
+		SQLGetPrivateProfileString((char*) qsDataSourceName.ascii(), szProperty, "", szValue, INI_MAX_PROPERTY_VALUE, szINI ); // GET VALUE FOR EACH ENTRY
 
 		if ( ODBCINSTSetProperty( hFirstProperty, szProperty, szValue ) == ODBCINST_ERROR )
         {
@@ -358,7 +410,11 @@ void CDSNList::Edit()
 
 void CDSNList::Delete()
 {
+#ifdef QT_V4LAYOUT
+	Q3ListViewItem		*pListViewItem;
+#else
 	QListViewItem		*pListViewItem;
+#endif
 	char 				szINI[FILENAME_MAX+1];
 	char 				*pDataSourceName;
 	QString				qsError;
@@ -395,7 +451,11 @@ void CDSNList::Delete()
 	Load( nSource );
 }
 
-void CDSNList::DoubleClick( QListViewItem * itm )
+#ifdef QT_V4LAYOUT
+void CDSNList::DoubleClick( Q3ListViewItem *itm )
+#else
+void CDSNList::DoubleClick( QListViewItem *itm )
+#endif
 {
     Edit();
 }

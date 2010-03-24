@@ -27,9 +27,15 @@
  *
  **********************************************************************
  *
- * $Id: SQLError.c,v 1.8 2003/02/27 12:19:39 lurcher Exp $
+ * $Id: SQLError.c,v 1.10 2008/09/29 14:02:45 lurcher Exp $
  *
  * $Log: SQLError.c,v $
+ * Revision 1.10  2008/09/29 14:02:45  lurcher
+ * Fix missing dlfcn group option
+ *
+ * Revision 1.9  2008/05/20 13:43:47  lurcher
+ * Vms fixes
+ *
  * Revision 1.8  2003/02/27 12:19:39  lurcher
  *
  * Add the A functions as well as the W
@@ -172,7 +178,7 @@
 
 #include "drivermanager.h"
 
-static char const rcsid[]= "$RCSfile: SQLError.c,v $ $Revision: 1.8 $";
+static char const rcsid[]= "$RCSfile: SQLError.c,v $ $Revision: 1.10 $";
 
 static SQLRETURN extract_sql_error( EHEAD *head,
         SQLCHAR *sqlstate,
@@ -216,7 +222,7 @@ static SQLRETURN extract_sql_error( EHEAD *head,
 
     if ( sqlstate )
     {
-        unicode_to_ansi_copy((char*) sqlstate, err -> sqlstate, SQL_NTS, connection );
+        unicode_to_ansi_copy((char*) sqlstate, 6, err -> sqlstate, SQL_NTS, connection );
     }
 
     str = unicode_to_ansi_alloc( err -> msg, SQL_NTS, connection );
@@ -364,7 +370,7 @@ SQLRETURN SQLError( SQLHENV environment_handle,
                     \n\t\t\tMessage Text = %s",
                         __get_return_status( ret, s2 ),
                         sqlstate,
-                        __ptr_as_string( s0, native_error ),
+                        __iptr_as_string( s0, native_error ),
                         __sdata_as_string( s1, SQL_CHAR, 
                             text_length, message_text ));
             }
@@ -446,7 +452,7 @@ SQLRETURN SQLError( SQLHENV environment_handle,
                     \n\t\t\tMessage Text = %s",
                         __get_return_status( ret, s2 ),
                         sqlstate,
-                        __ptr_as_string( s0, native_error ),
+                        __iptr_as_string( s0, native_error ),
                         __sdata_as_string( s1, SQL_CHAR, 
                             text_length, message_text ));
             }
@@ -526,7 +532,7 @@ SQLRETURN SQLError( SQLHENV environment_handle,
                     \n\t\t\tMessage Text = %s",
                         __get_return_status( ret, s2 ),
                         sqlstate,
-                        __ptr_as_string( s0, native_error ),
+                        __iptr_as_string( s0, native_error ),
                         __sdata_as_string( s1, SQL_CHAR, 
                             text_length, message_text ));
             }

@@ -11,7 +11,13 @@
  * Nick Gorham      - nick@easysoft.com
  **************************************************/
 
+#ifdef QT_V4LAYOUT
+#define QT3_SUPPORT
+#include <Qt/qfiledialog.h>
+#include <Qt/qfileinfo.h>
+#else
 #include <qfiledialog.h>
+#endif
 #include "CFileList.h"
 
 #ifdef HAVE_STRNCASECMP
@@ -27,37 +33,73 @@ int strncasecmp( char *, char *, int );
 
 extern int has_started;
 
+#ifdef QT_V4LAYOUT
+CFileList::CFileList( QWidget* parent, const char* name )
+	: Q3ListView( parent, name )
+#else
 CFileList::CFileList( QWidget* parent, const char* name )
 	: QListView( parent, name )
+#endif
 {
 	resize( 310,230 );
 	setMinimumSize( 0, 0 );
 	setMaximumSize( 32767, 32767 );
+#ifdef QT_V4LAYOUT
+	setFocusPolicy( Qt::TabFocus );
+	setBackgroundMode( Qt::PaletteBackground );
+#else
 	setFocusPolicy( QWidget::TabFocus );
 	setBackgroundMode( QWidget::PaletteBackground );
+#endif
 	setFrameStyle( QFrame::Box | QFrame::Raised );
+#ifdef QT_V4LAYOUT
+	setResizePolicy( Q3ScrollView::Manual );
+	setVScrollBarMode( Q3ScrollView::Auto );
+	setHScrollBarMode( Q3ScrollView::Auto );
+#else
 	setResizePolicy( QScrollView::Manual );
 	setVScrollBarMode( QScrollView::Auto );
 	setHScrollBarMode( QScrollView::Auto );
+#endif
 	setTreeStepSize( 20 );
 	setMultiSelection( FALSE );
 	setAllColumnsShowFocus( TRUE );
 	setItemMargin( 1 );
 	setRootIsDecorated( FALSE );
 	addColumn( "File Name", -1 );
+#ifdef QT_V4LAYOUT
+	setColumnWidthMode( 0, Q3ListView::Maximum );
+#else
 	setColumnWidthMode( 0, QListView::Maximum );
+#endif
 	setColumnAlignment( 0, 1 );
 	addColumn( "Permissions", -1 );
+#ifdef QT_V4LAYOUT
+	setColumnWidthMode( 1, Q3ListView::Maximum );
+#else
 	setColumnWidthMode( 1, QListView::Maximum );
+#endif
 	setColumnAlignment( 1, 1 );
 	addColumn( "Owner", -1 );
+#ifdef QT_V4LAYOUT
+	setColumnWidthMode( 2, Q3ListView::Maximum );
+#else
 	setColumnWidthMode( 2, QListView::Maximum );
+#endif
 	setColumnAlignment( 2, 1 );
 	addColumn( "Group", -1 );
+#ifdef QT_V4LAYOUT
+	setColumnWidthMode( 3, Q3ListView::Maximum );
+#else
 	setColumnWidthMode( 3, QListView::Maximum );
+#endif
 	setColumnAlignment( 3, 1 );
 	addColumn( "Size", -1 );
+#ifdef QT_V4LAYOUT
+	setColumnWidthMode( 4, Q3ListView::Maximum );
+#else
 	setColumnWidthMode( 4, QListView::Maximum );
+#endif
 	setColumnAlignment( 4, 1 );
 }
 
@@ -67,7 +109,11 @@ CFileList::~CFileList()
 
 void CFileList::Load( QString *in_cwd )
 {
+#ifdef QT_V4LAYOUT
+	Q3ListViewItem	*pListViewItem;
+#else
 	QListViewItem	*pListViewItem;
+#endif
     QDir d;
 	
 	clear();
@@ -80,6 +126,32 @@ void CFileList::Load( QString *in_cwd )
     d.cd( cwd );
     d.setNameFilter("*.dsn");
 
+#ifdef QT_V4LAYOUT
+    const QFileInfoList list = d.entryInfoList();
+    QFileInfo fi;                          // pointer for traversing
+
+	for ( int i = 0; i < list.size(); i ++ ) {
+        QString perm, size;
+        char driver[ 128 ];
+
+		fi = list.at(i);
+
+        perm = "-";
+        perm += fi.permission( QFileInfo::ReadUser ) ? "r" : "-";
+        perm += fi.permission( QFileInfo::WriteUser ) ? "w" : "-";
+        perm += fi.permission( QFileInfo::ExeUser ) ? "x" : "-";
+        perm += fi.permission( QFileInfo::ReadGroup ) ? "r" : "-";
+        perm += fi.permission( QFileInfo::WriteGroup ) ? "w" : "-";
+        perm += fi.permission( QFileInfo::ExeGroup ) ? "x" : "-";
+        perm += fi.permission( QFileInfo::ReadOther ) ? "r" : "-";
+        perm += fi.permission( QFileInfo::WriteOther ) ? "w" : "-";
+        perm += fi.permission( QFileInfo::ExeOther ) ? "x" : "-";
+
+        size.sprintf( "%d bytes", fi.size());
+
+        pListViewItem = new Q3ListViewItem( this, fi.fileName(), perm, fi.owner(), fi.group(), size );
+    }
+#else
     const QFileInfoList *list = d.entryInfoList();
     QFileInfoListIterator it( *list );      // create list iterator
     QFileInfo *fi;                          // pointer for traversing
@@ -104,8 +176,10 @@ void CFileList::Load( QString *in_cwd )
         size.sprintf( "%d bytes", fi->size());
 
         pListViewItem = new QListViewItem( this, fi->fileName(), perm, fi->owner(), fi->group(), size );
+
         ++it;                               // goto next list element
     }
+#endif
 }
 
 QString CFileList::GetDir()
@@ -153,9 +227,9 @@ void CFileList::Add()
         //
 
 		// GET PROPERTY LIST FROM DRIVER
-		if ( ODBCINSTConstructProperties( (char*)qsDataSourceDriver.data(), &hFirstProperty ) != ODBCINST_SUCCESS )
+		if ( ODBCINSTConstructProperties( (char*)qsDataSourceDriver.ascii(), &hFirstProperty ) != ODBCINST_SUCCESS )
 		{
-			qsError.sprintf( "Could not construct a property list for (%s)", qsDataSourceDriver.data() );
+			qsError.sprintf( "Could not construct a property list for (%s)", qsDataSourceDriver.ascii() );
 			QMessageBox::information( this, "ODBC Config",  qsError );
 			return;
 		}
@@ -222,7 +296,11 @@ void CFileList::Edit()
 	CPropertiesFrame		*pProperties;
 	HODBCINSTPROPERTY	hFirstProperty	= NULL;
 	HODBCINSTPROPERTY	hCurProperty	= NULL;
+#ifdef QT_V4LAYOUT
+	Q3ListViewItem		*pListViewItem;
+#else
 	QListViewItem		*pListViewItem;
+#endif
 
 	char				szEntryNames[4096];
 	char				szProperty[INI_MAX_PROPERTY_NAME+1];
@@ -355,7 +433,11 @@ void CFileList::Edit()
 
 void CFileList::Delete()
 {
+#ifdef QT_V4LAYOUT
+	Q3ListViewItem		*pListViewItem;
+#else
 	QListViewItem		*pListViewItem;
+#endif
 	char 				szINI[FILENAME_MAX+1];
 	char 				*pDataSourceName;
 	QString				qsError;

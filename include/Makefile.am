@@ -10,13 +10,10 @@ EXTRA_DIST = \
 	sqlucode.h \
 	sqp.h \
 	uodbc_stats.h \
+	uodbc_extras.h \
 	autotest.h \
-	DBFIO.h \
-	DBTIO.h \
-	FDBC.h \
-	FDB.h \
-	IFDB.h \
-	NTXIO.h
+	odbctrace.h \
+	odbctrac.h
 
 include_HEADERS = \
 	odbcinst.h \
@@ -26,5 +23,6 @@ include_HEADERS = \
 	sqltypes.h \
 	sqlucode.h \
 	uodbc_stats.h \
+	uodbc_extras.h \
 	autotest.h
 

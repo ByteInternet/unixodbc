@@ -40,7 +40,7 @@ subdir = odbcinstQ
 DIST_COMMON = README $(srcdir)/Makefile.am $(srcdir)/Makefile.in \
 	INSTALL
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
-am__aclocal_m4_deps = $(top_srcdir)/acinclude.m4 \
+am__aclocal_m4_deps = $(top_srcdir)/acinclude.m4 $(top_srcdir)/qt.m4 \
 	$(top_srcdir)/configure.in
 am__configure_deps = $(am__aclocal_m4_deps) $(CONFIGURE_DEPENDENCIES) \
 	$(ACLOCAL_M4)
@@ -55,28 +55,40 @@ am__strip_dir = `echo $$p | sed -e 's|^.*/||'`;
 am__installdirs = "$(DESTDIR)$(libdir)"
 libLTLIBRARIES_INSTALL = $(INSTALL)
 LTLIBRARIES = $(lib_LTLIBRARIES)
+am__DEPENDENCIES_1 =
 am__libodbcinstQ_la_SOURCES_DIST = CAbout.cpp CCredits.cpp CDLL.cpp \
 	CDSNList.cpp CDriverPrompt.cpp CDrivers.cpp CFileDSN.cpp \
 	CFileList.cpp CFileSelector.cpp CODBCConfig.cpp \
-	CProperties.cpp CPropertiesFrame.cpp CSplashDialog.cpp \
-	CStatDetails.cpp CStatSummary.cpp CStats.cpp CSystemDSN.cpp \
-	CTracing.cpp CUserDSN.cpp SQLManageDataSources.cpp
-@QT_TRUE@am_libodbcinstQ_la_OBJECTS = CAbout.lo CCredits.lo CDLL.lo \
-@QT_TRUE@	CDSNList.lo CDriverPrompt.lo CDrivers.lo CFileDSN.lo \
-@QT_TRUE@	CFileList.lo CFileSelector.lo CODBCConfig.lo \
-@QT_TRUE@	CProperties.lo CPropertiesFrame.lo CSplashDialog.lo \
-@QT_TRUE@	CStatDetails.lo CStatSummary.lo CStats.lo \
-@QT_TRUE@	CSystemDSN.lo CTracing.lo CUserDSN.lo \
-@QT_TRUE@	SQLManageDataSources.lo
-@QT_TRUE@nodist_libodbcinstQ_la_OBJECTS = mCAbout.lo mCCredits.lo \
-@QT_TRUE@	mCDriverPrompt.lo mCDrivers.lo mCDSNList.lo \
-@QT_TRUE@	mCFileDSN.lo mCFileList.lo mCFileSelector.lo \
-@QT_TRUE@	mCODBCConfig.lo mCProperties.lo mCPropertiesFrame.lo \
-@QT_TRUE@	mCStatDetails.lo mCStatSummary.lo mCStats.lo \
-@QT_TRUE@	mCSystemDSN.lo mCTracing.lo mCUserDSN.lo
-libodbcinstQ_la_OBJECTS = $(am_libodbcinstQ_la_OBJECTS) \
-	$(nodist_libodbcinstQ_la_OBJECTS)
-@QT_TRUE@am_libodbcinstQ_la_rpath = -rpath $(libdir)
+	CODBCCreate.cpp CProperties.cpp CPropertiesFrame.cpp \
+	CSplashDialog.cpp CStatDetails.cpp CStatSummary.cpp CStats.cpp \
+	CSystemDSN.cpp CTracing.cpp CUserDSN.cpp \
+	SQLManageDataSources.cpp mCAbout.cpp mCCredits.cpp \
+	mCDriverPrompt.cpp mCDrivers.cpp mCDSNList.cpp mCFileDSN.cpp \
+	mCFileList.cpp mCFileSelector.cpp mCODBCConfig.cpp \
+	mCODBCCreate.cpp mCProperties.cpp mCPropertiesFrame.cpp \
+	mCStatDetails.cpp mCStatSummary.cpp mCStats.cpp \
+	mCSystemDSN.cpp mCTracing.cpp mCUserDSN.cpp
+@QTWIZARD_FALSE@@QT_TRUE@am_libodbcinstQ_la_OBJECTS = CAbout.lo \
+@QTWIZARD_FALSE@@QT_TRUE@	CCredits.lo CDLL.lo CDSNList.lo \
+@QTWIZARD_FALSE@@QT_TRUE@	CDriverPrompt.lo CDrivers.lo \
+@QTWIZARD_FALSE@@QT_TRUE@	CFileDSN.lo CFileList.lo \
+@QTWIZARD_FALSE@@QT_TRUE@	CFileSelector.lo CODBCConfig.lo \
+@QTWIZARD_FALSE@@QT_TRUE@	CODBCCreate.lo CProperties.lo \
+@QTWIZARD_FALSE@@QT_TRUE@	CPropertiesFrame.lo CSplashDialog.lo \
+@QTWIZARD_FALSE@@QT_TRUE@	CStatDetails.lo CStatSummary.lo \
+@QTWIZARD_FALSE@@QT_TRUE@	CStats.lo CSystemDSN.lo CTracing.lo \
+@QTWIZARD_FALSE@@QT_TRUE@	CUserDSN.lo SQLManageDataSources.lo \
+@QTWIZARD_FALSE@@QT_TRUE@	mCAbout.lo mCCredits.lo \
+@QTWIZARD_FALSE@@QT_TRUE@	mCDriverPrompt.lo mCDrivers.lo \
+@QTWIZARD_FALSE@@QT_TRUE@	mCDSNList.lo mCFileDSN.lo \
+@QTWIZARD_FALSE@@QT_TRUE@	mCFileList.lo mCFileSelector.lo \
+@QTWIZARD_FALSE@@QT_TRUE@	mCODBCConfig.lo mCODBCCreate.lo \
+@QTWIZARD_FALSE@@QT_TRUE@	mCProperties.lo mCPropertiesFrame.lo \
+@QTWIZARD_FALSE@@QT_TRUE@	mCStatDetails.lo mCStatSummary.lo \
+@QTWIZARD_FALSE@@QT_TRUE@	mCStats.lo mCSystemDSN.lo \
+@QTWIZARD_FALSE@@QT_TRUE@	mCTracing.lo mCUserDSN.lo
+libodbcinstQ_la_OBJECTS = $(am_libodbcinstQ_la_OBJECTS)
+@QTWIZARD_FALSE@@QT_TRUE@am_libodbcinstQ_la_rpath = -rpath $(libdir)
 DEFAULT_INCLUDES = -I. -I$(srcdir)
 depcomp = $(SHELL) $(top_srcdir)/depcomp
 am__depfiles_maybe = depfiles
@@ -88,7 +100,7 @@ LTCXXCOMPILE = $(LIBTOOL) --tag=CXX --mode=compile $(CXX) $(DEFS) \
 CXXLD = $(CXX)
 CXXLINK = $(LIBTOOL) --tag=CXX --mode=link $(CXXLD) $(AM_CXXFLAGS) \
 	$(CXXFLAGS) $(AM_LDFLAGS) $(LDFLAGS) -o $@
-SOURCES = $(libodbcinstQ_la_SOURCES) $(nodist_libodbcinstQ_la_SOURCES)
+SOURCES = $(libodbcinstQ_la_SOURCES)
 DIST_SOURCES = $(am__libodbcinstQ_la_SOURCES_DIST)
 ETAGS = etags
 CTAGS = ctags
@@ -99,6 +111,7 @@ AMDEP_FALSE = @AMDEP_FALSE@
 AMDEP_TRUE = @AMDEP_TRUE@
 AMTAR = @AMTAR@
 AR = @AR@
+AS = @AS@
 AUTOCONF = @AUTOCONF@
 AUTOHEADER = @AUTOHEADER@
 AUTOMAKE = @AUTOMAKE@
@@ -115,18 +128,19 @@ CXXFLAGS = @CXXFLAGS@
 CYGPATH_W = @CYGPATH_W@
 DEFS = @DEFS@
 DEPDIR = @DEPDIR@
+DLLTOOL = @DLLTOOL@
 DRIVERS_FALSE = @DRIVERS_FALSE@
 DRIVERS_TRUE = @DRIVERS_TRUE@
-ECHO = @ECHO@
+DSYMUTIL = @DSYMUTIL@
+DUMPBIN = @DUMPBIN@
 ECHO_C = @ECHO_C@
 ECHO_N = @ECHO_N@
 ECHO_T = @ECHO_T@
 EGREP = @EGREP@
 EXEEXT = @EXEEXT@
-F77 = @F77@
 FDB_FALSE = @FDB_FALSE@
 FDB_TRUE = @FDB_TRUE@
-FFLAGS = @FFLAGS@
+FGREP = @FGREP@
 GREP = @GREP@
 HAVE_FLEX_FALSE = @HAVE_FLEX_FALSE@
 HAVE_FLEX_TRUE = @HAVE_FLEX_TRUE@
@@ -137,6 +151,7 @@ INSTALL_DATA = @INSTALL_DATA@
 INSTALL_PROGRAM = @INSTALL_PROGRAM@
 INSTALL_SCRIPT = @INSTALL_SCRIPT@
 INSTALL_STRIP_PROGRAM = @INSTALL_STRIP_PROGRAM@
+LD = @LD@
 LDFLAGS = @LDFLAGS@
 LEX = @LEX@
 LEXLIB = @LEXLIB@
@@ -149,29 +164,37 @@ LIBICONV = @LIBICONV@
 LIBLTDL = @LIBLTDL@
 LIBNSL = @LIBNSL@
 LIBOBJS = @LIBOBJS@
-LIBPNG = @LIBPNG@
 LIBS = @LIBS@
 LIBSOCKET = @LIBSOCKET@
 LIBTOOL = @LIBTOOL@
-LIBZ = @LIBZ@
-LIB_QT = @LIB_QT@
 LIB_VERSION = @LIB_VERSION@
-LIB_X11 = @LIB_X11@
+LIPO = @LIPO@
 LN_S = @LN_S@
+LTDLDEPS = @LTDLDEPS@
+LTDLINCL = @LTDLINCL@
 LTLIBOBJS = @LTLIBOBJS@
 MAINT = @MAINT@
 MAINTAINER_MODE_FALSE = @MAINTAINER_MODE_FALSE@
 MAINTAINER_MODE_TRUE = @MAINTAINER_MODE_TRUE@
 MAKEINFO = @MAKEINFO@
 MOC = @MOC@
+MOCDEFS = @MOCDEFS@
 MSQL_FALSE = @MSQL_FALSE@
 MSQL_TRUE = @MSQL_TRUE@
+NM = @NM@
+NMEDIT = @NMEDIT@
+OBJDUMP = @OBJDUMP@
 OBJEXT = @OBJEXT@
+ODBCTRACE_FALSE = @ODBCTRACE_FALSE@
+ODBCTRACE_TRUE = @ODBCTRACE_TRUE@
+OTOOL = @OTOOL@
+OTOOL64 = @OTOOL64@
 PACKAGE = @PACKAGE@
 PACKAGE_BUGREPORT = @PACKAGE_BUGREPORT@
 PACKAGE_NAME = @PACKAGE_NAME@
 PACKAGE_STRING = @PACKAGE_STRING@
 PACKAGE_TARNAME = @PACKAGE_TARNAME@
+PACKAGE_URL = @PACKAGE_URL@
 PACKAGE_VERSION = @PACKAGE_VERSION@
 PATH_SEPARATOR = @PATH_SEPARATOR@
 PTH_CFLAGS = @PTH_CFLAGS@
@@ -180,28 +203,41 @@ PTH_LDFLAGS = @PTH_LDFLAGS@
 PTH_LIBS = @PTH_LIBS@
 QNX_FALSE = @QNX_FALSE@
 QNX_TRUE = @QNX_TRUE@
+QT4_FALSE = @QT4_FALSE@
+QT4_TRUE = @QT4_TRUE@
+QTMAX = @QTMAX@
+QTMDIAREA_FALSE = @QTMDIAREA_FALSE@
+QTMDIAREA_TRUE = @QTMDIAREA_TRUE@
+QTMIN = @QTMIN@
+QTVERSION = @QTVERSION@
+QTWIZARD_FALSE = @QTWIZARD_FALSE@
+QTWIZARD_TRUE = @QTWIZARD_TRUE@
+QT_CXXFLAGS = @QT_CXXFLAGS@
 QT_FALSE = @QT_FALSE@
-QT_INCLUDES = @QT_INCLUDES@
 QT_LDFLAGS = @QT_LDFLAGS@
+QT_LIBS = @QT_LIBS@
 QT_TRUE = @QT_TRUE@
 RANLIB = @RANLIB@
 READLINE = @READLINE@
+SED = @SED@
 SET_MAKE = @SET_MAKE@
 SHELL = @SHELL@
 SHLIBEXT = @SHLIBEXT@
 STRIP = @STRIP@
-USER_INCLUDES = @USER_INCLUDES@
-USER_LDFLAGS = @USER_LDFLAGS@
+UIC = @UIC@
 VERSION = @VERSION@
 WITHLT_FALSE = @WITHLT_FALSE@
 WITHLT_TRUE = @WITHLT_TRUE@
-X_INCLUDES = @X_INCLUDES@
-X_LDFLAGS = @X_LDFLAGS@
+XMKMF = @XMKMF@
+X_CFLAGS = @X_CFLAGS@
+X_EXTRA_LIBS = @X_EXTRA_LIBS@
+X_LIBS = @X_LIBS@
+X_PRE_LIBS = @X_PRE_LIBS@
 YACC = @YACC@
 YFLAGS = @YFLAGS@
 ac_ct_CC = @ac_ct_CC@
 ac_ct_CXX = @ac_ct_CXX@
-ac_ct_F77 = @ac_ct_F77@
+ac_ct_DUMPBIN = @ac_ct_DUMPBIN@
 am__fastdepCC_FALSE = @am__fastdepCC_FALSE@
 am__fastdepCC_TRUE = @am__fastdepCC_TRUE@
 am__fastdepCXX_FALSE = @am__fastdepCXX_FALSE@
@@ -235,6 +271,7 @@ libdir = @libdir@
 libexecdir = @libexecdir@
 localedir = @localedir@
 localstatedir = @localstatedir@
+lt_ECHO = @lt_ECHO@
 mandir = @mandir@
 mkdir_p = @mkdir_p@
 msql_headers = @msql_headers@
@@ -244,98 +281,95 @@ pdfdir = @pdfdir@
 prefix = @prefix@
 program_transform_name = @program_transform_name@
 psdir = @psdir@
-qt_includes = @qt_includes@
-qt_libraries = @qt_libraries@
 sbindir = @sbindir@
 sharedstatedir = @sharedstatedir@
 subdirs = @subdirs@
 sysconfdir = @sysconfdir@
 target_alias = @target_alias@
-x_includes = @x_includes@
-x_libraries = @x_libraries@
 libodbcinstQ_la_LDFLAGS = \
+		-no-undefined \
         -version-info 1:0:0 \
 		-export-dynamic \
 		-export-symbols @srcdir@/odbcinstQ.exp \
 	    -module
 
-@QT_TRUE@lib_LTLIBRARIES = libodbcinstQ.la 
-@QT_TRUE@INCLUDES = -I@top_srcdir@/include @QT_INCLUDES@ \
-@QT_TRUE@    -DSYSTEM_FILE_PATH=\"@sysconfdir@\" -DDEFLIB_PATH=\"@libdir@\" $(INCLTDL)
+@QTWIZARD_FALSE@@QT_TRUE@lib_LTLIBRARIES = libodbcinstQ.la 
+@QTWIZARD_FALSE@@QT_TRUE@INCLUDES = -I@top_srcdir@/include $(QT_CXXFLAGS) \
+@QTWIZARD_FALSE@@QT_TRUE@    -DSYSTEM_FILE_PATH=\"@sysconfdir@\" -DDEFLIB_PATH=\"@libdir@\" $(LTDLINCL)
 
-@QT_TRUE@libodbcinstQ_la_LIBADD = @X_LDFLAGS@ \
-@QT_TRUE@	@QT_LDFLAGS@ \
-@QT_TRUE@	@USER_LDFLAGS@ \
-@QT_TRUE@	@LIB_QT@ \
-@QT_TRUE@	@LIBLTDL@ \
-@QT_TRUE@	../odbcinst/libodbcinst.la \
-@QT_TRUE@	../extras/libodbcextraslc.la \
-@QT_TRUE@	../DriverManager/libodbc.la 
+@QTWIZARD_FALSE@@QT_TRUE@libodbcinstQ_la_LIBADD = \
+@QTWIZARD_FALSE@@QT_TRUE@	$(QT_LDFLAGS) \
+@QTWIZARD_FALSE@@QT_TRUE@	$(QT_LIBS) \
+@QTWIZARD_FALSE@@QT_TRUE@	$(LIBLTDL) $(LIBADD_DL) \
+@QTWIZARD_FALSE@@QT_TRUE@    ../ini/libinilc.la \
+@QTWIZARD_FALSE@@QT_TRUE@	../DriverManager/libodbc.la \
+@QTWIZARD_FALSE@@QT_TRUE@	../odbcinst/libodbcinst.la 
 
-@QT_TRUE@libodbcinstQ_la_DEPENDENCIES = \
-@QT_TRUE@	../odbcinst/libodbcinst.la \
-@QT_TRUE@	../extras/libodbcextraslc.la \
-@QT_TRUE@	../DriverManager/libodbc.la
+@QTWIZARD_FALSE@@QT_TRUE@libodbcinstQ_la_DEPENDENCIES = \
+@QTWIZARD_FALSE@@QT_TRUE@    ../ini/libinilc.la \
+@QTWIZARD_FALSE@@QT_TRUE@	../DriverManager/libodbc.la \
+@QTWIZARD_FALSE@@QT_TRUE@	../odbcinst/libodbcinst.la 
 
-@QT_TRUE@CLEANFILES = \
-@QT_TRUE@	mCAbout.cpp \
-@QT_TRUE@	mCCredits.cpp \
-@QT_TRUE@	mCDriverPrompt.cpp \
-@QT_TRUE@	mCDrivers.cpp \
-@QT_TRUE@	mCDSNList.cpp \
-@QT_TRUE@	mCFileDSN.cpp \
-@QT_TRUE@	mCFileList.cpp \
-@QT_TRUE@	mCFileSelector.cpp \
-@QT_TRUE@	mCODBCConfig.cpp \
-@QT_TRUE@	mCProperties.cpp \
-@QT_TRUE@	mCPropertiesFrame.cpp \
-@QT_TRUE@	mCStatDetails.cpp \
-@QT_TRUE@	mCStatSummary.cpp \
-@QT_TRUE@	mCStats.cpp \
-@QT_TRUE@	mCSystemDSN.cpp \
-@QT_TRUE@	mCTracing.cpp \
-@QT_TRUE@	mCUserDSN.cpp
+@QTWIZARD_FALSE@@QT_TRUE@CLEANFILES = \
+@QTWIZARD_FALSE@@QT_TRUE@	mCAbout.cpp \
+@QTWIZARD_FALSE@@QT_TRUE@	mCCredits.cpp \
+@QTWIZARD_FALSE@@QT_TRUE@	mCDriverPrompt.cpp \
+@QTWIZARD_FALSE@@QT_TRUE@	mCDrivers.cpp \
+@QTWIZARD_FALSE@@QT_TRUE@	mCDSNList.cpp \
+@QTWIZARD_FALSE@@QT_TRUE@	mCFileDSN.cpp \
+@QTWIZARD_FALSE@@QT_TRUE@	mCFileList.cpp \
+@QTWIZARD_FALSE@@QT_TRUE@	mCFileSelector.cpp \
+@QTWIZARD_FALSE@@QT_TRUE@	mCODBCConfig.cpp \
+@QTWIZARD_FALSE@@QT_TRUE@	mCODBCCreate.cpp \
+@QTWIZARD_FALSE@@QT_TRUE@	mCProperties.cpp \
+@QTWIZARD_FALSE@@QT_TRUE@	mCPropertiesFrame.cpp \
+@QTWIZARD_FALSE@@QT_TRUE@	mCStatDetails.cpp \
+@QTWIZARD_FALSE@@QT_TRUE@	mCStatSummary.cpp \
+@QTWIZARD_FALSE@@QT_TRUE@	mCStats.cpp \
+@QTWIZARD_FALSE@@QT_TRUE@	mCSystemDSN.cpp \
+@QTWIZARD_FALSE@@QT_TRUE@	mCTracing.cpp \
+@QTWIZARD_FALSE@@QT_TRUE@	mCUserDSN.cpp
 
-@QT_TRUE@nodist_libodbcinstQ_la_SOURCES = \
-@QT_TRUE@	mCAbout.cpp \
-@QT_TRUE@	mCCredits.cpp \
-@QT_TRUE@	mCDriverPrompt.cpp \
-@QT_TRUE@	mCDrivers.cpp \
-@QT_TRUE@	mCDSNList.cpp \
-@QT_TRUE@	mCFileDSN.cpp \
-@QT_TRUE@	mCFileList.cpp \
-@QT_TRUE@	mCFileSelector.cpp \
-@QT_TRUE@	mCODBCConfig.cpp \
-@QT_TRUE@	mCProperties.cpp \
-@QT_TRUE@	mCPropertiesFrame.cpp \
-@QT_TRUE@	mCStatDetails.cpp \
-@QT_TRUE@	mCStatSummary.cpp \
-@QT_TRUE@	mCStats.cpp \
-@QT_TRUE@	mCSystemDSN.cpp \
-@QT_TRUE@	mCTracing.cpp \
-@QT_TRUE@	mCUserDSN.cpp
-
-@QT_TRUE@libodbcinstQ_la_SOURCES = \
-@QT_TRUE@	CAbout.cpp \
-@QT_TRUE@	CCredits.cpp \
-@QT_TRUE@	CDLL.cpp \
-@QT_TRUE@	CDSNList.cpp \
-@QT_TRUE@	CDriverPrompt.cpp \
-@QT_TRUE@	CDrivers.cpp \
-@QT_TRUE@	CFileDSN.cpp \
-@QT_TRUE@	CFileList.cpp \
-@QT_TRUE@	CFileSelector.cpp \
-@QT_TRUE@	CODBCConfig.cpp \
-@QT_TRUE@	CProperties.cpp \
-@QT_TRUE@	CPropertiesFrame.cpp \
-@QT_TRUE@	CSplashDialog.cpp \
-@QT_TRUE@	CStatDetails.cpp \
-@QT_TRUE@	CStatSummary.cpp \
-@QT_TRUE@	CStats.cpp \
-@QT_TRUE@	CSystemDSN.cpp \
-@QT_TRUE@	CTracing.cpp \
-@QT_TRUE@	CUserDSN.cpp \
-@QT_TRUE@	SQLManageDataSources.cpp
+@QTWIZARD_FALSE@@QT_TRUE@libodbcinstQ_la_SOURCES = \
+@QTWIZARD_FALSE@@QT_TRUE@	CAbout.cpp \
+@QTWIZARD_FALSE@@QT_TRUE@	CCredits.cpp \
+@QTWIZARD_FALSE@@QT_TRUE@	CDLL.cpp \
+@QTWIZARD_FALSE@@QT_TRUE@	CDSNList.cpp \
+@QTWIZARD_FALSE@@QT_TRUE@	CDriverPrompt.cpp \
+@QTWIZARD_FALSE@@QT_TRUE@	CDrivers.cpp \
+@QTWIZARD_FALSE@@QT_TRUE@	CFileDSN.cpp \
+@QTWIZARD_FALSE@@QT_TRUE@	CFileList.cpp \
+@QTWIZARD_FALSE@@QT_TRUE@	CFileSelector.cpp \
+@QTWIZARD_FALSE@@QT_TRUE@	CODBCConfig.cpp \
+@QTWIZARD_FALSE@@QT_TRUE@	CODBCCreate.cpp \
+@QTWIZARD_FALSE@@QT_TRUE@	CProperties.cpp \
+@QTWIZARD_FALSE@@QT_TRUE@	CPropertiesFrame.cpp \
+@QTWIZARD_FALSE@@QT_TRUE@	CSplashDialog.cpp \
+@QTWIZARD_FALSE@@QT_TRUE@	CStatDetails.cpp \
+@QTWIZARD_FALSE@@QT_TRUE@	CStatSummary.cpp \
+@QTWIZARD_FALSE@@QT_TRUE@	CStats.cpp \
+@QTWIZARD_FALSE@@QT_TRUE@	CSystemDSN.cpp \
+@QTWIZARD_FALSE@@QT_TRUE@	CTracing.cpp \
+@QTWIZARD_FALSE@@QT_TRUE@	CUserDSN.cpp \
+@QTWIZARD_FALSE@@QT_TRUE@	SQLManageDataSources.cpp \
+@QTWIZARD_FALSE@@QT_TRUE@	mCAbout.cpp \
+@QTWIZARD_FALSE@@QT_TRUE@	mCCredits.cpp \
+@QTWIZARD_FALSE@@QT_TRUE@	mCDriverPrompt.cpp \
+@QTWIZARD_FALSE@@QT_TRUE@	mCDrivers.cpp \
+@QTWIZARD_FALSE@@QT_TRUE@	mCDSNList.cpp \
+@QTWIZARD_FALSE@@QT_TRUE@	mCFileDSN.cpp \
+@QTWIZARD_FALSE@@QT_TRUE@	mCFileList.cpp \
+@QTWIZARD_FALSE@@QT_TRUE@	mCFileSelector.cpp \
+@QTWIZARD_FALSE@@QT_TRUE@	mCODBCConfig.cpp \
+@QTWIZARD_FALSE@@QT_TRUE@	mCODBCCreate.cpp \
+@QTWIZARD_FALSE@@QT_TRUE@	mCProperties.cpp \
+@QTWIZARD_FALSE@@QT_TRUE@	mCPropertiesFrame.cpp \
+@QTWIZARD_FALSE@@QT_TRUE@	mCStatDetails.cpp \
+@QTWIZARD_FALSE@@QT_TRUE@	mCStatSummary.cpp \
+@QTWIZARD_FALSE@@QT_TRUE@	mCStats.cpp \
+@QTWIZARD_FALSE@@QT_TRUE@	mCSystemDSN.cpp \
+@QTWIZARD_FALSE@@QT_TRUE@	mCTracing.cpp \
+@QTWIZARD_FALSE@@QT_TRUE@	mCUserDSN.cpp
 
 EXTRA_DIST = \
 	CAbout.h \
@@ -346,11 +380,13 @@ EXTRA_DIST = \
 	CStatDetails.h \
 	CDLL.h \
 	CDSNList.h \
+	CDSNList4.h \
 	CFileList.h \
 	CDriverPrompt.h \
 	CDrivers.h \
 	CFileSelector.h \
 	CODBCConfig.h \
+	CODBCCreate.h \
 	CPropertiesFrame.h \
 	CProperties.h \
 	CSystemDSN.h \
@@ -459,6 +495,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/CFileList.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/CFileSelector.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/CODBCConfig.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/CODBCCreate.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/CProperties.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/CPropertiesFrame.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/CSplashDialog.Plo@am__quote@
@@ -478,6 +515,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/mCFileList.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/mCFileSelector.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/mCODBCConfig.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/mCODBCCreate.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/mCProperties.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/mCPropertiesFrame.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/mCStatDetails.Plo@am__quote@
@@ -690,56 +728,61 @@ uninstall-am: uninstall-info-am uninstall-libLTLIBRARIES
 	uninstall-libLTLIBRARIES
 
 
-@QT_TRUE@mCDrivers.cpp: @srcdir@/CDrivers.h
-@QT_TRUE@	@MOC@ @srcdir@/CDrivers.h -o mCDrivers.cpp
+@QT4_TRUE@@QTWIZARD_FALSE@@QT_TRUE@mCDSNList.cpp: @srcdir@/CDSNList4.h
+@QT4_TRUE@@QTWIZARD_FALSE@@QT_TRUE@	@MOC@ @srcdir@/CDSNList4.h -o mCDSNList.cpp
+@QT4_FALSE@@QTWIZARD_FALSE@@QT_TRUE@mCDSNList.cpp: @srcdir@/CDSNList.h
+@QT4_FALSE@@QTWIZARD_FALSE@@QT_TRUE@	@MOC@ @srcdir@/CDSNList.h -o mCDSNList.cpp
 
-@QT_TRUE@mCODBCConfig.cpp: @srcdir@/CODBCConfig.h
-@QT_TRUE@	@MOC@ @srcdir@/CODBCConfig.h -o mCODBCConfig.cpp
+@QTWIZARD_FALSE@@QT_TRUE@mCDrivers.cpp: @srcdir@/CDrivers.h
+@QTWIZARD_FALSE@@QT_TRUE@	@MOC@ @srcdir@/CDrivers.h -o mCDrivers.cpp
 
-@QT_TRUE@mCSystemDSN.cpp: @srcdir@/CSystemDSN.h
-@QT_TRUE@	@MOC@ @srcdir@/CSystemDSN.h -o mCSystemDSN.cpp
+@QTWIZARD_FALSE@@QT_TRUE@mCODBCConfig.cpp: @srcdir@/CODBCConfig.h
+@QTWIZARD_FALSE@@QT_TRUE@	@MOC@ @srcdir@/CODBCConfig.h -o mCODBCConfig.cpp
 
-@QT_TRUE@mCFileDSN.cpp: @srcdir@/CFileDSN.h
-@QT_TRUE@	@MOC@ @srcdir@/CFileDSN.h -o mCFileDSN.cpp
+@QTWIZARD_FALSE@@QT_TRUE@mCODBCCreate.cpp: @srcdir@/CODBCCreate.h
+@QTWIZARD_FALSE@@QT_TRUE@	@MOC@ @srcdir@/CODBCCreate.h -o mCODBCCreate.cpp
 
-@QT_TRUE@mCUserDSN.cpp: @srcdir@/CUserDSN.h
-@QT_TRUE@	@MOC@ @srcdir@/CUserDSN.h -o mCUserDSN.cpp
+@QTWIZARD_FALSE@@QT_TRUE@mCSystemDSN.cpp: @srcdir@/CSystemDSN.h
+@QTWIZARD_FALSE@@QT_TRUE@	@MOC@ @srcdir@/CSystemDSN.h -o mCSystemDSN.cpp
 
-@QT_TRUE@mCTracing.cpp: @srcdir@/CTracing.h
-@QT_TRUE@	@MOC@ @srcdir@/CTracing.h -o mCTracing.cpp
+@QTWIZARD_FALSE@@QT_TRUE@mCFileDSN.cpp: @srcdir@/CFileDSN.h
+@QTWIZARD_FALSE@@QT_TRUE@	@MOC@ @srcdir@/CFileDSN.h -o mCFileDSN.cpp
 
-@QT_TRUE@mCStats.cpp: @srcdir@/CStats.h
-@QT_TRUE@	@MOC@ @srcdir@/CStats.h -o mCStats.cpp
+@QTWIZARD_FALSE@@QT_TRUE@mCUserDSN.cpp: @srcdir@/CUserDSN.h
+@QTWIZARD_FALSE@@QT_TRUE@	@MOC@ @srcdir@/CUserDSN.h -o mCUserDSN.cpp
 
-@QT_TRUE@mCStatSummary.cpp: @srcdir@/CStatSummary.h
-@QT_TRUE@	@MOC@ @srcdir@/CStatSummary.h -o mCStatSummary.cpp
+@QTWIZARD_FALSE@@QT_TRUE@mCTracing.cpp: @srcdir@/CTracing.h
+@QTWIZARD_FALSE@@QT_TRUE@	@MOC@ @srcdir@/CTracing.h -o mCTracing.cpp
 
-@QT_TRUE@mCStatDetails.cpp: @srcdir@/CStatDetails.h
-@QT_TRUE@	@MOC@ @srcdir@/CStatDetails.h -o mCStatDetails.cpp
+@QTWIZARD_FALSE@@QT_TRUE@mCStats.cpp: @srcdir@/CStats.h
+@QTWIZARD_FALSE@@QT_TRUE@	@MOC@ @srcdir@/CStats.h -o mCStats.cpp
 
-@QT_TRUE@mCAbout.cpp: @srcdir@/CAbout.h
-@QT_TRUE@	@MOC@ @srcdir@/CAbout.h -o mCAbout.cpp
+@QTWIZARD_FALSE@@QT_TRUE@mCStatSummary.cpp: @srcdir@/CStatSummary.h
+@QTWIZARD_FALSE@@QT_TRUE@	@MOC@ @srcdir@/CStatSummary.h -o mCStatSummary.cpp
 
-@QT_TRUE@mCDriverPrompt.cpp: @srcdir@/CDriverPrompt.h
-@QT_TRUE@	@MOC@ @srcdir@/CDriverPrompt.h -o mCDriverPrompt.cpp
+@QTWIZARD_FALSE@@QT_TRUE@mCStatDetails.cpp: @srcdir@/CStatDetails.h
+@QTWIZARD_FALSE@@QT_TRUE@	@MOC@ @srcdir@/CStatDetails.h -o mCStatDetails.cpp
 
-@QT_TRUE@mCPropertiesFrame.cpp: @srcdir@/CPropertiesFrame.h
-@QT_TRUE@	@MOC@ @srcdir@/CPropertiesFrame.h -o mCPropertiesFrame.cpp
+@QTWIZARD_FALSE@@QT_TRUE@mCAbout.cpp: @srcdir@/CAbout.h
+@QTWIZARD_FALSE@@QT_TRUE@	@MOC@ @srcdir@/CAbout.h -o mCAbout.cpp
 
-@QT_TRUE@mCProperties.cpp: @srcdir@/CProperties.h
-@QT_TRUE@	@MOC@ @srcdir@/CProperties.h -o mCProperties.cpp
+@QTWIZARD_FALSE@@QT_TRUE@mCDriverPrompt.cpp: @srcdir@/CDriverPrompt.h
+@QTWIZARD_FALSE@@QT_TRUE@	@MOC@ @srcdir@/CDriverPrompt.h -o mCDriverPrompt.cpp
 
-@QT_TRUE@mCFileSelector.cpp: @srcdir@/CFileSelector.h
-@QT_TRUE@	@MOC@ @srcdir@/CFileSelector.h -o mCFileSelector.cpp
+@QTWIZARD_FALSE@@QT_TRUE@mCPropertiesFrame.cpp: @srcdir@/CPropertiesFrame.h
+@QTWIZARD_FALSE@@QT_TRUE@	@MOC@ @srcdir@/CPropertiesFrame.h -o mCPropertiesFrame.cpp
 
-@QT_TRUE@mCDSNList.cpp: @srcdir@/CDSNList.h
-@QT_TRUE@	@MOC@ @srcdir@/CDSNList.h -o mCDSNList.cpp
+@QTWIZARD_FALSE@@QT_TRUE@mCProperties.cpp: @srcdir@/CProperties.h
+@QTWIZARD_FALSE@@QT_TRUE@	@MOC@ @srcdir@/CProperties.h -o mCProperties.cpp
 
-@QT_TRUE@mCFileList.cpp: @srcdir@/CFileList.h
-@QT_TRUE@	@MOC@ @srcdir@/CFileList.h -o mCFileList.cpp
+@QTWIZARD_FALSE@@QT_TRUE@mCFileSelector.cpp: @srcdir@/CFileSelector.h
+@QTWIZARD_FALSE@@QT_TRUE@	@MOC@ @srcdir@/CFileSelector.h -o mCFileSelector.cpp
 
-@QT_TRUE@mCCredits.cpp: @srcdir@/CCredits.h
-@QT_TRUE@	@MOC@ @srcdir@/CCredits.h -o mCCredits.cpp
+@QTWIZARD_FALSE@@QT_TRUE@mCFileList.cpp: @srcdir@/CFileList.h
+@QTWIZARD_FALSE@@QT_TRUE@	@MOC@ @srcdir@/CFileList.h -o mCFileList.cpp
+
+@QTWIZARD_FALSE@@QT_TRUE@mCCredits.cpp: @srcdir@/CCredits.h
+@QTWIZARD_FALSE@@QT_TRUE@	@MOC@ @srcdir@/CCredits.h -o mCCredits.cpp
 # Tell versions [3.59,3.63) of GNU make to not export all variables.
 # Otherwise a system limit (for SysV at least) may be exceeded.
 .NOEXPORT:

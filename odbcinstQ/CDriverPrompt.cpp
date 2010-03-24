@@ -26,8 +26,13 @@ CDriverPrompt::CDriverPrompt( QWidget* parent, const char* name )
 	pDrivers->setGeometry( 1, 25, 390, 300 );
 	pDrivers->setMinimumSize( 0, 0 );
 	pDrivers->setMaximumSize( 32767, 32767 );
+#ifdef QT_V4LAYOUT
+	pDrivers->setFocusPolicy( Qt::NoFocus );
+	pDrivers->setBackgroundMode( Qt::PaletteBackground );
+#else
 	pDrivers->setFocusPolicy( QWidget::NoFocus );
 	pDrivers->setBackgroundMode( QWidget::PaletteBackground );
+#endif
     pDrivers->show();
 
 	QLabel* qtarch_Label_10;
@@ -35,8 +40,13 @@ CDriverPrompt::CDriverPrompt( QWidget* parent, const char* name )
 	qtarch_Label_10->setGeometry( 10, 10, 400, 20 );
 	qtarch_Label_10->setMinimumSize( 0, 0 );
 	qtarch_Label_10->setMaximumSize( 32767, 32767 );
+#ifdef QT_V4LAYOUT
+	qtarch_Label_10->setFocusPolicy( Qt::NoFocus );
+	qtarch_Label_10->setBackgroundMode( Qt::PaletteBackground );
+#else
 	qtarch_Label_10->setFocusPolicy( QWidget::NoFocus );
 	qtarch_Label_10->setBackgroundMode( QWidget::PaletteBackground );
+#endif
 	qtarch_Label_10->setText( "Select the DRIVER to use or Add a new one..." );
 	qtarch_Label_10->setAlignment( 289 );
 	qtarch_Label_10->setMargin( -1 );
@@ -52,11 +62,18 @@ CDriverPrompt::CDriverPrompt( QWidget* parent, const char* name )
 	qtarch_pbOk->setMinimumSize( 0, 0 );
 	qtarch_pbOk->setMaximumSize( 32767, 32767 );
 	connect( qtarch_pbOk, SIGNAL(clicked()), SLOT(pbOk_Clicked()) );
+#ifdef QT_V4LAYOUT
+	qtarch_pbOk->setFocusPolicy( Qt::TabFocus );
+	qtarch_pbOk->setBackgroundMode( Qt::PaletteBackground );
+#else
 	qtarch_pbOk->setFocusPolicy( QWidget::TabFocus );
 	qtarch_pbOk->setBackgroundMode( QWidget::PaletteBackground );
+#endif
 	qtarch_pbOk->setText( "&Ok" );
 	qtarch_pbOk->setAutoRepeat( FALSE );
+#ifndef QT_V4LAYOUT
 	qtarch_pbOk->setAutoResize( FALSE );
+#endif
 
 	QPushButton* qtarch_pbCancel;
 	qtarch_pbCancel = new QPushButton( this, "pbCancel" );
@@ -64,11 +81,18 @@ CDriverPrompt::CDriverPrompt( QWidget* parent, const char* name )
 	qtarch_pbCancel->setMinimumSize( 0, 0 );
 	qtarch_pbCancel->setMaximumSize( 32767, 32767 );
 	connect( qtarch_pbCancel, SIGNAL(clicked()), SLOT(pbCancel_Clicked()) );
+#ifdef QT_V4LAYOUT
+	qtarch_pbCancel->setFocusPolicy( Qt::TabFocus );
+	qtarch_pbCancel->setBackgroundMode( Qt::PaletteBackground );
+#else
 	qtarch_pbCancel->setFocusPolicy( QWidget::TabFocus );
 	qtarch_pbCancel->setBackgroundMode( QWidget::PaletteBackground );
+#endif
 	qtarch_pbCancel->setText( "&Cancel" );
 	qtarch_pbCancel->setAutoRepeat( FALSE );
+#ifndef QT_V4LAYOUT
 	qtarch_pbCancel->setAutoResize( FALSE );
+#endif
 
 	resize( 530,335 );
 	setMinimumSize( 0, 0 );
@@ -91,8 +115,13 @@ void CDriverPrompt::pbCancel_Clicked()
 
 void CDriverPrompt::pbOk_Clicked()
 {
+#ifdef QT_V4LAYOUT
+    Q3ListView		*pListView;
+    Q3ListViewItem	*pListViewItem;
+#else
     QListView		*pListView;
     QListViewItem	*pListViewItem;
+#endif
 
 	pListView		= pDrivers->getListView();
 	pListViewItem	= pListView->currentItem();

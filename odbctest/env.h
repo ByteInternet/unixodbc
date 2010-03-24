@@ -24,12 +24,21 @@
 #ifndef ENV_H
 #define ENV_H
 
+#ifdef QT_V4LAYOUT
+#include <Qt/qwidget.h>
+#include <Qt/qdialog.h>
+#include <Qt/qpushbutton.h>
+#include <Qt/qcombobox.h>
+#include <Qt/qcheckbox.h>
+#include <Qt/qlabel.h>
+#else
 #include <qwidget.h>
 #include <qdialog.h>
 #include <qpushbutton.h>
 #include <qcombobox.h>
 #include <qcheckbox.h>
 #include <qlabel.h>
+#endif
 #include "odbctest.h"
 
 class dAllocHandle : public QDialog 
@@ -45,7 +54,11 @@ class dAllocHandle : public QDialog
 		QComboBox *handles, *types;
 		QCheckBox *valid;
 		QLabel *l_handle, *l_types;
+#ifdef QT_V4LAYOUT
+		Q3MultiLineEdit *in_win;
+#else
 		QMultiLineEdit *in_win;
+#endif
 		OutputWin *out_win;
 		OdbcTest *odbctest;
 		QString txt;
@@ -68,7 +81,11 @@ class dFreeHandle : public QDialog
 		QComboBox *handles, *types;
 		QCheckBox *valid;
 		QLabel *l_handle, *l_types;
+#ifdef QT_V4LAYOUT
+		Q3MultiLineEdit *in_win;
+#else
 		QMultiLineEdit *in_win;
+#endif
 		OutputWin *out_win;
 		OdbcTest *odbctest;
 		QString txt;
@@ -91,7 +108,11 @@ class dDataSources : public QDialog
 		QCheckBox *server_valid, *nlp1_valid, *description_valid, *nlp2_valid;
 		QLabel *l_handles, *l_direction, *l_server_len, *l_description_len;
 		QLineEdit *server_len, *description_len;
+#ifdef QT_V4LAYOUT
+		Q3MultiLineEdit *in_win;
+#else
 		QMultiLineEdit *in_win;
+#endif
 		OutputWin *out_win;
 		OdbcTest *odbctest;
 		QString txt;
@@ -118,7 +139,11 @@ class dDrivers : public QDialog
 		QCheckBox *server_valid, *nlp1_valid, *description_valid, *nlp2_valid;
 		QLabel *l_handles, *l_direction, *l_server_len, *l_description_len;
 		QLineEdit *server_len, *description_len;
+#ifdef QT_V4LAYOUT
+		Q3MultiLineEdit *in_win;
+#else
 		QMultiLineEdit *in_win;
+#endif
 		OutputWin *out_win;
 		OdbcTest *odbctest;
 		QString txt;
@@ -143,7 +168,11 @@ class dEndTran : public QDialog
 		QPushButton *ok, *cancel, *help;
 		QComboBox *handles, *handle_type, *completion_type;
 		QLabel *l_handles, *l_handle_type, *l_completion_type;
+#ifdef QT_V4LAYOUT
+		Q3MultiLineEdit *in_win;
+#else
 		QMultiLineEdit *in_win;
+#endif
 		OutputWin *out_win;
 		OdbcTest *odbctest;
 		QString txt;
@@ -163,7 +192,11 @@ class dAllocEnv : public QDialog
 
 	protected:
 		QPushButton *ok, *cancel, *help;
+#ifdef QT_V4LAYOUT
+		Q3MultiLineEdit *in_win;
+#else
 		QMultiLineEdit *in_win;
+#endif
 		QCheckBox *handle_valid;
 		OutputWin *out_win;
 		OdbcTest *odbctest;
@@ -184,7 +217,11 @@ class dFreeEnv : public QDialog
 
 	protected:
 		QPushButton *ok, *cancel, *help;
+#ifdef QT_V4LAYOUT
+		Q3MultiLineEdit *in_win;
+#else
 		QMultiLineEdit *in_win;
+#endif
 		QComboBox *handles;
 		QLabel *l_handles;
 		OutputWin *out_win;
@@ -205,7 +242,11 @@ class dTransact : public QDialog
 
 	protected:
 		QPushButton *ok, *cancel, *help;
+#ifdef QT_V4LAYOUT
+		Q3MultiLineEdit *in_win;
+#else
 		QMultiLineEdit *in_win;
+#endif
 		QComboBox *ehandles, *chandles;
 		QLabel *l_ehandles, *l_chandles;
 		QComboBox *completion_type;

@@ -27,9 +27,18 @@
  *
  **********************************************************************
  *
- * $Id: SQLSetStmtAttrW.c,v 1.5 2003/10/30 18:20:46 lurcher Exp $
+ * $Id: SQLSetStmtAttrW.c,v 1.8 2008/08/29 08:01:39 lurcher Exp $
  *
  * $Log: SQLSetStmtAttrW.c,v $
+ * Revision 1.8  2008/08/29 08:01:39  lurcher
+ * Alter the way W functions are passed to the driver
+ *
+ * Revision 1.7  2007/02/28 15:37:48  lurcher
+ * deal with drivers that call internal W functions and end up in the driver manager. controlled by the --enable-handlemap configure arg
+ *
+ * Revision 1.6  2006/04/18 10:24:47  lurcher
+ * Add a couple of changes from Mark Vanderwiel
+ *
  * Revision 1.5  2003/10/30 18:20:46  lurcher
  *
  * Fix broken thread protection
@@ -85,6 +94,7 @@ SQLRETURN SQLSetStmtAttrW( SQLHSTMT statement_handle,
     DMHSTMT statement = (DMHSTMT) statement_handle;
     SQLRETURN ret;
     SQLCHAR s1[ 100 + LOG_MESSAGE_LEN ];
+	SQLWCHAR buffer[ 512 ];
 
     /*
      * check statement
@@ -98,6 +108,36 @@ SQLRETURN SQLSetStmtAttrW( SQLHSTMT statement_handle,
                     LOG_INFO, 
                     "Error: SQL_INVALID_HANDLE" );
 
+#ifdef WITH_HANDLE_REDIRECT
+		{
+			DMHSTMT parent_statement;
+
+			parent_statement = find_parent_handle( statement, SQL_HANDLE_STMT );
+
+			if ( parent_statement ) {
+        		dm_log_write( __FILE__, 
+                	__LINE__, 
+                    	LOG_INFO, 
+                    	LOG_INFO, 
+                    	"Info: found parent handle" );
+
+				if ( CHECK_SQLSETSTMTATTRW( parent_statement -> connection ))
+				{
+        			dm_log_write( __FILE__, 
+                		__LINE__, 
+                   		 	LOG_INFO, 
+                   		 	LOG_INFO, 
+                   		 	"Info: calling redirected driver function" );
+
+                	return  SQLSETSTMTATTRW( parent_statement -> connection,
+							statement_handle,
+							attribute,
+							value,
+							string_length );
+				}
+			}
+		}
+#endif
         return SQL_INVALID_HANDLE;
     }
 
@@ -225,20 +265,41 @@ SQLRETURN SQLSetStmtAttrW( SQLHSTMT statement_handle,
         }
     }
 
-    if ( !CHECK_SQLSETSTMTATTRW( statement -> connection ))
-    {
-        dm_log_write( __FILE__, 
-                __LINE__, 
-                LOG_INFO, 
-                LOG_INFO, 
-                "Error: IM001" );
-
-        __post_internal_error( &statement -> error,
-                ERROR_IM001, NULL,
-                statement -> connection -> environment -> requested_version );
-
-        return function_return( SQL_HANDLE_STMT, statement, SQL_ERROR );
-    }
+    if ( statement -> connection -> unicode_driver ||
+		    CHECK_SQLSETSTMTATTRW( statement -> connection ))
+	{
+    	if ( !CHECK_SQLSETSTMTATTRW( statement -> connection ))
+    	{
+        	dm_log_write( __FILE__, 
+                	__LINE__, 
+                	LOG_INFO, 
+                	LOG_INFO, 
+                	"Error: IM001" );
+	
+        	__post_internal_error( &statement -> error,
+                	ERROR_IM001, NULL,
+                	statement -> connection -> environment -> requested_version );
+	
+        	return function_return( SQL_HANDLE_STMT, statement, SQL_ERROR );
+    	}
+	}
+	else
+	{
+    	if ( !CHECK_SQLSETSTMTATTR( statement -> connection ))
+    	{
+        	dm_log_write( __FILE__, 
+                	__LINE__, 
+                	LOG_INFO, 
+                	LOG_INFO, 
+                	"Error: IM001" );
+	
+        	__post_internal_error( &statement -> error,
+                	ERROR_IM001, NULL,
+                	statement -> connection -> environment -> requested_version );
+	
+        	return function_return( SQL_HANDLE_STMT, statement, SQL_ERROR );
+    	}
+	}
 
     /*
      * map descriptors to our copies
@@ -367,7 +428,7 @@ SQLRETURN SQLSetStmtAttrW( SQLHSTMT statement_handle,
      * is it something overridden
      */
 
-    value = __attr_override( statement, SQL_HANDLE_STMT, attribute, value, &string_length );
+    value = __attr_override_wide( statement, SQL_HANDLE_STMT, attribute, value, &string_length, buffer );
 
     /*
      * does the call need mapping from 3 to 2
@@ -404,11 +465,26 @@ SQLRETURN SQLSetStmtAttrW( SQLHSTMT statement_handle,
     }
     else 
     {
-        ret = SQLSETSTMTATTRW( statement -> connection,
+    	if ( statement -> connection -> unicode_driver )
+		{
+        	ret = SQLSETSTMTATTRW( statement -> connection,
                 statement -> driver_stmt,
                 attribute,
                 value,
                 string_length );
+		}
+		else
+		{
+			/*
+			 * I can't find any string values, so we don't need to translate
+			 */
+
+        	ret = SQLSETSTMTATTR( statement -> connection,
+                statement -> driver_stmt,
+                attribute,
+                value,
+                string_length );
+		}
     }
 
     /*

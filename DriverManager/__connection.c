@@ -27,9 +27,12 @@
  *
  **********************************************************************
  *
- * $Id: __connection.c,v 1.4 2004/09/08 16:38:54 lurcher Exp $
+ * $Id: __connection.c,v 1.5 2008/09/29 14:02:45 lurcher Exp $
  *
  * $Log: __connection.c,v $
+ * Revision 1.5  2008/09/29 14:02:45  lurcher
+ * Fix missing dlfcn group option
+ *
  * Revision 1.4  2004/09/08 16:38:54  lurcher
  *
  * Get ready for a 2.2.10 release
@@ -97,7 +100,7 @@
  * variable
  */
 
-static char const rcsid[]= "$RCSfile: __connection.c,v $ $Revision: 1.4 $";
+static char const rcsid[]= "$RCSfile: __connection.c,v $ $Revision: 1.5 $";
 
 /*
  * search for the library (.so) that the DSN points to
@@ -143,6 +146,10 @@ char *__find_lib_name( char *dsn, char *lib_name, char *driver_name )
 	{
         strcpy( driver, driver_lib );
 
+		/*
+		 * allow the use of "User odbcinst files
+		 */
+
 #ifdef PLATFORM64
 		SQLGetPrivateProfileString( driver, "Driver64", "",
 				driver_lib, sizeof( driver_lib ), "ODBCINST.INI" );
@@ -157,10 +164,11 @@ char *__find_lib_name( char *dsn, char *lib_name, char *driver_name )
 				driver_lib, sizeof( driver_lib ), "ODBCINST.INI" );
 #endif
 
-        strcpy( driver_name, driver );
+                strcpy( driver_name, driver );
 
-		if ( driver_lib[ 0 ] == 0 )
-			return NULL;
+		if ( driver_lib[ 0 ] == 0 ) {
+		    return NULL;
+		}
 	}
 
 	strcpy( lib_name, driver_lib );

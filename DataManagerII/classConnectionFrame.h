@@ -13,12 +13,31 @@
 #define classConnectionFrame_included
 
 #include "classISQL.h"
+#ifdef QT_V4LAYOUT
+#include <Qt/qwidget.h>
+#include <Qt/qevent.h>
+#include <Qt/q3mainwindow.h>
+#include <Qt/q3popupmenu.h>
+#else
 #include <qwidget.h>
 #include <qmainwindow.h>
 #include <qpopupmenu.h>
+#endif
 #include <sqlext.h>
 
-class classConnectionFrame : public QMainWindow
+#ifdef QT_V4LAYOUT
+#define LView			Q3ListView
+#define LViewItem		Q3ListViewItem
+#define MWindow			Q3MainWindow
+#define PMenu			Q3PopupMenu
+#else
+#define LView			QListView
+#define LViewItem		QListViewItem
+#define MWindow			QMainWindow
+#define PMenu			QPopupMenu
+#endif
+
+class classConnectionFrame : public MWindow
 {
     Q_OBJECT
 
@@ -34,9 +53,10 @@ public slots:
     void setViewHTMLSource();
     void setViewText();
     void setViewTextDelimited();
+    void Resize(int,int); 
 
 protected:
-    QPopupMenu *    pView;
+    PMenu *    		pView;
     classISQL  *    isql;
     classISQL::View view;
 };

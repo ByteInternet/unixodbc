@@ -40,7 +40,10 @@ BOOL SQLInstallDriverEx(		LPCSTR	pszDriver,
 	BOOL	bInsertUsageCount;
 	int		nElement;
 	int		nUsageCount 			= 0;				/* SHOULD GET THIS FROM SOMEWHERE ? */
+	char	b1[ 256 ], b2[ 256 ];
 
+
+    inst_logClear();
 
 	/* SANITY CHECKS */
 	if ( pszDriver == NULL || pszPathOut == NULL )
@@ -59,17 +62,17 @@ BOOL SQLInstallDriverEx(		LPCSTR	pszDriver,
     if ( pszPathIn )
     {
 #ifdef VMS
-        sprintf( szIniName, "%sODBCINST.INI", pszPathIn );
+        sprintf( szIniName, "%s:%s", pszPathIn, odbcinst_system_file_name( b2 ) );
 #else
-        sprintf( szIniName, "%s/odbcinst.ini", pszPathIn );
+        sprintf( szIniName, "%s/%s", pszPathIn, odbcinst_system_file_name( b2 ) );
 #endif
     }
     else
     {
 #ifdef VMS
-        sprintf( szIniName, "%sODBCINST.INI", odbcinst_system_file_path() );
+        sprintf( szIniName, "%s:%s", odbcinst_system_file_path( b1 ), odbcinst_system_file_name( b2 ) );
 #else
-        sprintf( szIniName, "%s/odbcinst.ini", odbcinst_system_file_path() );
+        sprintf( szIniName, "%s/%s", odbcinst_system_file_path( b1 ), odbcinst_system_file_name( b2 ) );
 #endif
     }
 
@@ -162,13 +165,13 @@ BOOL SQLInstallDriverEx(		LPCSTR	pszDriver,
     {
         if ( pszPathOut )
         {
-            if ( strlen( odbcinst_system_file_path()) < nPathOutMax )
+            if ( strlen( odbcinst_system_file_path( b1 )) < nPathOutMax )
             {
-                strcpy( pszPathOut, odbcinst_system_file_path());
+                strcpy( pszPathOut, odbcinst_system_file_path( b1 ));
             }
             else
             {
-                strncpy( pszPathOut, odbcinst_system_file_path(), nPathOutMax );
+                strncpy( pszPathOut, odbcinst_system_file_path( b1 ), nPathOutMax );
                 pszPathOut[ nPathOutMax - 1 ] = '\0';
             }
         }
@@ -193,7 +196,7 @@ BOOL SQLInstallDriverEx(		LPCSTR	pszDriver,
     {
         if (  pszPathIn == NULL )
         {
-            *pnPathOut = strlen( odbcinst_system_file_path());
+            *pnPathOut = strlen( odbcinst_system_file_path( b1 ));
         }
         else
         {
@@ -209,4 +212,62 @@ BOOL SQLInstallDriverEx(		LPCSTR	pszDriver,
 	return TRUE;
 }
 
+BOOL INSTAPI SQLInstallDriverExW(LPCWSTR lpszDriver,
+                             LPCWSTR       lpszPathIn,
+                             LPWSTR    lpszPathOut,
+                             WORD      cbPathOutMax,
+                             WORD     *pcbPathOut,
+                             WORD       fRequest,
+                             LPDWORD    lpdwUsageCount)
+{
+	char *drv;
+	char *pth;
+	char *pout;
+	WORD len;
+	BOOL ret;
 
+    inst_logClear();
+
+	drv = lpszDriver ? _multi_string_alloc_and_copy( lpszDriver ) : (char*)NULL;
+	pth = lpszPathIn ? _single_string_alloc_and_copy( lpszPathIn ) : (char*)NULL;
+
+	if ( lpszPathOut ) 
+	{
+		if ( cbPathOutMax > 0 )
+		{
+			pout = calloc( cbPathOutMax + 1, 1 );
+		}
+		else
+		{
+			pout = NULL;
+		}
+	}
+	else
+	{
+		pout = NULL;
+	}
+
+	ret = SQLInstallDriverEx( drv, pth, pout, cbPathOutMax, &len, fRequest, lpdwUsageCount );
+
+	if ( ret )
+	{
+		if ( pout && lpszPathOut )
+		{
+			_single_copy_to_wide( lpszPathOut, pout, len + 1 );
+		}
+	}
+
+	if ( pcbPathOut )
+	{
+		*pcbPathOut = len;
+	}
+
+	if ( drv )
+		free( drv );
+	if ( pth )
+		free( pth );
+	if ( pout )
+		free( pout );
+
+	return ret;
+}

@@ -27,9 +27,12 @@
  *
  **********************************************************************
  *
- * $Id: SQLExtendedFetch.c,v 1.4 2003/10/30 18:20:45 lurcher Exp $
+ * $Id: SQLExtendedFetch.c,v 1.5 2007/11/29 12:00:30 lurcher Exp $
  *
  * $Log: SQLExtendedFetch.c,v $
+ * Revision 1.5  2007/11/29 12:00:30  lurcher
+ * Add 64 bit type changes to SQLExtendedFetch etc
+ *
  * Revision 1.4  2003/10/30 18:20:45  lurcher
  *
  * Fix broken thread protection
@@ -111,13 +114,13 @@
 
 #include "drivermanager.h"
 
-static char const rcsid[]= "$RCSfile: SQLExtendedFetch.c,v $ $Revision: 1.4 $";
+static char const rcsid[]= "$RCSfile: SQLExtendedFetch.c,v $ $Revision: 1.5 $";
 
 SQLRETURN SQLExtendedFetch(
     SQLHSTMT           statement_handle,
     SQLUSMALLINT       f_fetch_type,
-    SQLROWOFFSET       irow,
-    SQLROWSETSIZE      *pcrow,
+    SQLLEN       	   irow,
+    SQLULEN            *pcrow,
     SQLUSMALLINT       *rgf_row_status )
 {
     DMHSTMT statement = (DMHSTMT) statement_handle;

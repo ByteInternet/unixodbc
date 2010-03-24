@@ -12,12 +12,14 @@
 
 #include "classISQL.h"
 #include "classODBC.h"
-#include <qwhatsthis.h>
 #include <sqlucode.h>
-#include <qlistbox.h>
-#if (QT_VERSION>=300)
-#include <qptrlist.h>
+#ifdef QT_V4LAYOUT
+#include <Qt/qwhatsthis.h>
+#include <Qt/q3listbox.h>
+#include <Qt/q3ptrlist.h>
 #else
+#include <qwhatsthis.h>
+#include <qlistbox.h>
 #include <qlist.h>
 #endif
 
@@ -49,23 +51,40 @@ classISQL::classISQL( SQLHDBC hDbc, QString qsDataSource, QWidget *parent, const
     // TAB BAR
     pTabBar = new QTabBar( this );
     pTabBar->setGeometry( 0, 0, 150, 20 );
+#ifdef QT_V4LAYOUT
+    pTabBar->addTab( QString( "SQL" ) ) ;
+    pTabBar->addTab( QString( "Results" ) ) ;
+#else
     pTabBar->addTab( new QTab( "SQL"     ) ) ;
     pTabBar->addTab( new QTab( "Results" ) ) ;
+#endif
     connect( pTabBar, SIGNAL(selected(int)), SLOT(ChangeTextType(int)) );
 
     // SQL ENTRY GUI
+#ifdef QT_V4LAYOUT
+    txtSQL = new Q3MultiLineEdit( this, "txtSQL" );
+    txtSQL->setFocusPolicy( Qt::StrongFocus );
+    txtSQL->setBackgroundMode( Qt::PaletteBase );
+#else
     txtSQL = new QMultiLineEdit( this, "txtSQL" );
     txtSQL->setFocusPolicy( QWidget::StrongFocus );
     txtSQL->setBackgroundMode( QWidget::PaletteBase );
+#endif
     txtSQL->insertLine( "" );
     txtSQL->setReadOnly( FALSE );
     txtSQL->setOverwriteMode( FALSE );
     txtSQL->setFont( qf );
 
     // SQL DATA RESULTS GUI
+#ifdef QT_V4LAYOUT
+    txtResults = new Q3MultiLineEdit( this, "txtResults" );
+    txtResults->setFocusPolicy( Qt::StrongFocus );
+    txtResults->setBackgroundMode( Qt::PaletteBase );
+#else
     txtResults = new QMultiLineEdit( this, "txtResults" );
     txtResults->setFocusPolicy( QWidget::StrongFocus );
     txtResults->setBackgroundMode( QWidget::PaletteBase );
+#endif
     txtResults->insertLine( "" );
     txtResults->setReadOnly( FALSE );
     txtResults->setOverwriteMode( FALSE );
@@ -73,7 +92,11 @@ classISQL::classISQL( SQLHDBC hDbc, QString qsDataSource, QWidget *parent, const
     txtResults->hide();
 
     // QUICK ACCESS SLIDER
+#ifdef QT_V4LAYOUT
+    pSliderRecentSQL = new QSlider( Qt::Horizontal, this );
+#else
     pSliderRecentSQL = new QSlider( QSlider::Horizontal, this );
+#endif
     pSliderRecentSQL->setTickmarks( QSlider::Left );
     pSliderRecentSQL->setTickInterval( 1 );
     pSliderRecentSQL->setLineStep( 1 );
@@ -86,11 +109,20 @@ classISQL::classISQL( SQLHDBC hDbc, QString qsDataSource, QWidget *parent, const
 
     // STATUS LABEL
     QLabel *labelStatus = new QLabel( "STATUS", this );
+#ifdef QT_V4LAYOUT
+    labelStatus->setAlignment( Qt::AlignCenter );
+#else
     labelStatus->setAlignment( AlignCenter );
+#endif
 
     // STATUS LISTBOX
+#ifdef QT_V4LAYOUT
+    listStatus = new Q3ListBox( this );
+    listStatus->setSelectionMode( Q3ListBox::NoSelection );
+#else
     listStatus = new QListBox( this );
     listStatus->setSelectionMode( QListBox::NoSelection );
+#endif
 
     // HELP TIPS
     QWhatsThis::add( txtSQL           , szHelpSQL       );
@@ -132,13 +164,13 @@ void classISQL::ExecSQL(View view)
 
     txtResults->clear();
 
-    addStatus( QString().sprintf( "RUN: view=%s sql=%s", view == Text ? "Text" : view == TextDelimited ? "TextDelimited" : "HTML", txtSQL->text().simplifyWhiteSpace().data() ) ) ;
+    addStatus( QString().sprintf( "RUN: view=%s sql=%s", view == Text ? "Text" : view == TextDelimited ? "TextDelimited" : "HTML", txtSQL->text().simplifyWhiteSpace().ascii() ) ) ;
 
     // CREATE A STATEMENT
     StatementScoper stmt( hDbc ) ; if ( !stmt() ) return ;
 
     // PREPARE
-    if (!SQL_SUCCEEDED(nReturn=SQLPrepare(stmt(), (SQLCHAR*)txtSQL->text().simplifyWhiteSpace().data(), SQL_NTS) ) )
+    if (!SQL_SUCCEEDED(nReturn=SQLPrepare(stmt(), (SQLCHAR*)txtSQL->text().simplifyWhiteSpace().ascii(), SQL_NTS) ) )
       return my_msgBox( "classISQL", "SQLPrepare", nReturn, NULL, NULL, stmt(), txtSQL->text() ) ;
 
     // EXECUTE
@@ -159,7 +191,11 @@ void classISQL::ExecSQL(View view)
       case Text:
       {
         QString qsHorizSep;
+#ifdef QT_V4LAYOUT
+        Q3MemArray<int> colWidths(nColumns) ;
+#else
         QArray<int> colWidths(nColumns) ;
+#endif
         // GET A RESULTS HEADER (column headers)
         getResultsHeader( stmt(), nColumns, qsHorizSep, colWidths );
         // GET A RESULTS BODY (data)
@@ -171,7 +207,11 @@ void classISQL::ExecSQL(View view)
       {
         int nCol ;
         QString qsLine ;
+#ifdef QT_V4LAYOUT
+        Q3MemArray<bool> colChar(nColumns) ;
+#else
         QArray<bool> colChar(nColumns) ;
+#endif
 
         // Get Column Names
         for ( nCol = 1; nCol <= nColumns; nCol++ )
@@ -183,7 +223,7 @@ void classISQL::ExecSQL(View view)
             qsLine += "\"ERR\"," ;
 
           // Determine if this column needs to have quotes around it
-          SQLINTEGER nConciseType = 0 ;
+          SQLLEN nConciseType = 0 ;
           colChar[nCol-1]         = false ;
           if (SQL_SUCCEEDED(SQLColAttribute( stmt(), nCol, SQL_DESC_CONCISE_TYPE, 0, 0, 0, &nConciseType ) ) )
           {
@@ -218,7 +258,7 @@ void classISQL::ExecSQL(View view)
             memset(szData, 0, sizeof(szData) ) ; // Handle broken drivers that don't properly null terminate
             SQLLEN nIndicator               = 0;
             if (SQL_SUCCEEDED(SQLGetData( stmt(), nCol, SQL_C_CHAR, (SQLPOINTER)szData, sizeof(szData), &nIndicator ) ) )
-              qsLine += QString().sprintf("%s%s%s,", colChar[nCol-1] ? "\"" : "" , nIndicator != SQL_NULL_DATA ? QString(szData).stripWhiteSpace().data() : "", colChar[nCol-1] ? "\"" : "" ) ;
+              qsLine += QString().sprintf("%s%s%s,", colChar[nCol-1] ? "\"" : "" , nIndicator != SQL_NULL_DATA ? QString(szData).stripWhiteSpace().ascii() : "", colChar[nCol-1] ? "\"" : "" ) ;
             else
               qsLine += QString("\"ERR\",")  ;
           }
@@ -235,14 +275,14 @@ void classISQL::ExecSQL(View view)
         txtResults->insertLine( "<html>"  ) ;
         txtResults->insertLine( "<body>"  ) ;
         txtResults->insertLine( "<table border>" ) ;
-        txtResults->insertLine( QString().sprintf("<caption>%s</caption>", txtSQL->text().data() ) ) ;
+        txtResults->insertLine( QString().sprintf("<caption>%s</caption>", txtSQL->text().ascii() ) ) ;
         // Get Column Names
         txtResults->insertLine( "  <tr>"    );
         SQLCHAR szColumnName[MAX_COLUMN_WIDTH] ;
         for ( nCol = 1; nCol <= nColumns; nCol++ )
         {
           if (SQL_SUCCEEDED(SQLColAttribute( stmt(), nCol, SQL_DESC_LABEL, szColumnName, sizeof(szColumnName), 0, 0 ) ) )
-            txtResults->insertLine( QString().sprintf("    <th>%s</th>", QString((const char *)szColumnName).stripWhiteSpace().data() ) ) ;
+            txtResults->insertLine( QString().sprintf("    <th>%s</th>", QString((const char *)szColumnName).stripWhiteSpace().ascii() ) ) ;
           else
             txtResults->insertLine( "    <th>ERR</th>" ) ;
         }
@@ -261,7 +301,7 @@ void classISQL::ExecSQL(View view)
             SQLLEN nIndicator = 0;
             memset(szData, 0, sizeof(szData) ) ; // Handle broken drivers that don't properly null terminate
             if (SQL_SUCCEEDED(SQLGetData( stmt(), nCol, SQL_C_CHAR, (SQLPOINTER)szData, sizeof(szData), &nIndicator ) ) )
-              txtResults->insertLine( QString().sprintf("    <td>%s</td>", nIndicator != SQL_NULL_DATA ? QString((const char *)szData).stripWhiteSpace().data() : "" ) ) ;
+              txtResults->insertLine( QString().sprintf("    <td>%s</td>", nIndicator != SQL_NULL_DATA ? QString((const char *)szData).stripWhiteSpace().ascii() : "" ) ) ;
             else
               txtResults->insertLine( "    <td>ERR</td>" ) ;
           }
@@ -285,7 +325,11 @@ void classISQL::ExecSQL(View view)
     addStatus( QString().sprintf( "RUN: %d rows and %d columns affected", nRowsAffected, nColumns ) ) ;
 }
 
+#ifdef QT_V4LAYOUT
+void classISQL::getResultsHeader( SQLHSTMT hStmt, SWORD nColumns, QString &qsHorizSep, Q3MemArray<int> &colWidths )
+#else
 void classISQL::getResultsHeader( SQLHSTMT hStmt, SWORD nColumns, QString &qsHorizSep, QArray<int> &colWidths )
+#endif
 {
     QString qsColumnHeader;
     QString qsFill ; qsFill.fill('-', MAX_COLUMN_WIDTH);
@@ -301,8 +345,8 @@ void classISQL::getResultsHeader( SQLHSTMT hStmt, SWORD nColumns, QString &qsHor
         int nWidth = max( nMaxLength, qsColumnName.length() ) ;
         nWidth = min( nWidth, MAX_COLUMN_WIDTH );
         // Buld the formatted column
-        qsHorizSep     += QString().sprintf( "+%-*.*s-" , nWidth, nWidth, qsFill.data()       ) ;
-        qsColumnHeader += QString().sprintf( "| %-*.*s" , nWidth, nWidth, qsColumnName.data() ) ;
+        qsHorizSep     += QString().sprintf( "+%-*.*s-" , nWidth, nWidth, qsFill.ascii()       ) ;
+        qsColumnHeader += QString().sprintf( "| %-*.*s" , nWidth, nWidth, qsColumnName.ascii() ) ;
         colWidths[nCol-1] = nWidth ;
     }
     qsHorizSep += "+";
@@ -313,7 +357,11 @@ void classISQL::getResultsHeader( SQLHSTMT hStmt, SWORD nColumns, QString &qsHor
     txtResults->insertLine( qsHorizSep );
 }
 
+#ifdef QT_V4LAYOUT
+int classISQL::getResultsBody( SQLHSTMT hStmt, SWORD nColumns, const QString &qsHorizSep, const Q3MemArray<int> &colWidths )
+#else
 int classISQL::getResultsBody( SQLHSTMT hStmt, SWORD nColumns, const QString &qsHorizSep, const QArray<int> &colWidths )
+#endif
 {
   int nRow = 0;
 
@@ -358,7 +406,12 @@ void classISQL::ChangeTextType( int nTab )
 
 void classISQL::gotoHistoryItem( int nValue )
 {
+#ifdef QT_V4LAYOUT
+    Q3ValueList<QString>::Iterator it;
+#else
     QValueList<QString>::Iterator it;
+#endif
+	return;
 
     // SAVE ANY CHANGES
     it      = listSQL.at( nSQL );
@@ -390,8 +443,13 @@ void classISQL::gotoHistoryItem( int nValue )
 
 void classISQL::appendHistoryItem()
 {
+#ifdef QT_V4LAYOUT
+    Q3ValueList<QString>::Iterator it;
+#else
     QValueList<QString>::Iterator it;
+#endif
 
+	return;
     // SAVE ANY CHANGES
     it      = listSQL.at( nSQL );
     (*it)   = txtSQL->text();
@@ -413,9 +471,17 @@ void classISQL::NewSQL()
 
 void classISQL::OpenSQL()
 {
+#ifdef QT_V4LAYOUT
+    Q3MultiLineEdit *txt;
+#else
     QMultiLineEdit *txt;
+#endif
 
+#ifdef QT_V4LAYOUT
+    if ( pTabBar->currentIndex() == 0 )
+#else
     if ( pTabBar->currentTab() == 0 )
+#endif
     {
       pSliderRecentSQL->setValue( pSliderRecentSQL->maxValue() );
       txt = txtSQL;
@@ -437,25 +503,38 @@ void classISQL::OpenSQL()
     txt->clear();
 
     QTextStream t( &hFile );
+#ifdef QT_V4LAYOUT
+    while ( !t.atEnd() )
+#else
     while ( !t.eof() )
+#endif
       txt->append( t.readLine() ) ;
     hFile.close();
 
     txt->setAutoUpdate( TRUE );
     txt->repaint();
 
+#ifdef QT_V4LAYOUT
+    if ( pTabBar->currentIndex() == 0 )
+#else
     if ( pTabBar->currentTab() == 0 )
+#endif
       qsSQLFileName = qsFile;
     else
       qsResultsFileName = qsFile;
 
-    addStatus( QString().sprintf( "OPEN: file %s opened", qsFile.data() ) ) ;
+    addStatus( QString().sprintf( "OPEN: file %s opened", qsFile.ascii() ) ) ;
 }
 
 void classISQL::SaveSQL()
 {
+#ifdef QT_V4LAYOUT
+    Q3MultiLineEdit *txt        = pTabBar->currentIndex() ? txtResults        : txtSQL        ;
+    const QString  &qsFileName = pTabBar->currentIndex() ? qsResultsFileName : qsSQLFileName ;
+#else
     QMultiLineEdit *txt        = pTabBar->currentTab() ? txtResults        : txtSQL        ;
     const QString  &qsFileName = pTabBar->currentTab() ? qsResultsFileName : qsSQLFileName ;
+#endif
 
     if ( qsFileName.isEmpty() )
       return SaveAsSQL();
@@ -467,13 +546,18 @@ void classISQL::SaveSQL()
 
     hFile.writeBlock( txt->text(), txt->text().length() );
     hFile.close();
-    addStatus( QString().sprintf( "SAVE: file %s saved", qsFileName.data() ) ) ;
+    addStatus( QString().sprintf( "SAVE: file %s saved", qsFileName.ascii() ) ) ;
 }
 
 void classISQL::SaveAsSQL()
 {
+#ifdef QT_V4LAYOUT
+    Q3MultiLineEdit *txt        = pTabBar->currentIndex() ? txtResults        : txtSQL        ;
+    const QString  &qsFileName = pTabBar->currentIndex() ? qsResultsFileName : qsSQLFileName ;
+#else
     QMultiLineEdit *txt        = pTabBar->currentTab() ? txtResults        : txtSQL        ;
     const QString  &qsFileName = pTabBar->currentTab() ? qsResultsFileName : qsSQLFileName ;
+#endif
 
     // LET USER PICK A FILE
     QString qsFile = QFileDialog::getSaveFileName( qsFileName );
@@ -489,11 +573,15 @@ void classISQL::SaveAsSQL()
     hFile.close();
 
     // SAVE THE NEW FILE NAME
+#ifdef QT_V4LAYOUT
+    if ( pTabBar->currentIndex() == 0 )
+#else
     if ( pTabBar->currentTab() == 0 )
+#endif
       qsSQLFileName = qsFile;
     else
       qsResultsFileName = qsFile;
 
-    addStatus( QString().sprintf( "SAVE SQL: file %s saved", qsFile.data() ) ) ;
+    addStatus( QString().sprintf( "SAVE SQL: file %s saved", qsFile.ascii() ) ) ;
 }
 

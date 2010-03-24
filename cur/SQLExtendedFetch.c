@@ -23,9 +23,24 @@
  *
  **********************************************************************
  *
- * $Id: SQLExtendedFetch.c,v 1.7 2004/07/24 17:55:38 lurcher Exp $
+ * $Id: SQLExtendedFetch.c,v 1.12 2008/01/22 17:51:54 lurcher Exp $
  *
  * $Log: SQLExtendedFetch.c,v $
+ * Revision 1.12  2008/01/22 17:51:54  lurcher
+ * Another SQLULEN mismatch
+ *
+ * Revision 1.11  2007/11/29 12:00:36  lurcher
+ * Add 64 bit type changes to SQLExtendedFetch etc
+ *
+ * Revision 1.10  2007/11/13 15:04:57  lurcher
+ * Fix 64 bit cursor lib issues
+ *
+ * Revision 1.9  2005/10/27 17:54:49  lurcher
+ * fix what I suspect is a typo in qt.m4
+ *
+ * Revision 1.8  2005/10/21 16:49:53  lurcher
+ * Fix a problem with the cursor lib and rowsets
+ *
  * Revision 1.7  2004/07/24 17:55:38  lurcher
  * Sync up CVS
  *
@@ -82,6 +97,8 @@
 #include "cursorlibrary.h"
 
 #define ABS(x)  (((x)>=0)?(x):(-(x)))
+
+#define SQL_FETCH_PART_ROWSET SQL_NO_DATA + 1
 
 SQLRETURN fetch_row( CLHSTMT cl_statement, int row_number, int offset )
 {
@@ -187,7 +204,7 @@ SQLRETURN fetch_row( CLHSTMT cl_statement, int row_number, int offset )
                     if ( cbuf -> bound_ind )
                     {
                         ind_ptr = ( char * ) cbuf -> bound_ind;
-                        ind_ptr += offset * sizeof( SQLUINTEGER );
+                        ind_ptr += offset * sizeof( SQLULEN );
                     }
                 }
 
@@ -227,7 +244,6 @@ SQLRETURN fetch_row( CLHSTMT cl_statement, int row_number, int offset )
 
         ret = SQLFETCH( cl_statement -> cl_connection,
                         cl_statement -> driver_stmt );
-
 
         if ( ret == SQL_NO_DATA )
         {
@@ -306,7 +322,7 @@ SQLRETURN fetch_row( CLHSTMT cl_statement, int row_number, int offset )
                         if ( cbuf -> bound_ind )
                         {
                             ind_ptr = ( char * ) cbuf -> bound_ind;
-                            ind_ptr += offset * sizeof( SQLUINTEGER );
+                            ind_ptr += offset * sizeof( SQLULEN );
                         }
                     }
 
@@ -446,7 +462,7 @@ static SQLRETURN fetch_rowset( CLHSTMT cl_statement,
         int row_offset,
         int *fetched_rows,
         SQLUSMALLINT *row_status_array,
-        SQLUINTEGER *rows_fetched_ptr )
+        SQLULEN *rows_fetched_ptr )
 {
     SQLRETURN ret;
     int row_count = 0;
@@ -472,6 +488,17 @@ static SQLRETURN fetch_rowset( CLHSTMT cl_statement,
         }
         ret = SQL_SUCCESS;
     }
+
+    if ( ret == SQL_NO_DATA && row > 0 )
+	{
+        *fetched_rows = row;
+    	if ( rows_fetched_ptr )
+		{
+        	*rows_fetched_ptr = row_count;
+		}
+		ret = SQL_FETCH_PART_ROWSET;
+	}
+
     if ( SQL_SUCCEEDED( ret ))
     {
         *fetched_rows = row;
@@ -487,9 +514,10 @@ static SQLRETURN fetch_rowset( CLHSTMT cl_statement,
 
 SQLRETURN do_fetch_scroll( CLHSTMT cl_statement,
         int fetch_orientation,
-        int fetch_offset,
+        SQLLEN fetch_offset,
         SQLUSMALLINT *row_status_ptr,
-        SQLUINTEGER *rows_fetched_ptr )
+        SQLULEN *rows_fetched_ptr,
+		int ext_fetch )
 {
     SQLRETURN ret;
     int rows_in_set, row_offset, fetched_rows, info = 0;
@@ -515,10 +543,20 @@ SQLRETURN do_fetch_scroll( CLHSTMT cl_statement,
         cl_statement -> first_fetch_done = 1;
     }
 
-    if ( cl_statement -> rowset_array_size < 1 )
-        rows_in_set = 1;
-    else 
-        rows_in_set = cl_statement -> rowset_array_size;
+	if ( ext_fetch ) 
+	{
+    	if ( cl_statement -> rowset_size < 1 )
+       	 	rows_in_set = 1;
+    	else 
+        	rows_in_set = cl_statement -> rowset_size;
+	}
+	else 
+	{
+    	if ( cl_statement -> rowset_array_size < 1 )
+       	 	rows_in_set = 1;
+    	else 
+        	rows_in_set = cl_statement -> rowset_array_size;
+	}
 
     /*
      * I refuse to document all these conditions, you have to
@@ -539,6 +577,10 @@ SQLRETURN do_fetch_scroll( CLHSTMT cl_statement,
                 cl_statement -> rowset_position;
             cl_statement -> rowset_position += fetched_rows;
         }
+		else if ( ret == SQL_FETCH_PART_ROWSET ) 
+		{
+			ret = SQL_SUCCESS;
+		}
         break;
 
       case SQL_FETCH_NEXT:
@@ -568,6 +610,11 @@ SQLRETURN do_fetch_scroll( CLHSTMT cl_statement,
                 cl_statement -> rowset_position;
             cl_statement -> rowset_position += fetched_rows;
         }
+		else if ( ret == SQL_FETCH_PART_ROWSET ) 
+		{
+        	cl_statement -> rowset_position == CL_AFTER_END;
+			ret = SQL_SUCCESS;
+		}
         break;
 
       case SQL_FETCH_PRIOR:
@@ -623,6 +670,10 @@ SQLRETURN do_fetch_scroll( CLHSTMT cl_statement,
                 cl_statement -> rowset_position;
             cl_statement -> rowset_position += fetched_rows;
         }
+		else if ( ret == SQL_FETCH_PART_ROWSET ) 
+		{
+			ret = SQL_SUCCESS;
+		}
         break;
 
       case SQL_FETCH_RELATIVE:
@@ -635,7 +686,8 @@ SQLRETURN do_fetch_scroll( CLHSTMT cl_statement,
                     SQL_FETCH_ABSOLUTE,
                     fetch_offset,
                     row_status_ptr,
-                    rows_fetched_ptr );
+                    rows_fetched_ptr, 
+					ext_fetch );
         }
         else if ( cl_statement -> rowset_position == CL_BEFORE_START &&
             fetch_offset <= 0 )
@@ -712,6 +764,10 @@ SQLRETURN do_fetch_scroll( CLHSTMT cl_statement,
                 cl_statement -> rowset_position;
             cl_statement -> rowset_position += fetched_rows;
         }
+		else if ( ret == SQL_FETCH_PART_ROWSET ) 
+		{
+			ret = SQL_SUCCESS;
+		}
 
         break;
 
@@ -804,6 +860,10 @@ SQLRETURN do_fetch_scroll( CLHSTMT cl_statement,
                 cl_statement -> rowset_position;
             cl_statement -> rowset_position += fetched_rows;
         }
+		else if ( ret == SQL_FETCH_PART_ROWSET ) 
+		{
+			ret = SQL_SUCCESS;
+		}
 
         break;
 
@@ -840,6 +900,10 @@ SQLRETURN do_fetch_scroll( CLHSTMT cl_statement,
             cl_statement -> curr_rowset_start = 
                 cl_statement -> rowset_position = CL_AFTER_END;
         }
+		else if ( ret == SQL_FETCH_PART_ROWSET ) 
+		{
+			ret = SQL_SUCCESS;
+		}
         
         break;
     }
@@ -853,8 +917,8 @@ SQLRETURN do_fetch_scroll( CLHSTMT cl_statement,
 SQLRETURN CLExtendedFetch(
     SQLHSTMT           statement_handle,
     SQLUSMALLINT       f_fetch_type,
-    SQLINTEGER         irow,
-    SQLUINTEGER        *pcrow,
+    SQLLEN             irow,
+    SQLULEN            *pcrow,
     SQLUSMALLINT       *rgf_row_status )
 {
     CLHSTMT cl_statement = (CLHSTMT) statement_handle; 
@@ -873,5 +937,6 @@ SQLRETURN CLExtendedFetch(
             f_fetch_type, 
             irow,
             rgf_row_status,
-            pcrow );
+            pcrow,
+			1 );
 }

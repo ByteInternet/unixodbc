@@ -12,11 +12,19 @@
 
 #include "classDrivers.h"
 #include "classODBC.h"
+#ifdef QT_V4LAYOUT
+#include <Qt/qpixmap.h>
+#else
 #include <qpixmap.h>
+#endif
 #include <sqlext.h>
 #include "drivers.xpm"
 
+#ifdef QT_V4LAYOUT
+classDrivers::classDrivers( Q3ListViewItem *pParent, Q3ListViewItem *pAfter, classCanvas *pCanvas )
+#else
 classDrivers::classDrivers( QListViewItem *pParent, QListViewItem *pAfter, classCanvas *pCanvas )
+#endif
     : classNode( pParent, pAfter, pCanvas )
 {
   listDrivers.setAutoDelete( TRUE );
@@ -67,6 +75,10 @@ void classDrivers::setOpen( bool bOpen )
   }
   */
 
+#ifdef QT_V4LAYOUT
+  Q3ListViewItem::setOpen( bOpen );
+#else
   QListViewItem::setOpen( bOpen );
+#endif
 }
 

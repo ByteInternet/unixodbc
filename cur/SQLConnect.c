@@ -23,9 +23,20 @@
  *
  **********************************************************************
  *
- * $Id: SQLConnect.c,v 1.3 2002/11/25 15:37:54 lurcher Exp $
+ * $Id: SQLConnect.c,v 1.6 2007/02/12 11:49:35 lurcher Exp $
  *
  * $Log: SQLConnect.c,v $
+ * Revision 1.6  2007/02/12 11:49:35  lurcher
+ * Add QT4 support to existing GUI parts
+ *
+ * Revision 1.5  2005/07/08 12:11:23  lurcher
+ *
+ * Fix a cursor lib problem (it was broken if you did metadata calls)
+ * Alter the params to SQLParamOptions to use SQLULEN
+ *
+ * Revision 1.4  2005/05/03 17:16:49  lurcher
+ * Backport a couple of changes from the Debian build
+ *
  * Revision 1.3  2002/11/25 15:37:54  lurcher
  *
  * Fix problems in the cursor lib
@@ -275,7 +286,7 @@ SQLRETURN CLConnect( DMHDBC connection, struct driver_helper_funcs *dh )
 
     if ( !( cl_connection -> functions = malloc( sizeof( cl_template_func ))))
     {
-        dh -> dm_log_write( "CL " __FILE__,
+        dh ->dm_log_write( "CL " __FILE__,
                 __LINE__,
                 LOG_INFO,
                 LOG_INFO,
@@ -351,7 +362,7 @@ SQLRETURN CLConnect( DMHDBC connection, struct driver_helper_funcs *dh )
      */
 
     cl_connection -> driver_dbc = connection -> driver_dbc;
-    connection -> driver_dbc = ( SQLHANDLE ) cl_connection;
+    connection -> driver_dbc = ( DRV_SQLHANDLE ) cl_connection;
 
     /*
      * check the number of alowed active statements
@@ -363,7 +374,7 @@ SQLRETURN CLConnect( DMHDBC connection, struct driver_helper_funcs *dh )
                 cl_connection -> driver_dbc,
                 SQL_MAX_CONCURRENT_ACTIVITIES,
                 &cl_connection -> active_statement_allowed,
-                0,
+                sizeof( cl_connection -> active_statement_allowed ),
                 NULL );
         /*
          * assume the worst

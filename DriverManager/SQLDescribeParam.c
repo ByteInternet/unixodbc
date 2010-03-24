@@ -27,9 +27,15 @@
  *
  **********************************************************************
  *
- * $Id: SQLDescribeParam.c,v 1.4 2003/10/30 18:20:45 lurcher Exp $
+ * $Id: SQLDescribeParam.c,v 1.6 2008/05/20 13:43:47 lurcher Exp $
  *
  * $Log: SQLDescribeParam.c,v $
+ * Revision 1.6  2008/05/20 13:43:47  lurcher
+ * Vms fixes
+ *
+ * Revision 1.5  2007/04/02 10:50:19  lurcher
+ * Fix some 64bit problems (only when sizeof(SQLLEN) == 8 )
+ *
  * Revision 1.4  2003/10/30 18:20:45  lurcher
  *
  * Fix broken thread protection
@@ -123,7 +129,7 @@
 
 #include "drivermanager.h"
 
-static char const rcsid[]= "$RCSfile: SQLDescribeParam.c,v $ $Revision: 1.4 $";
+static char const rcsid[]= "$RCSfile: SQLDescribeParam.c,v $ $Revision: 1.6 $";
 
 SQLRETURN SQLDescribeParam(
     SQLHSTMT           statement_handle,
@@ -317,7 +323,7 @@ SQLRETURN SQLDescribeParam(
                 \n\t\t\tNullable = %p",
                     __get_return_status( ret, s6 ),
                     __sptr_as_string( s1, pf_sql_type ),
-                    __ptr_as_string( s2, (void*)pcb_param_def ),
+                    __ptr_as_string( s2, (SQLLEN*)pcb_param_def ),
                     __sptr_as_string( s3, pib_scale ),
                     __sptr_as_string( s4, pf_nullable ));
 

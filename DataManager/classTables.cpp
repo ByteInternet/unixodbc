@@ -13,19 +13,31 @@
 
 #include "tables.xpm"
 
+#ifdef QT_V4LAYOUT
+classTables::classTables( Q3ListView *pParent, classCanvas *pCanvas, SQLHDBC hDbc )
+#else
 classTables::classTables( QListView *pParent, classCanvas *pCanvas, SQLHDBC hDbc )
+#endif
     : classNode( pParent, pCanvas )
 {
 	Init( hDbc );
 }
 
+#ifdef QT_V4LAYOUT
+classTables::classTables( Q3ListViewItem *pParent, classCanvas *pCanvas, SQLHENV hDbc )
+#else
 classTables::classTables( QListViewItem *pParent, classCanvas *pCanvas, SQLHENV hDbc )
+#endif
     : classNode( pParent, pCanvas )
 {
 	Init( hDbc );
 }
 
+#ifdef QT_V4LAYOUT
+classTables::classTables( Q3ListViewItem *pParent, Q3ListViewItem *pAfter, classCanvas *pCanvas, SQLHENV hDbc )
+#else
 classTables::classTables( QListViewItem *pParent, QListViewItem *pAfter, classCanvas *pCanvas, SQLHENV hDbc )
+#endif
     : classNode( pParent, pAfter, pCanvas )
 {
 	Init( hDbc );
@@ -48,7 +60,11 @@ void classTables::Init( SQLHDBC hDbc )
 
 void classTables::setOpen( bool bOpen )
 {
+#ifdef QT_V4LAYOUT
+    Q3ListViewItem::setOpen( bOpen );
+#else
     QListViewItem::setOpen( bOpen );
+#endif
     listView()->setSelected( listView()->selectedItem(), false );
     if ( bOpen )
     {
@@ -62,7 +78,11 @@ void classTables::setOpen( bool bOpen )
 void classTables::setup()
 {
     setExpandable( TRUE );
+#ifdef QT_V4LAYOUT
+    Q3ListViewItem::setup();
+#else
     QListViewItem::setup();
+#endif
 }
 
 void classTables::LoadTables()
@@ -118,7 +138,11 @@ void classTables::LoadTables()
 
 }
 
+#ifdef QT_V4LAYOUT
+void classTables::selectionChanged( Q3ListViewItem *p )
+#else
 void classTables::selectionChanged( QListViewItem *p )
+#endif
 {
 	classTable	*pTable;
 

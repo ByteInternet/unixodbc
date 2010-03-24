@@ -8,11 +8,19 @@ CStatDetails::CStatDetails( QWidget* parent, const char* name )
     QGridLayout * pLayoutTop    = new QGridLayout( this, 1, 1 );
 
     // Table
+#ifdef QT_V4LAYOUT
+    pTable = new Q3Table( MAXPROCESSES, MAXHANDLES+1, this );
+#else
     pTable = new QTable( MAXPROCESSES, MAXHANDLES+1, this );
+#endif
     pTable->setLeftMargin( 0 );
     pTable->verticalHeader()->hide();
 
+#ifdef QT_V4LAYOUT
+    Q3Header * pHeader = pTable->horizontalHeader();
+#else
     QHeader * pHeader = pTable->horizontalHeader();
+#endif
     pHeader->setLabel( 0, "PID" );
     pHeader->setLabel( 1, "Environments" );
     pHeader->setLabel( 2, "Connections" );

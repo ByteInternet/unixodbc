@@ -27,9 +27,15 @@
  *
  **********************************************************************
  *
- * $Id: SQLColAttributeW.c,v 1.11 2004/11/22 17:02:48 lurcher Exp $
+ * $Id: SQLColAttributeW.c,v 1.13 2008/08/29 08:01:38 lurcher Exp $
  *
  * $Log: SQLColAttributeW.c,v $
+ * Revision 1.13  2008/08/29 08:01:38  lurcher
+ * Alter the way W functions are passed to the driver
+ *
+ * Revision 1.12  2007/04/02 10:50:18  lurcher
+ * Fix some 64bit problems (only when sizeof(SQLLEN) == 8 )
+ *
  * Revision 1.11  2004/11/22 17:02:48  lurcher
  * Fix unicode/ansi conversion in the SQLGet functions
  *
@@ -102,7 +108,7 @@ SQLRETURN SQLColAttributeW ( SQLHSTMT statement_handle,
            SQLPOINTER character_attribute,
            SQLSMALLINT buffer_length,
            SQLSMALLINT *string_length,
-           SQLPOINTER numeric_attribute )
+           SQLLEN *numeric_attribute )
 {
     DMHSTMT statement = (DMHSTMT) statement_handle;
     SQLRETURN ret;
@@ -267,7 +273,9 @@ SQLRETURN SQLColAttributeW ( SQLHSTMT statement_handle,
         }
     }
 
-    if ( statement -> connection -> unicode_driver )
+    if ( statement -> connection -> unicode_driver ||
+		CHECK_SQLCOLATTRIBUTEW( statement -> connection ) ||
+		CHECK_SQLCOLATTRIBUTESW( statement -> connection ))
     {
         if ( !CHECK_SQLCOLATTRIBUTEW( statement -> connection ))
         {

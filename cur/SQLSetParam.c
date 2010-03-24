@@ -23,9 +23,12 @@
  *
  **********************************************************************
  *
- * $Id: SQLSetParam.c,v 1.1.1.1 2001/10/17 16:40:15 lurcher Exp $
+ * $Id: SQLSetParam.c,v 1.2 2007/11/13 15:04:57 lurcher Exp $
  *
  * $Log: SQLSetParam.c,v $
+ * Revision 1.2  2007/11/13 15:04:57  lurcher
+ * Fix 64 bit cursor lib issues
+ *
  * Revision 1.1.1.1  2001/10/17 16:40:15  lurcher
  *
  * First upload to SourceForge
@@ -48,10 +51,10 @@ SQLRETURN CLSetParam( SQLHSTMT statement_handle,
            SQLUSMALLINT parameter_number,
            SQLSMALLINT value_type,
            SQLSMALLINT parameter_type,
-           SQLUINTEGER length_precision,
+           SQLULEN length_precision,
            SQLSMALLINT parameter_scale,
            SQLPOINTER parameter_value,
-           SQLINTEGER *strlen_or_ind )
+           SQLLEN *strlen_or_ind )
 {
     CLHSTMT cl_statement = (CLHSTMT) statement_handle; 
 

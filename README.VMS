@@ -3,7 +3,7 @@ Building unixODBC on OpenVMS (Alpha only)
 
 Here's an initial go at building unixODBC on OpenVMS, at present this will 
 only run on alpha but if anyone requires use of this on VAX drop me an email
-(jason@easysoft.com) and I'll do the necessary transfer vector macro's to export 
+(suypport@easysoft.com) and I'll do the necessary transfer vector macro's to export 
 the required symbols from the two shared objects (ODBC.EXE and ODBCINST.EXE).
 
 Current components which have been built on OpenVMS
@@ -35,11 +35,11 @@ the following functions.
 
 COMPILING
 
-$ @vmsbuild compile
+$ @vmsbuild COMPILE
 
 LINKING 
 
-$ @vmsbuild link
+$ @vmsbuild LINK
 
 COPYING SHARED LIBRARIES TO THEIR INSTALLED LOCATION
 

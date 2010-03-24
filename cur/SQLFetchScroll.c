@@ -23,9 +23,18 @@
  *
  **********************************************************************
  *
- * $Id: SQLFetchScroll.c,v 1.3 2003/12/01 16:37:17 lurcher Exp $
+ * $Id: SQLFetchScroll.c,v 1.6 2007/11/29 12:00:36 lurcher Exp $
  *
  * $Log: SQLFetchScroll.c,v $
+ * Revision 1.6  2007/11/29 12:00:36  lurcher
+ * Add 64 bit type changes to SQLExtendedFetch etc
+ *
+ * Revision 1.5  2007/11/13 15:04:57  lurcher
+ * Fix 64 bit cursor lib issues
+ *
+ * Revision 1.4  2005/10/27 17:54:49  lurcher
+ * fix what I suspect is a typo in qt.m4
+ *
  * Revision 1.3  2003/12/01 16:37:17  lurcher
  *
  * Fix a bug in SQLWritePrivateProfileString
@@ -58,7 +67,7 @@
 
 SQLRETURN CLFetchScroll( SQLHSTMT statement_handle,
            SQLSMALLINT fetch_orientation,
-           SQLINTEGER fetch_offset )
+           SQLLEN fetch_offset )
 {
     CLHSTMT cl_statement = (CLHSTMT) statement_handle; 
 
@@ -96,5 +105,6 @@ SQLRETURN CLFetchScroll( SQLHSTMT statement_handle,
             fetch_orientation, 
             fetch_offset,
             cl_statement -> row_status_ptr,
-            cl_statement -> rows_fetched_ptr );
+            cl_statement -> rows_fetched_ptr,
+			0 );
 }

@@ -12,19 +12,31 @@
 #include "classIndex.h"
 #include "keysilver2.xpm"
 
+#ifdef QT_V4LAYOUT
+classIndex::classIndex( Q3ListView *pParent, classCanvas *pCanvas, SQLHDBC hDbc, char *pszTable, char *pszIndex, char *pszDesc )
+#else
 classIndex::classIndex( QListView *pParent, classCanvas *pCanvas, SQLHDBC hDbc, char *pszTable, char *pszIndex, char *pszDesc )
+#endif
     : classNode( pParent, pCanvas )
 {
 	Init( hDbc, pszTable, pszIndex, pszDesc );
 }
 
+#ifdef QT_V4LAYOUT
+classIndex::classIndex( Q3ListViewItem *pParent, classCanvas *pCanvas, SQLHENV hDbc, char *pszTable, char *pszIndex, char *pszDesc )
+#else
 classIndex::classIndex( QListViewItem *pParent, classCanvas *pCanvas, SQLHENV hDbc, char *pszTable, char *pszIndex, char *pszDesc )
+#endif
     : classNode( pParent, pCanvas )
 {
 	Init( hDbc, pszTable, pszIndex, pszDesc );
 }
 
+#ifdef QT_V4LAYOUT
+classIndex::classIndex( Q3ListViewItem *pParent, Q3ListViewItem *pAfter, classCanvas *pCanvas, SQLHENV hDbc, char *pszTable, char *pszIndex, char *pszDesc )
+#else
 classIndex::classIndex( QListViewItem *pParent, QListViewItem *pAfter, classCanvas *pCanvas, SQLHENV hDbc, char *pszTable, char *pszIndex, char *pszDesc )
+#endif
     : classNode( pParent, pAfter, pCanvas )
 {
 	Init( hDbc, pszTable, pszIndex, pszDesc );
@@ -54,16 +66,28 @@ void classIndex::setOpen( bool o )
 	{
 		LoadColumns();
     }
+#ifdef QT_V4LAYOUT
+    Q3ListViewItem::setOpen( o );
+#else
     QListViewItem::setOpen( o );
+#endif
 }
 
 void classIndex::setup()
 {
     setExpandable( TRUE );
+#ifdef QT_V4LAYOUT
+    Q3ListViewItem::setup();
+#else
     QListViewItem::setup();
+#endif
 }
 
+#ifdef QT_V4LAYOUT
+void classIndex::selectionChanged( Q3ListViewItem *p )
+#else
 void classIndex::selectionChanged( QListViewItem *p )
+#endif
 {
 	if ( p == this )
 	{
@@ -92,7 +116,11 @@ void classIndex::LoadColumns()
 	}
 
 	// EXECUTE OUR SQL/CALL
+#ifdef QT_V4LAYOUT
+	strcpy( (char *)szTableName, qsTable.ascii() );
+#else
 	strcpy( (char *)szTableName, qsTable.data() );
+#endif
 	if ( SQL_SUCCESS != (nReturn=SQLStatistics( hstmt, 0, 0, 0, 0, szTableName, SQL_NTS, 0, 0 )) )
 	{
 		QMessageBox::warning( pCanvas, "Data Manager",  "Failed to SQLStatistics" );
@@ -111,8 +139,11 @@ void classIndex::LoadColumns()
 		if ( nReturn != SQL_SUCCESS || nIndicator == SQL_NULL_DATA )
 			strcpy( (char *)szColumnName, "Unknown" );
 
-
+#ifdef QT_V4LAYOUT
+		if ( strcmp( (const char*)szIndexName,  qsIndex.ascii() ) == 0 )
+#else
 		if ( strcmp( (const char*)szIndexName,  qsIndex.data() ) == 0 )
+#endif
 		{
 			listColumns.append( new classColumn( this, pCanvas, hDbc, (char *)szColumnName ) );
 		}

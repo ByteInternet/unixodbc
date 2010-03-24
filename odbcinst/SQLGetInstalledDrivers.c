@@ -20,11 +20,14 @@ BOOL SQLGetInstalledDrivers(	LPSTR	pszBuf,
 	WORD	nToCopySize	= 0;
 	char	szObjectName[INI_MAX_OBJECT_NAME+1];
     char    szIniName[ INI_MAX_OBJECT_NAME + 1 ];
+	char 	b1[ 256 ], b2[ 256 ];
+
+    inst_logClear();
 
 #ifdef VMS
-    sprintf( szIniName, "%sODBCINST.INI", odbcinst_system_file_path() );
+    sprintf( szIniName, "%s:%s", odbcinst_system_file_path( b1 ), odbcinst_system_file_name( b2 ) );
 #else
-    sprintf( szIniName, "%s/odbcinst.ini", odbcinst_system_file_path() );
+    sprintf( szIniName, "%s/%d", odbcinst_system_file_path( b1 ), odbcinst_system_file_name( b2 ) );
 #endif
 
 #ifdef __OS2__
@@ -72,3 +75,25 @@ BOOL SQLGetInstalledDrivers(	LPSTR	pszBuf,
 }
 
 
+BOOL INSTAPI SQLGetInstalledDriversW  (LPWSTR      lpszBuf,
+                                      WORD       cbBufMax,
+                                      WORD      * pcbBufOut)
+{
+	char *path;
+	BOOL ret;
+
+    inst_logClear();
+
+	path = calloc( cbBufMax, 1 );
+
+	ret = SQLGetInstalledDrivers( path, cbBufMax, pcbBufOut );
+
+	if ( ret ) 
+	{
+		_multi_string_copy_to_wide( lpszBuf, path, cbBufMax );
+	}
+
+	free( path );
+
+	return ret;
+}

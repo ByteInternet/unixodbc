@@ -2,7 +2,7 @@
 #define _INTRINSIC_SQL_H
 
 typedef unsigned char           UCHAR;
-#if (SIZEOF_LONG == 4)
+#if (SIZEOF_LONG_INT == 4)
 typedef long int                SDWORD;
 typedef unsigned long int       UDWORD;
 #else

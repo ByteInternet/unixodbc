@@ -29,3 +29,16 @@ RETCODE SQLPostInstallerError(	DWORD	nErrorCode,
 	return SQL_SUCCESS;
 }
 
+SQLRETURN INSTAPI   SQLPostInstallerErrorW(DWORD dwErrorCode,
+                            LPCWSTR lpszErrorMsg)
+{
+	char *msg = lpszErrorMsg ? _single_string_alloc_and_copy( lpszErrorMsg ) : (char*)NULL;
+	SQLRETURN ret;
+
+	ret = SQLPostInstallerError( dwErrorCode, msg );
+
+	if ( msg )
+		free( msg );
+
+	return ret;
+}

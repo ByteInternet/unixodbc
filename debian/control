@@ -1,6 +1,7 @@
 Source: unixodbc
-Build-Depends: debhelper (>= 7.0.50), flex-old, bison, libqt3-mt-dev,
+Build-Depends: debhelper (>= 7.0.50), libqt3-mt-dev, libqt3-compat-headers,
 	libreadline-dev, autotools-dev, libltdl-dev
+Build-Conflicts: unixodbc-dev
 Section: libs
 Priority: optional
 Maintainer: Steve Langasek <vorlon@debian.org>
@@ -26,7 +27,7 @@ Architecture: any
 Section: devel
 Priority: extra
 Depends: unixodbc (= ${binary:Version}),
-	odbcinst1debian1 (= ${binary:Version}),
+	odbcinst1debian2 (= ${binary:Version}),
 	libodbcinstq1c2 (= ${binary:Version}),
 	libltdl3-dev, ${misc:Depends}
 Suggests: libqt3-mt-dev
@@ -59,12 +60,12 @@ Description: Qt-based ODBC configuration library
  This package contains the libodbcinstQ library, a library used by some
  Qt-based GUI configuration tools for managing ODBC drivers and ODBC DSNs.
 
-Package: odbcinst1debian1
+Package: odbcinst1debian2
 Architecture: any
 Section: libs
 Depends: ${shlibs:Depends}, ${misc:Depends}, odbcinst
 Replaces: unixodbc (<< 2.1.1-2)
-Conflicts: odbcinst1
+Conflicts: odbcinst1, odbcinst1debian1
 Description: Support library for accessing odbc ini files
  This package contains the libodbcinst library from unixodbc, a library
  used by ODBC drivers for reading their configuration settings from

@@ -13,8 +13,25 @@
 #define classNode_included
 
 #include "classCanvas.h"
+#ifdef QT_V4LAYOUT
+#include <Qt/q3listview.h>
+#else
 #include <qlistview.h>
+#endif
 
+#ifdef QT_V4LAYOUT
+class classNode: public Q3ListViewItem
+{
+public:
+    classNode( Q3ListView     *pParent,                        classCanvas *pCanvas );
+    classNode( Q3ListViewItem *pParent, Q3ListViewItem *pAfter, classCanvas *pCanvas );
+   ~classNode() {}
+
+protected:
+    classCanvas *pCanvas;
+
+};
+#else
 class classNode: public QListViewItem
 {
 public:
@@ -26,5 +43,6 @@ protected:
     classCanvas *pCanvas;
 
 };
+#endif
 #endif
 

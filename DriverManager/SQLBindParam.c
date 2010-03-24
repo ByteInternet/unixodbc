@@ -27,9 +27,18 @@
  *
  **********************************************************************
  *
- * $Id: SQLBindParam.c,v 1.5 2003/10/30 18:20:45 lurcher Exp $
+ * $Id: SQLBindParam.c,v 1.8 2007/03/05 09:49:23 lurcher Exp $
  *
  * $Log: SQLBindParam.c,v $
+ * Revision 1.8  2007/03/05 09:49:23  lurcher
+ * Get it to build on VMS again
+ *
+ * Revision 1.7  2006/04/11 10:22:56  lurcher
+ * Fix a data type check
+ *
+ * Revision 1.6  2006/03/08 11:22:13  lurcher
+ * Add check for valid C_TYPE
+ *
  * Revision 1.5  2003/10/30 18:20:45  lurcher
  *
  * Fix broken thread protection
@@ -119,7 +128,7 @@
 
 #include "drivermanager.h"
 
-static char const rcsid[]= "$RCSfile: SQLBindParam.c,v $ $Revision: 1.5 $";
+static char const rcsid[]= "$RCSfile: SQLBindParam.c,v $ $Revision: 1.8 $";
 
 SQLRETURN SQLBindParam( SQLHSTMT statement_handle,
            SQLUSMALLINT parameter_number,
@@ -236,6 +245,25 @@ SQLRETURN SQLBindParam( SQLHSTMT statement_handle,
         return function_return( SQL_HANDLE_STMT, statement, SQL_ERROR );
     }
 
+	/*
+	 * check valid C_TYPE
+	 */
+
+	if ( !check_target_type( value_type ))
+	{
+        dm_log_write( __FILE__, 
+                __LINE__, 
+                LOG_INFO, 
+                LOG_INFO, 
+                "Error: HY003" );
+
+        __post_internal_error( &statement -> error,
+                ERROR_HY003, NULL,
+                statement -> connection -> environment -> requested_version );
+
+        return function_return( SQL_HANDLE_STMT, statement, SQL_ERROR );
+	}
+
     if ( CHECK_SQLBINDPARAM( statement -> connection ))
     {
         ret = SQLBINDPARAM( statement -> connection,
@@ -289,7 +317,7 @@ SQLRETURN SQLBindParam( SQLHSTMT statement_handle,
 
     if ( log_info.log_flag )
     {
-        char buf[ 128 ];
+        SQLCHAR buf[ 128 ];
 
         sprintf( statement -> msg, 
                 "\n\t\tExit:[%s]",

@@ -3,6 +3,7 @@ lib_LTLIBRARIES = libodbcpsql.la
 INCLUDES = -I@top_srcdir@/include
 
 libodbcpsql_la_LDFLAGS = \
+	-no-undefined \
 	-version-info 1:0:0 \
 	$(LIBSOCKET) $(LIBNSL) \
 	-module

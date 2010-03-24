@@ -27,9 +27,27 @@
  *
  **********************************************************************
  *
- * $Id: SQLAllocHandle.c,v 1.6 2003/10/30 18:20:45 lurcher Exp $
+ * $Id: SQLAllocHandle.c,v 1.12 2007/12/17 13:13:03 lurcher Exp $
  *
  * $Log: SQLAllocHandle.c,v $
+ * Revision 1.12  2007/12/17 13:13:03  lurcher
+ * Fix a couple of descriptor typo's
+ *
+ * Revision 1.11  2007/02/12 11:49:34  lurcher
+ * Add QT4 support to existing GUI parts
+ *
+ * Revision 1.10  2006/06/28 08:08:41  lurcher
+ * Add timestamp with timezone to Postgres7.1 driver
+ *
+ * Revision 1.9  2005/11/21 17:25:43  lurcher
+ * A few DM fixes for Oracle's ODBC driver
+ *
+ * Revision 1.8  2005/11/08 09:37:10  lurcher
+ * Allow the driver and application to have different length handles
+ *
+ * Revision 1.7  2005/10/06 08:50:58  lurcher
+ * Fix problem with SQLDrivers not returning first entry
+ *
  * Revision 1.6  2003/10/30 18:20:45  lurcher
  *
  * Fix broken thread protection
@@ -230,7 +248,7 @@
 #include <uodbc_stats.h>
 #endif
 
-static char const rcsid[]= "$RCSfile: SQLAllocHandle.c,v $ $Revision: 1.6 $";
+static char const rcsid[]= "$RCSfile: SQLAllocHandle.c,v $ $Revision: 1.12 $";
 
 /*
  * connection pooling stuff
@@ -291,6 +309,7 @@ SQLRETURN __SQLAllocHandle( SQLSMALLINT handle_type,
 
             environment -> state = STATE_E1;
             environment -> requested_version = requested_version;
+        	environment -> sql_driver_count = -1;
 
             /*
              * if SQLAllocEnv is called then it's probable that
@@ -681,7 +700,7 @@ SQLRETURN __SQLAllocHandle( SQLSMALLINT handle_type,
                 if ( connection -> driver_act_ver == 3 &&
                         CHECK_SQLGETSTMTATTR( connection ))
                 {
-                    SQLHDESC desc;
+                    DRV_SQLHDESC desc;
 
                     /*
                      * ARD
@@ -742,7 +761,7 @@ SQLRETURN __SQLAllocHandle( SQLSMALLINT handle_type,
                          * to wrap around this
                          */
                         statement -> apd = __alloc_desc();
-                        if ( !statement -> ard )
+                        if ( !statement -> apd )
                         {
                             dm_log_write( __FILE__, 
                                 __LINE__, 
@@ -851,6 +870,179 @@ SQLRETURN __SQLAllocHandle( SQLSMALLINT handle_type,
                         statement -> ipd -> connection = connection;
                     }
                 }
+                /* Driver may only have unicode API's */
+                else if ( CHECK_SQLGETSTMTATTRW( connection ))
+                {
+                    DRV_SQLHDESC desc;
+
+                    /*
+                     * ARD
+                     */
+
+                    ret1 = SQLGETSTMTATTRW( connection,
+                            statement -> driver_stmt,
+                            SQL_ATTR_APP_ROW_DESC,
+                            &desc,
+                            sizeof( desc ),
+                            NULL );
+
+                    if ( SQL_SUCCEEDED( ret1 ))
+                    {
+                        /*
+                         * allocate one of our descriptors
+                         * to wrap around this
+                         */
+                        statement -> ard = __alloc_desc();
+                        if ( !statement -> ard )
+                        {
+                            dm_log_write( __FILE__, 
+                                __LINE__, 
+                                LOG_INFO, 
+                                LOG_INFO, 
+                                "Error: HY013" );
+
+                            __post_internal_error( &connection -> error,
+                                    ERROR_HY013, NULL,
+                                    connection -> environment -> requested_version );
+
+                            __release_stmt( statement );
+
+                            return function_return( SQL_HANDLE_DBC, connection, SQL_ERROR );
+                        }
+                        statement -> implicit_ard = statement -> ard;
+                        statement -> ard -> implicit = 1;
+                        statement -> ard -> state = STATE_D1i;
+                        statement -> ard -> driver_desc = desc;
+                        statement -> ard -> connection = connection;
+                    }
+
+                    /*
+                     * APD
+                     */
+
+                    ret1 = SQLGETSTMTATTRW( connection,
+                            statement -> driver_stmt,
+                            SQL_ATTR_APP_PARAM_DESC,
+                            &desc,
+                            sizeof( desc ),
+                            NULL );
+
+                    if ( SQL_SUCCEEDED( ret1 ))
+                    {
+                        /*
+                         * allocate one of our descriptors
+                         * to wrap around this
+                         */
+                        statement -> apd = __alloc_desc();
+                        if ( !statement -> apd )
+                        {
+                            dm_log_write( __FILE__, 
+                                __LINE__, 
+                                LOG_INFO, 
+                                LOG_INFO, 
+                                "Error: HY013" );
+
+                            __post_internal_error( &connection -> error,
+                                    ERROR_HY013, NULL,
+                                    connection -> environment -> requested_version );
+        
+                            __release_stmt( statement );
+
+                            *output_handle = SQL_NULL_HSTMT;
+
+                            return function_return( SQL_HANDLE_DBC, connection, SQL_ERROR );
+                        }
+                        statement -> implicit_apd = statement -> apd;
+                        statement -> apd -> implicit = 1;
+                        statement -> apd -> state = STATE_D1i;
+                        statement -> apd -> driver_desc = desc;
+                        statement -> apd -> connection = connection;
+                    }
+
+                    /*
+                     * IRD
+                     */
+
+                    ret1 = SQLGETSTMTATTRW( connection,
+                            statement -> driver_stmt,
+                            SQL_ATTR_IMP_ROW_DESC,
+                            &desc,
+                            sizeof( desc ),
+                            NULL );
+
+                    if ( SQL_SUCCEEDED( ret1 ))
+                    {
+                        /*
+                         * allocate one of our descriptors
+                         * to wrap around this
+                         */
+                        statement -> ird = __alloc_desc();
+                        if ( !statement -> ird )
+                        {
+                            dm_log_write( __FILE__, 
+                                __LINE__, 
+                                LOG_INFO, 
+                                LOG_INFO, 
+                                "Error: HY013" );
+
+                            __post_internal_error( &connection -> error,
+                                    ERROR_HY013, NULL, 
+                                    connection -> environment -> requested_version );
+
+                            __release_stmt( statement );
+
+                            *output_handle = SQL_NULL_HSTMT;
+
+                            return function_return( SQL_HANDLE_DBC, connection, SQL_ERROR );
+                        }
+                        statement -> implicit_ird = statement -> ird;
+                        statement -> ird -> implicit = 1;
+                        statement -> ird -> state = STATE_D1i;
+                        statement -> ird -> driver_desc = desc;
+                        statement -> ird -> connection = connection;
+                    }
+
+                    /*
+                     * IPD
+                     */
+
+                    ret1 = SQLGETSTMTATTRW( connection,
+                            statement -> driver_stmt,
+                            SQL_ATTR_IMP_PARAM_DESC,
+                            &desc,
+                            sizeof( desc ),
+                            NULL );
+
+                    if ( SQL_SUCCEEDED( ret1 ))
+                    {
+                        /*
+                         * allocate one of our descriptors
+                         * to wrap around this
+                         */
+                        statement -> ipd = __alloc_desc();
+                        if ( !statement -> ipd )
+                        {
+                            dm_log_write( __FILE__, 
+                                __LINE__, 
+                                LOG_INFO, 
+                                LOG_INFO, 
+                                "Error: HY013" );
+
+                            __post_internal_error( &connection -> error,
+                                    ERROR_HY013, NULL,
+                                    connection -> environment -> requested_version );
+
+                            *output_handle = SQL_NULL_HSTMT;
+
+                            return function_return( SQL_HANDLE_DBC, connection, SQL_ERROR );
+                        }
+                        statement -> implicit_ipd = statement -> ipd;
+                        statement -> ipd -> implicit = 1;
+                        statement -> ipd -> state = STATE_D1i;
+                        statement -> ipd -> driver_desc = desc;
+                        statement -> ipd -> connection = connection;
+                    }
+                } 
             }
 
             /*
@@ -1045,8 +1237,29 @@ SQLRETURN __SQLAllocHandle( SQLSMALLINT handle_type,
         break;
 
       default:
-        return SQL_ERROR;
-        break;
+		if ( __validate_env( (DMHENV) input_handle ))
+		{
+			DMHENV environment = (DMHENV) input_handle;
+			__post_internal_error( &environment -> error,
+						ERROR_HY092, NULL,
+						environment -> requested_version );
+
+			return function_return( SQL_HANDLE_ENV, environment, SQL_ERROR );
+		}
+		else if ( __validate_dbc( (DMHDBC) input_handle ))
+		{
+			DMHDBC connection = (DMHDBC) input_handle;
+			__post_internal_error( &connection -> error,
+					ERROR_HY092, NULL,
+					connection -> environment -> requested_version );
+	
+			return function_return( SQL_HANDLE_DBC, connection, SQL_ERROR );
+		}
+		else
+		{
+			return SQL_ERROR;
+		}
+		break;
     }
 }
 

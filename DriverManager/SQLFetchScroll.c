@@ -27,9 +27,12 @@
  *
  **********************************************************************
  *
- * $Id: SQLFetchScroll.c,v 1.4 2003/10/30 18:20:45 lurcher Exp $
+ * $Id: SQLFetchScroll.c,v 1.5 2007/11/29 12:00:31 lurcher Exp $
  *
  * $Log: SQLFetchScroll.c,v $
+ * Revision 1.5  2007/11/29 12:00:31  lurcher
+ * Add 64 bit type changes to SQLExtendedFetch etc
+ *
  * Revision 1.4  2003/10/30 18:20:45  lurcher
  *
  * Fix broken thread protection
@@ -111,11 +114,11 @@
 
 #include "drivermanager.h"
 
-static char const rcsid[]= "$RCSfile: SQLFetchScroll.c,v $ $Revision: 1.4 $";
+static char const rcsid[]= "$RCSfile: SQLFetchScroll.c,v $ $Revision: 1.5 $";
 
 SQLRETURN SQLFetchScroll( SQLHSTMT statement_handle,
            SQLSMALLINT fetch_orientation,
-           SQLROWOFFSET fetch_offset )
+           SQLLEN fetch_offset )
 {
     DMHSTMT statement = (DMHSTMT) statement_handle;
     SQLRETURN ret;

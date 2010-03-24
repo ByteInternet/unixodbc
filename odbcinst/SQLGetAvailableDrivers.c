@@ -19,4 +19,10 @@ BOOL SQLGetAvailableDrivers(	LPCSTR     	pszInfFile,
 	return SQLGetInstalledDrivers(	pszBuf,	nBufMax, pnBufOut );
 }
 
-
+BOOL INSTAPI SQLGetAvailableDriversW  (LPCWSTR     lpszInfFile,
+                                      LPWSTR      lpszBuf,
+                                      WORD       cbBufMax,
+                                      WORD      * pcbBufOut)
+{
+	return SQLGetInstalledDriversW(	lpszBuf, cbBufMax, pcbBufOut );
+}

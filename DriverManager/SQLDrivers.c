@@ -27,9 +27,18 @@
  *
  **********************************************************************
  *
- * $Id: SQLDrivers.c,v 1.8 2004/07/25 00:42:02 peteralexharvey Exp $
+ * $Id: SQLDrivers.c,v 1.11 2008/09/29 14:02:45 lurcher Exp $
  *
  * $Log: SQLDrivers.c,v $
+ * Revision 1.11  2008/09/29 14:02:45  lurcher
+ * Fix missing dlfcn group option
+ *
+ * Revision 1.10  2005/10/06 08:58:19  lurcher
+ * Fix problem with SQLDrivers not returning first entry
+ *
+ * Revision 1.9  2005/07/17 09:11:23  lurcher
+ * Fix bug in SQLDrivers that was stopping the return of the attribute length
+ *
  * Revision 1.8  2004/07/25 00:42:02  peteralexharvey
  * for OS2 port
  *
@@ -154,7 +163,7 @@
 
 #include "drivermanager.h"
 
-static char const rcsid[]= "$RCSfile: SQLDrivers.c,v $ $Revision: 1.8 $";
+static char const rcsid[]= "$RCSfile: SQLDrivers.c,v $ $Revision: 1.11 $";
 
 #define BUFFERSIZE  1024
 
@@ -311,7 +320,10 @@ try_again:
                 environment -> sql_driver_count,
                 object, sizeof( object )) != INI_SUCCESS )
 	{
-        environment -> sql_driver_count = 0; 
+		/*
+		 * Set up for the next time
+		 */
+        environment -> sql_driver_count = -1; 
 		ret = SQL_NO_DATA;
 	}
 	else
@@ -359,12 +371,13 @@ try_again:
             char szIniName[ INI_MAX_OBJECT_NAME + 1 ];
             char buffer[ 1024 ];
             int total_len = 0;
+			char b1[ 256 ], b2[ 256 ];
 
             /*
              * enumerate the driver attributes
              */
 
-            sprintf( szIniName, "%s/odbcinst.ini", odbcinst_system_file_path());
+            sprintf( szIniName, "%s/%s", odbcinst_system_file_path( b1 ), odbcinst_system_file_name( b2 ));
 
 			memset( buffer, '\0', sizeof( buffer ));
 #ifdef __OS2__
@@ -410,7 +423,7 @@ try_again:
                 if ( sz_driver_attributes )
                     *sz_driver_attributes = '\0';
 
-                if ( *pcb_drvr_attr )
+                if ( pcb_drvr_attr )
                 {
                     *pcb_drvr_attr = total_len;
                 }

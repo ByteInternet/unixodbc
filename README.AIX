@@ -55,11 +55,16 @@ The same will need doing for the seyup libs
 
 This is only a issue with the libodbcinstQ.a lib that is opened by
 ODBCConfig. There are two things, first because libtool decides that 
-shared libs a lib*.a the code trys to load libodbcinstQ.a, and also
-we have to rebuild the lib using the IBM util makeC++SharedLib 
+shared libs ar lib*.a the code trys to load libodbcinstQ.a, and also
+we maye have to rebuild the lib using the IBM util makeC++SharedLib 
 (the name gives its away :-)
 
-So after the make install is done, go into the odbcinstQ dir on the
+I have tried this with a current AIX, and it seems that all is needed is to extract the .so 
+from the .a by running ar -x libodbcinstQ.a to get the .so
+
+If that doesn't help, or on older AIX's the following may need doing.
+
+After the make install is done, go into the odbcinstQ dir on thE
 build tree, and do the following
 
 	makeC++SharedLib -p 0 -o libodbcinstQ.so.1.0 -L$QTDIR/lib -lqt -L$PREFIX/lib -lodbc -lodbcinst  .libs/libodbcinstQ.lax/libodbcextraslc.al/strcasecmp.o  *.o ../ini/*.lo

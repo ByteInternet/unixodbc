@@ -2,7 +2,7 @@ lib_LTLIBRARIES = libnn.la
 
 INCLUDES = -I@top_srcdir@/include -I.
 
-libnn_la_LDFLAGS = -version-info 1:0:0 -module
+libnn_la_LDFLAGS = -no-undefined  -version-info 1:0:0 -module
 
 DEFS = -DUNIXODBC @DEFS@
 

@@ -11,8 +11,13 @@
  **************************************************/
 
 #include "classLogin.h"
+#ifdef QT_V4LAYOUT
+#include <Qt/qpushbutton.h>
+#include <Qt/qpixmap.h>
+#else
 #include <qpushbutton.h>
 #include <qpixmap.h>
+#endif
 #include <unistd.h>
 #include <pwd.h>
 #include <sys/types.h>

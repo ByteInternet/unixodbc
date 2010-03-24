@@ -21,9 +21,12 @@
  *
  **********************************************************************
  *
- * $Id: env.cpp,v 1.3 2004/06/21 10:01:17 lurcher Exp $
+ * $Id: env.cpp,v 1.4 2007/02/12 11:49:37 lurcher Exp $
  *
  * $Log: env.cpp,v $
+ * Revision 1.4  2007/02/12 11:49:37  lurcher
+ * Add QT4 support to existing GUI parts
+ *
  * Revision 1.3  2004/06/21 10:01:17  lurcher
  *
  * Fix a couple of 64 bit issues
@@ -83,6 +86,16 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#ifdef QT_V4LAYOUT
+#include <Qt/qapplication.h>
+#include <Qt/qmessagebox.h>
+#include <Qt/qpushbutton.h>
+#include <Qt/qcombobox.h>
+#include <Qt/qdialog.h>
+#include <Qt/qcheckbox.h>
+#include <Qt/qlabel.h>
+#include <Qt/qlineedit.h>
+#else
 #include <qapplication.h>
 #include <qmessagebox.h>
 #include <qpushbutton.h>
@@ -91,6 +104,7 @@
 #include <qcheckbox.h>
 #include <qlabel.h>
 #include <qlineedit.h>
+#endif
 #include <sql.h>
 #include <sqlext.h>
 #include "odbctest.h"

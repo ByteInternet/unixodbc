@@ -23,9 +23,12 @@
  *
  **********************************************************************
  *
- * $Id: SQLGetDescRec.c,v 1.1.1.1 2001/10/17 16:40:15 lurcher Exp $
+ * $Id: SQLGetDescRec.c,v 1.2 2005/09/05 09:49:48 lurcher Exp $
  *
  * $Log: SQLGetDescRec.c,v $
+ * Revision 1.2  2005/09/05 09:49:48  lurcher
+ * New QT detection macros added
+ *
  * Revision 1.1.1.1  2001/10/17 16:40:15  lurcher
  *
  * First upload to SourceForge
@@ -56,9 +59,5 @@ SQLRETURN CLGetDescRec( SQLHDESC descriptor_handle,
            SQLSMALLINT *scale, 
            SQLSMALLINT *nullable )
 {
-    /*
-     * todo
-     */
-
     return SQL_ERROR;
 }

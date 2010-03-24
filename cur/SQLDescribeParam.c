@@ -23,9 +23,12 @@
  *
  **********************************************************************
  *
- * $Id: SQLDescribeParam.c,v 1.1.1.1 2001/10/17 16:40:15 lurcher Exp $
+ * $Id: SQLDescribeParam.c,v 1.2 2007/11/13 15:04:57 lurcher Exp $
  *
  * $Log: SQLDescribeParam.c,v $
+ * Revision 1.2  2007/11/13 15:04:57  lurcher
+ * Fix 64 bit cursor lib issues
+ *
  * Revision 1.1.1.1  2001/10/17 16:40:15  lurcher
  *
  * First upload to SourceForge
@@ -48,7 +51,7 @@ SQLRETURN CLDescribeParam(
     SQLHSTMT           statement_handle,
     SQLUSMALLINT       ipar,
     SQLSMALLINT        *pf_sql_type,
-    SQLUINTEGER        *pcb_param_def,
+    SQLULEN        	   *pcb_param_def,
     SQLSMALLINT        *pib_scale,
     SQLSMALLINT        *pf_nullable )
 {

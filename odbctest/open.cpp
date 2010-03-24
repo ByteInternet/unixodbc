@@ -21,9 +21,12 @@
  *
  **********************************************************************
  *
- * $Id: open.cpp,v 1.1.1.1 2001/10/17 16:40:31 lurcher Exp $
+ * $Id: open.cpp,v 1.2 2007/02/12 11:49:37 lurcher Exp $
  *
  * $Log: open.cpp,v $
+ * Revision 1.2  2007/02/12 11:49:37  lurcher
+ * Add QT4 support to existing GUI parts
+ *
  * Revision 1.1.1.1  2001/10/17 16:40:31  lurcher
  *
  * First upload to SourceForge
@@ -39,8 +42,13 @@
  **********************************************************************/
 
 #include "odbctest.h"
+#ifdef QT_V4LAYOUT
+#include <Qt/qapplication.h>
+#include <Qt/qmessagebox.h>
+#else
 #include <qapplication.h>
 #include <qmessagebox.h>
+#endif
 
 void OdbcTest::open()
 {

@@ -27,9 +27,12 @@
  *
  **********************************************************************
  *
- * $Id: SQLMoreResults.c,v 1.6 2003/12/19 16:25:38 lurcher Exp $
+ * $Id: SQLMoreResults.c,v 1.7 2006/03/08 09:18:41 lurcher Exp $
  *
  * $Log: SQLMoreResults.c,v $
+ * Revision 1.7  2006/03/08 09:18:41  lurcher
+ * fix silly typo that was using sizeof( SQL_WCHAR ) instead of SQLWCHAR
+ *
  * Revision 1.6  2003/12/19 16:25:38  lurcher
  *
  * Fix incorrect state in SQLMoreResults.c
@@ -120,7 +123,7 @@
 
 #include "drivermanager.h"
 
-static char const rcsid[]= "$RCSfile: SQLMoreResults.c,v $ $Revision: 1.6 $";
+static char const rcsid[]= "$RCSfile: SQLMoreResults.c,v $ $Revision: 1.7 $";
 
 SQLRETURN SQLMoreResults( SQLHSTMT statement_handle )
 {
@@ -163,7 +166,6 @@ SQLRETURN SQLMoreResults( SQLHSTMT statement_handle )
     /*
      * check states
      */
-
     if ( statement -> state == STATE_S1 ||
             statement -> state == STATE_S2 ||
             statement -> state == STATE_S3 )

@@ -14,24 +14,33 @@
 
 #include "classCanvas.h"
 #include "classDriver.h"
-#if (QT_VERSION>=300)
-#include <qptrlist.h>
+#ifdef QT_V4LAYOUT
+#include <Qt/q3ptrlist.h>
+#include <Qt/q3listview.h>
 #else
 #include <qlist.h>
-#endif
 #include <qlistview.h>
+#endif
 #include <sqlext.h>
 
 class classDrivers: public classNode
 {
 public:
+#ifdef QT_V4LAYOUT
+    classDrivers( Q3ListViewItem *pParent, Q3ListViewItem *pAfter, classCanvas *pCanvas );
+#else
     classDrivers( QListViewItem *pParent, QListViewItem *pAfter, classCanvas *pCanvas );
+#endif
    ~classDrivers() {}
 
     void setOpen( bool );
 
 private:
+#ifdef QT_V4LAYOUT
+    Q3PtrList<classDriver> listDrivers;
+#else
     QList<classDriver> listDrivers;
+#endif
 
 };
 #endif

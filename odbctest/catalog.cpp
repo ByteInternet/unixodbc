@@ -21,9 +21,12 @@
  *
  **********************************************************************
  *
- * $Id: catalog.cpp,v 1.1.1.1 2001/10/17 16:40:30 lurcher Exp $
+ * $Id: catalog.cpp,v 1.2 2007/02/12 11:49:37 lurcher Exp $
  *
  * $Log: catalog.cpp,v $
+ * Revision 1.2  2007/02/12 11:49:37  lurcher
+ * Add QT4 support to existing GUI parts
+ *
  * Revision 1.1.1.1  2001/10/17 16:40:30  lurcher
  *
  * First upload to SourceForge
@@ -70,12 +73,21 @@
  **********************************************************************/
 
 #include <stdlib.h>
+#ifdef QT_V4LAYOUT
+#include <Qt/qapplication.h>
+#include <Qt/qmessagebox.h>
+#include <Qt/qpushbutton.h>
+#include <Qt/qcombobox.h>
+#include <Qt/qcheckbox.h>
+#include <Qt/qlabel.h>
+#else
 #include <qapplication.h>
 #include <qmessagebox.h>
 #include <qpushbutton.h>
 #include <qcombobox.h>
 #include <qcheckbox.h>
 #include <qlabel.h>
+#endif
 #include <sql.h>
 #include <sqlext.h>
 #include "catalog.h"

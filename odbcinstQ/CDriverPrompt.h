@@ -12,14 +12,21 @@
 #ifndef CDriverPrompt_included
 #define CDriverPrompt_included
 
+#ifdef QT_V4LAYOUT
+#define QT3_SUPPORT
+#include <Qt/qdialog.h>
+#include <Qt/qframe.h>
+#include <Qt/qpixmap.h>
+#include <Qt/qlayout.h>
+#include <Qt/qlabel.h>
+#include <Qt/q3listview.h>
+#include <Qt/qpushbutton.h>
+#else
 #include <qdialog.h>
 #include <qframe.h>
 #include <qpixmap.h>
 #include <qlayout.h>
 #include <qlabel.h>
-#if (QT_VERSION>=300)
-#include <qpushbutton.h>
-#else
 #include <qpushbt.h>
 #endif
 

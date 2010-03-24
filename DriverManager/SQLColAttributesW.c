@@ -27,9 +27,15 @@
  *
  **********************************************************************
  *
- * $Id: SQLColAttributesW.c,v 1.10 2004/11/22 17:02:48 lurcher Exp $
+ * $Id: SQLColAttributesW.c,v 1.12 2008/08/29 08:01:38 lurcher Exp $
  *
  * $Log: SQLColAttributesW.c,v $
+ * Revision 1.12  2008/08/29 08:01:38  lurcher
+ * Alter the way W functions are passed to the driver
+ *
+ * Revision 1.11  2007/02/28 15:37:47  lurcher
+ * deal with drivers that call internal W functions and end up in the driver manager. controlled by the --enable-handlemap configure arg
+ *
  * Revision 1.10  2004/11/22 17:02:48  lurcher
  * Fix unicode/ansi conversion in the SQLGet functions
  *
@@ -119,6 +125,39 @@ SQLRETURN SQLColAttributesW( SQLHSTMT statement_handle,
                     LOG_INFO, 
                     "Error: SQL_INVALID_HANDLE" );
 
+#ifdef WITH_HANDLE_REDIRECT
+		{
+			DMHSTMT parent_statement;
+
+			parent_statement = find_parent_handle( statement, SQL_HANDLE_STMT );
+
+			if ( parent_statement ) {
+        		dm_log_write( __FILE__, 
+                	__LINE__, 
+                    	LOG_INFO, 
+                    	LOG_INFO, 
+                    	"Info: found parent handle" );
+
+				if ( CHECK_SQLCOLATTRIBUTEW( parent_statement -> connection ))
+				{
+        			dm_log_write( __FILE__, 
+                		__LINE__, 
+                   		 	LOG_INFO, 
+                   		 	LOG_INFO, 
+                   		 	"Info: calling redirected driver function" );
+
+            		return  SQLCOLATTRIBUTEW( parent_statement -> connection,
+							statement_handle,
+                    		column_number,
+                    		field_identifier,
+                    		character_attribute,
+                    		buffer_length,
+                    		string_length,
+                    		numeric_attribute );
+				}
+			}
+		}
+#endif
         return SQL_INVALID_HANDLE;
     }
 
@@ -273,7 +312,9 @@ SQLRETURN SQLColAttributesW( SQLHSTMT statement_handle,
         }
     }
 
-    if ( statement -> connection -> unicode_driver )
+    if ( statement -> connection -> unicode_driver || 
+			    CHECK_SQLCOLATTRIBUTESW( statement -> connection ) || 
+			    CHECK_SQLCOLATTRIBUTEW( statement -> connection ))
     {
         if ( !CHECK_SQLCOLATTRIBUTESW( statement -> connection ))
         {

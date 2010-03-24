@@ -33,11 +33,18 @@ CUserDSN::CUserDSN( QWidget* parent, const char* name )
 	pbAdd->setGeometry( 290, 10, 100, 30 );
 	pbAdd->setMinimumSize( 0, 0 );
 	pbAdd->setMaximumSize( 32767, 32767 );
+#ifdef QT_V4LAYOUT
+	pbAdd->setFocusPolicy( Qt::TabFocus );
+	pbAdd->setBackgroundMode( Qt::PaletteBackground );
+#else
 	pbAdd->setFocusPolicy( QWidget::TabFocus );
 	pbAdd->setBackgroundMode( QWidget::PaletteBackground );
+#endif
 	pbAdd->setText( "A&dd..." );
 	pbAdd->setAutoRepeat( FALSE );
+#ifndef QT_V4LAYOUT
 	pbAdd->setAutoResize( FALSE );
+#endif
 
     playoutButtons->addWidget( pbAdd );
 
@@ -45,11 +52,18 @@ CUserDSN::CUserDSN( QWidget* parent, const char* name )
 	pbRemove->setGeometry( 290, 50, 100, 30 );
 	pbRemove->setMinimumSize( 0, 0 );
 	pbRemove->setMaximumSize( 32767, 32767 );
+#ifdef QT_V4LAYOUT
+	pbRemove->setFocusPolicy( Qt::TabFocus );
+	pbRemove->setBackgroundMode( Qt::PaletteBackground );
+#else
 	pbRemove->setFocusPolicy( QWidget::TabFocus );
 	pbRemove->setBackgroundMode( QWidget::PaletteBackground );
+#endif
 	pbRemove->setText( "&Remove" );
 	pbRemove->setAutoRepeat( FALSE );
+#ifndef QT_V4LAYOUT
 	pbRemove->setAutoResize( FALSE );
+#endif
 
     playoutButtons->addWidget( pbRemove );
 
@@ -57,11 +71,18 @@ CUserDSN::CUserDSN( QWidget* parent, const char* name )
 	pbConfigure->setGeometry( 290, 90, 100, 30 );
 	pbConfigure->setMinimumSize( 0, 0 );
 	pbConfigure->setMaximumSize( 32767, 32767 );
+#ifdef QT_V4LAYOUT
+	pbConfigure->setFocusPolicy( Qt::TabFocus );
+	pbConfigure->setBackgroundMode( Qt::PaletteBackground );
+#else
 	pbConfigure->setFocusPolicy( QWidget::TabFocus );
 	pbConfigure->setBackgroundMode( QWidget::PaletteBackground );
+#endif
 	pbConfigure->setText( "&Configure..." );
 	pbConfigure->setAutoRepeat( FALSE );
+#ifndef QT_V4LAYOUT
 	pbConfigure->setAutoResize( FALSE );
+#endif
 
     playoutButtons->addWidget( pbConfigure );
 
@@ -73,8 +94,13 @@ CUserDSN::CUserDSN( QWidget* parent, const char* name )
 	pframe->setGeometry( 10, 210, 380, 80 );
 	pframe->setMinimumSize( 0, 0 );
 	pframe->setMaximumSize( 32767, 32767 );
+#ifdef QT_V4LAYOUT
+	pframe->setFocusPolicy( Qt::NoFocus );
+	pframe->setBackgroundMode( Qt::PaletteBackground );
+#else
 	pframe->setFocusPolicy( QWidget::NoFocus );
 	pframe->setBackgroundMode( QWidget::PaletteBackground );
+#endif
 	pframe->setFrameStyle( QFrame::Box | QFrame::Raised );
 
     playoutTop->addWidget( pframe );
@@ -91,7 +117,12 @@ CUserDSN::CUserDSN( QWidget* parent, const char* name )
 	plabel2->setMinimumSize( 0, 0 );
 	plabel2->setMaximumSize( 32767, 32767 );
 	plabel2->setText( "User data source configuration is stored in your home directory. This allows you to configure data access without having to be the system administrator." );
+#ifdef QT_V4LAYOUT
+	plabel2->setAlignment( Qt::AlignLeft | Qt::WordBreak );
+	plabel2->setWordWrap( true );
+#else
 	plabel2->setAlignment( AlignLeft | WordBreak );
+#endif
 
 	playoutHelp->addWidget( plabel1, 0, 0 );
     playoutHelp->addWidget( plabel2, 0, 1 );
@@ -102,7 +133,11 @@ CUserDSN::CUserDSN( QWidget* parent, const char* name )
 	connect( pbAdd, SIGNAL(clicked()), pDSNList, SLOT(Add()) );
 	connect( pbRemove, SIGNAL(clicked()), pDSNList, SLOT(Delete()) );
 	connect( pbConfigure, SIGNAL(clicked()), pDSNList, SLOT(Edit()) );
+#ifdef QT_V4LAYOUT
+    connect( pDSNList, SIGNAL(doubleClicked( Q3ListViewItem * )), pDSNList, SLOT(DoubleClick( Q3ListViewItem * )));
+#else
     connect( pDSNList, SIGNAL(doubleClicked( QListViewItem * )), pDSNList, SLOT(DoubleClick( QListViewItem * )));
+#endif
 }
 
 

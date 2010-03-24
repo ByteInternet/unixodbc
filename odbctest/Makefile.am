@@ -1,42 +1,21 @@
 if QT
+if QT4
+
+else
 
 bin_PROGRAMS = odbctest
 
-INCLUDES = -I@top_srcdir@/include @QT_INCLUDES@ -DSYSTEM_FILE_PATH=\"@sysconfdir@\" $(INCLTDL)
+INCLUDES = -I@top_srcdir@/include $(QT_CXXFLAGS) -DSYSTEM_FILE_PATH=\"@sysconfdir@\" $(LTDLINCL)
 
-odbctest_LDADD = @X_LDFLAGS@ \
-	@QT_LDFLAGS@ \
-	@USER_LDFLAGS@ \
-	@LIB_QT@ \
+odbctest_LDADD = \
+	$(QT_LDFLAGS) \
+	$(QT_LIBS) \
+	../ini/libinilc.la \
 	../odbcinst/libodbcinst.la \
 	../DriverManager/libodbc.la \
-	$(LIBLTDL) $(LIBADD_DL)
+	$(LIBLTDL) $(LIBADD_DL) 
 
 odbctest_DEPENDANCIES = ../odbcinst/libodbcinst.la ../DriverManager/libodbc.la
-
-CLEANFILES = \
-	moc_results.cpp \
-	moc_stmt.cpp \
-	moc_odbctest.cpp \
-	moc_desc.cpp \
-	moc_diag.cpp \
-	moc_env.cpp \
-	moc_catalog.cpp \
-	moc_conn.cpp \
-	moc_attr.cpp \
-	moc_tools.cpp
-
-nodist_odbctest_SOURCES = \
-	moc_results.cpp \
-	moc_stmt.cpp \
-	moc_odbctest.cpp \
-	moc_desc.cpp \
-	moc_diag.cpp \
-	moc_env.cpp \
-	moc_catalog.cpp \
-	moc_conn.cpp \
-	moc_attr.cpp \
-	moc_tools.cpp
 
 odbctest_SOURCES = \
 	tools.cpp \
@@ -51,7 +30,17 @@ odbctest_SOURCES = \
 	diag.cpp \
 	conn.cpp \
 	catalog.cpp \
-	attr.cpp
+	attr.cpp \
+	moc_results.cpp \
+	moc_stmt.cpp \
+	moc_odbctest.cpp \
+	moc_desc.cpp \
+	moc_diag.cpp \
+	moc_env.cpp \
+	moc_catalog.cpp \
+	moc_conn.cpp \
+	moc_attr.cpp \
+	moc_tools.cpp
 
 moc_results.cpp: @srcdir@/results.h
 	@MOC@ @srcdir@/results.h -o moc_results.cpp
@@ -83,6 +72,19 @@ moc_attr.cpp: @srcdir@/attr.h
 moc_tools.cpp: @srcdir@/tools.h
 	@MOC@ @srcdir@/tools.h -o moc_tools.cpp
 
+CLEANFILES = \
+	moc_attr.cpp \
+	moc_conn.cpp \
+	moc_diag.cpp \
+	moc_odbctest.cpp \
+	moc_stmt.cpp \
+	moc_catalog.cpp \
+	moc_desc.cpp \
+	moc_env.cpp \
+	moc_results.cpp \
+	moc_tools.cpp
+
+endif
 endif
 
 EXTRA_DIST = \
@@ -95,5 +97,6 @@ EXTRA_DIST = \
 	catalog.h \
 	conn.h \
 	attr.h \
-	tools.h 
+	tools.h \
+	tools4.h
 

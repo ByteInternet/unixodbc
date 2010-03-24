@@ -12,19 +12,31 @@
 #include "classTable.h"
 #include "table.xpm"
 
+#ifdef QT_V4LAYOUT
+classTable::classTable( Q3ListView *pParent, classCanvas *pCanvas, SQLHDBC hDbc, char *pszName, char *pszType, char *pszDescription )
+#else
 classTable::classTable( QListView *pParent, classCanvas *pCanvas, SQLHDBC hDbc, char *pszName, char *pszType, char *pszDescription )
+#endif
     : classNode( pParent, pCanvas )
 {
 	Init( hDbc, pszName, pszType, pszDescription );
 }
 
+#ifdef QT_V4LAYOUT
+classTable::classTable( Q3ListViewItem *pParent, classCanvas *pCanvas, SQLHENV hDbc, char *pszName, char *pszType, char *pszDescription )
+#else
 classTable::classTable( QListViewItem *pParent, classCanvas *pCanvas, SQLHENV hDbc, char *pszName, char *pszType, char *pszDescription )
+#endif
     : classNode( pParent, pCanvas )
 {
 	Init( hDbc, pszName, pszType, pszDescription );
 }
 
+#ifdef QT_V4LAYOUT
+classTable::classTable( Q3ListViewItem *pParent, Q3ListViewItem *pAfter, classCanvas *pCanvas, SQLHENV hDbc, char *pszName, char *pszType, char *pszDescription )
+#else
 classTable::classTable( QListViewItem *pParent, QListViewItem *pAfter, classCanvas *pCanvas, SQLHENV hDbc, char *pszName, char *pszType, char *pszDescription )
+#endif
     : classNode( pParent, pAfter, pCanvas )
 {
 	Init( hDbc, pszName, pszType, pszDescription );
@@ -66,7 +78,11 @@ void classTable::Fini()
 
 void classTable::setOpen( bool bOpen )
 {
+#ifdef QT_V4LAYOUT
+    Q3ListViewItem::setOpen( bOpen );
+#else
     QListViewItem::setOpen( bOpen );
+#endif
     listView()->setSelected( listView()->selectedItem(), false );
     if ( bOpen )
     {
@@ -86,7 +102,11 @@ void classTable::setOpen( bool bOpen )
 void classTable::setup()
 {
     setExpandable( TRUE );
+#ifdef QT_V4LAYOUT
+    Q3ListViewItem::setup();
+#else
     QListViewItem::setup();
+#endif
 }
 
 void classTable::LoadColumns()
@@ -109,7 +129,11 @@ void classTable::LoadColumns()
 	}
 
 	// EXECUTE OUR SQL/CALL
+#ifdef QT_V4LAYOUT
+	strcpy( (char *)szTableName, qsName.ascii() );
+#else
 	strcpy( (char *)szTableName, qsName.data() );
+#endif
 
 	if ( SQL_SUCCESS != (nReturn=SQLColumns( hstmt, 0, 0, 0, 0, szTableName, SQL_NTS, 0, 0 )) )
 	{
@@ -141,7 +165,11 @@ void classTable::LoadColumns()
 
 }
 
+#ifdef QT_V4LAYOUT
+void classTable::selectionChanged( Q3ListViewItem *p )
+#else
 void classTable::selectionChanged( QListViewItem *p )
+#endif
 {
 	classColumn	*pColumn;
 

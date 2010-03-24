@@ -27,9 +27,15 @@
  *
  **********************************************************************
  *
- * $Id: SQLGetCursorNameW.c,v 1.6 2003/10/30 18:20:46 lurcher Exp $
+ * $Id: SQLGetCursorNameW.c,v 1.8 2008/08/29 08:01:39 lurcher Exp $
  *
  * $Log: SQLGetCursorNameW.c,v $
+ * Revision 1.8  2008/08/29 08:01:39  lurcher
+ * Alter the way W functions are passed to the driver
+ *
+ * Revision 1.7  2007/02/28 15:37:48  lurcher
+ * deal with drivers that call internal W functions and end up in the driver manager. controlled by the --enable-handlemap configure arg
+ *
  * Revision 1.6  2003/10/30 18:20:46  lurcher
  *
  * Fix broken thread protection
@@ -106,6 +112,36 @@ SQLRETURN SQLGetCursorNameW( SQLHSTMT statement_handle,
                     LOG_INFO, 
                     "Error: SQL_INVALID_HANDLE" );
 
+#ifdef WITH_HANDLE_REDIRECT
+		{
+			DMHSTMT parent_statement;
+
+			parent_statement = find_parent_handle( statement, SQL_HANDLE_STMT );
+
+			if ( parent_statement ) {
+        		dm_log_write( __FILE__, 
+                	__LINE__, 
+                    	LOG_INFO, 
+                    	LOG_INFO, 
+                    	"Info: found parent handle" );
+
+				if ( CHECK_SQLGETCURSORNAMEW( parent_statement -> connection ))
+				{
+        			dm_log_write( __FILE__, 
+                		__LINE__, 
+                   		 	LOG_INFO, 
+                   		 	LOG_INFO, 
+                   		 	"Info: calling redirected driver function" );
+
+                	return  SQLGETCURSORNAMEW( parent_statement -> connection,
+							statement_handle,
+							cursor_name,
+							buffer_length,
+							name_length );
+				}
+			}
+		}
+#endif
         return SQL_INVALID_HANDLE;
     }
 
@@ -170,7 +206,8 @@ SQLRETURN SQLGetCursorNameW( SQLHSTMT statement_handle,
         return function_return( SQL_HANDLE_STMT, statement, SQL_ERROR ); 
     }
 
-    if ( statement -> connection -> unicode_driver )
+    if ( statement -> connection -> unicode_driver ||
+		    CHECK_SQLGETCURSORNAMEW( statement -> connection ))
     {
         if ( !CHECK_SQLGETCURSORNAMEW( statement -> connection ))
         {

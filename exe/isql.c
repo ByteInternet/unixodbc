@@ -13,45 +13,55 @@
 
 #include "isql.h"
 #ifdef HAVE_READLINE
-#include <readline/readline.h>
-#include <readline/history.h>
+    #include <readline/readline.h>
+    #include <readline/history.h>
 #endif
 
 #ifdef HAVE_SETLOCALE
-#ifdef HAVE_LOCALE_H
-#include <locale.h>
-#endif 
+    #ifdef HAVE_LOCALE_H
+        #include <locale.h>
+    #endif 
 #endif
 
-int 	bVerbose					= 0;
-int     nUserWidth                = 0;
-SQLHENV	hEnv						= 0;
-SQLHDBC	hDbc						= 0;
+int     bVerbose                    = 0;
+int     nUserWidth                  = 0;
+SQLHENV hEnv                        = 0;
+SQLHDBC hDbc                        = 0;
+int     bQuote                      = 0;
+int     version3                    = 0;
+int     bBatch                      = 0;
+int     ac_off                      = 0;
+int     bHTMLTable                  = 0;
+int     cDelimiter                  = 0;
+int     bColumnNames                = 0;
+SQLUSMALLINT    has_moreresults     = 1;
 
 int main( int argc, char *argv[] )
 {
-	int 	nArg, count;
-	int 	bHTMLTable					= 0;
-	int		bBatch						= 0;
-	int 	cDelimiter					= 0;
-    int     bColumnNames                = 0;
-	int rc = 0;
-	char	*szDSN;
-	char	*szUID;
-	char	*szPWD;
-	char	*szSQL;
-	char    *pEscapeChar;
+    int     nArg, count;
+    int     bNewStyle                   = 0;
+    int rc = 0;
+    char    *szDSN;
+    char    *szUID;
+    char    *szPWD;
+    char    *szSQL;
+    char    *line_buffer;
+    char    *pEscapeChar;
     int     buffer_size = 9000;
+    int     line_buffer_size = 9000;
+    int     contget = 1;
+    int     bufpos,linen;
+    char    prompt[24];
 
-	szDSN = NULL;
-	szUID = NULL;
-	szPWD = NULL;
+    szDSN = NULL;
+    szUID = NULL;
+    szPWD = NULL;
 
-	if ( argc < 2 )
-	{
-		fprintf( stderr, szSyntax );
-		exit( 1 );
-	}
+    if ( argc < 2 )
+    {
+        fprintf( stderr, szSyntax );
+        exit( 1 );
+    }
 
 #ifdef HAVE_SETLOCALE
     /*
@@ -60,126 +70,151 @@ int main( int argc, char *argv[] )
     setlocale( LC_ALL, "" );
 #endif
 
-	/****************************
-	 * PARSE ARGS
-	 ***************************/
-	for ( nArg = 1, count = 1 ; nArg < argc; nArg++ )
-	{
-		if ( argv[nArg][0] == '-' )
-		{
-			/* Options */
-			switch ( argv[nArg][1] )
-			{
-			case 'd':
-				cDelimiter = argv[nArg][2];
-				break;
-            case 'm':
-				nUserWidth = atoi( &(argv[nArg][2]) );
-				break;
-            case 's':
-				buffer_size = atoi( &(argv[nArg][2]) );
-				break;
-			case 'w':
-				bHTMLTable = 1;
-				break;
-			case 'b':
-				bBatch = 1;
-				break;
-			case 'c':
-				bColumnNames = 1;
-				break;
-			case 'v':
-				bVerbose = 1;
-				break;
-			case '-':
-				printf( "unixODBC " VERSION "\n" );
-				exit(0);
+    /****************************
+     * PARSE ARGS
+     ***************************/
+    for ( nArg = 1, count = 1 ; nArg < argc; nArg++ )
+    {
+        if ( argv[nArg][0] == '-' )
+        {
+            /* Options */
+            switch ( argv[nArg][1] )
+            {
+                case 'd':
+                    cDelimiter = argv[nArg][2];
+                    break;
+                case 'm':
+                    nUserWidth = atoi( &(argv[nArg][2]) );
+                    break;
+                case 's':
+                    buffer_size = atoi( &(argv[nArg][2]) );
+                    line_buffer_size = buffer_size;
+                    break;
+                case 'w':
+                    bHTMLTable = 1;
+                    break;
+                case 'b':
+                    bBatch = 1;
+                    break;
+                case 'c':
+                    bColumnNames = 1;
+                    break;
+                case '3':
+                    version3 = 1;
+                case 'v':
+                    bVerbose = 1;
+                    break;
+                case 'q':
+                    bQuote = 1;
+                    break;
+                case 'n':
+                    bNewStyle = 1;
+                    break;
+                case '-':
+                    printf( "unixODBC " VERSION "\n" );
+                    exit(0);
 #ifdef HAVE_STRTOL
-            case 'x':
-				cDelimiter = strtol( argv[nArg]+2, NULL, 0 );
-                break;
+                case 'x':
+                    cDelimiter = strtol( argv[nArg]+2, NULL, 0 );
+                    break;
 #endif
 #ifdef HAVE_SETLOCALE
-            case 'l':
-                if ( !setlocale( LC_ALL, argv[nArg]+2 ))
-                {
-                    fprintf( stderr, "isql: can't set locale to '%s'\n", argv[nArg]+2 );
-                    exit ( -1 );
-                }
-                break;
+                case 'l':
+                    if ( !setlocale( LC_ALL, argv[nArg]+2 ))
+                    {
+                        fprintf( stderr, "isql: can't set locale to '%s'\n", argv[nArg]+2 );
+                        exit ( -1 );
+                    }
+                    break;
 #endif
 
-			default:
-				fprintf( stderr, szSyntax );
-				exit( 1 );
-			}
-			continue;
-		}
-		else if ( count == 1 )
-			szDSN = argv[nArg];
-		else if ( count == 2 )
-			szUID = argv[nArg];
-		else if ( count == 3 )
-			szPWD = argv[nArg];
-		count++;
-	}
+                default:
+                    fprintf( stderr, szSyntax );
+                    exit( 1 );
+            }
+            continue;
+        }
+        else if ( count == 1 )
+            szDSN = argv[nArg];
+        else if ( count == 2 )
+            szUID = argv[nArg];
+        else if ( count == 3 )
+            szPWD = argv[nArg];
+        count++;
+    }
 
     szSQL = calloc( 1, buffer_size + 1 );
+    line_buffer = calloc( 1, buffer_size + 1 );
 
-	/****************************
-	 * CONNECT
-	 ***************************/
-	
-	if ( !OpenDatabase( &hEnv, &hDbc, szDSN, szUID, szPWD ) )
-		exit( 1 );
+    /****************************
+     * CONNECT
+     ***************************/
 
-	/****************************
-	 * EXECUTE
-	 ***************************/
-	if ( !bBatch )
-	{
-		printf( "+---------------------------------------+\n" );
-		printf( "| Connected!                            |\n" );
-		printf( "|                                       |\n" );
-		printf( "| sql-statement                         |\n" );
-		printf( "| help [tablename]                      |\n" );
-		printf( "| quit                                  |\n" );
-		printf( "|                                       |\n" );
-		printf( "+---------------------------------------+\n" );
-	}
-	do
-	{
-		if ( !bBatch )
-#ifndef HAVE_READLINE
-			printf( "SQL> " );
-#else
-		{
-			char *line;
-            int malloced;
+    if ( !OpenDatabase( &hEnv, &hDbc, szDSN, szUID, szPWD ) )
+        exit( 1 );
 
-			line=readline("SQL> ");
-            if ( !line )        /* EOF - ctrl D */
-            {
-                malloced = 1;
-                line = strdup( "quit" );
-            }
-            else
-            {
-                malloced = 0;
-            }
-			strncpy(szSQL, line, buffer_size );
-			add_history(line);
-            if ( malloced )
-            {
-                free(line);
-            }
-		} else 
-#endif
+    /****************************
+     * EXECUTE
+     ***************************/
+    if ( !bBatch )
+    {
+        printf( "+---------------------------------------+\n" );
+        printf( "| Connected!                            |\n" );
+        printf( "|                                       |\n" );
+        if ( bNewStyle )
         {
-			char *line;
-            int malloced;
+            printf( "| sql-statement(s)[;]                   |\n" );
+            printf( "| go                                    |\n" );
+            printf( "| \\noac                                 |\n" );
+            printf( "| \\ac                                   |\n" );
+            printf( "| \\commit                               |\n" );
+            printf( "| \\rollback                             |\n" );
+            printf( "| \\tables                               |\n" );
+            printf( "| \\columns <table-name>                 |\n" );
+            printf( "| \\quit                                 |\n" );
+        }
+        else
+        {
+            printf( "| sql-statement                         |\n" );
+            printf( "| help [tablename]                      |\n" );
+            printf( "| quit                                  |\n" );
+        }
+        printf( "|                                       |\n" );
+        printf( "+---------------------------------------+\n" );
+    }
 
-		    line = fgets( szSQL, buffer_size, stdin );
+    linen = 0;
+    bufpos = 0;
+
+    do
+    {
+        char *line = NULL;
+        int malloced = 0;
+        int len = 0;
+        int dont_copy, exec_now;
+
+        szSQL[ bufpos ] = '\0';
+
+        if ( bNewStyle )
+        {
+            if ( ac_off )
+            {
+                sprintf( prompt, "*%d SQL> ", ++linen );
+            }
+            else
+            {
+                sprintf( prompt, "%d SQL> ", ++linen );
+            }
+        }
+        else
+        {
+            sprintf( prompt, "SQL> " );
+        }
+
+        if ( !bBatch )
+        {
+#ifdef HAVE_READLINE
+            line=readline( prompt );
             if ( !line )        /* EOF - ctrl D */
             {
                 malloced = 1;
@@ -189,50 +224,206 @@ int main( int argc, char *argv[] )
             {
                 malloced = 0;
             }
-			strncpy(szSQL, line, buffer_size );
-            if ( malloced )
+
+            add_history(line);
+#else
+            printf( prompt );
+
+            line = fgets( line_buffer, line_buffer_size, stdin );
+            if ( !line )        /* EOF - ctrl D */
             {
-                free(line);
+                malloced = 1;
+                line = strdup( "quit" );
+            }
+            else
+            {
+                malloced = 0;
+            }
+#endif
+        }
+        else
+        {
+            char *line;
+            int malloced;
+
+            line = fgets( line_buffer, line_buffer_size, stdin );
+            if ( !line )        /* EOF - ctrl D */
+            {
+                malloced = 1;
+                line = strdup( "quit" );
+            }
+            else
+            {
+                malloced = 0;
             }
         }
 
-		/* strip away escape chars */
-		while ( (pEscapeChar=(char*)strchr(szSQL, '\n')) != NULL || (pEscapeChar=(char*)strchr(szSQL, '\r')) != NULL )
-			*pEscapeChar = ' ';
+        /* remove any ctrl chars, and find the length */
 
-		if ( szSQL[1] != '\0' )
-		{
-			if ( strncmp( szSQL, "quit", 4 ) == 0 )
-				szSQL[1] = '\0';
-			else if ( strncmp( szSQL, "help", 4 ) == 0 )
-				ExecuteHelp( hDbc, szSQL, cDelimiter, bColumnNames, bHTMLTable );
-			else if (memcmp(szSQL, "--", 2) != 0) 
-				ExecuteSQL( hDbc, szSQL, cDelimiter, bColumnNames, bHTMLTable );
-		}
+        len = 0;
+        while ( line[ len ] )
+        {
+            if ( line[ len ] == '\n' )
+            {
+                line[ len ] = ' ';
+            }
+            if ( line[ len ] == '\r' )
+            {
+                line[ len ] = ' ';
+            }
+            len ++;
+        }
 
-	} while ( szSQL[1] != '\0' );
+        /*
+         * is it a comment? 
+         */
 
-	/****************************
-	 * DISCONNECT
-	 ***************************/
-	CloseDatabase( hEnv, hDbc );
+        if ( bNewStyle )
+        {
+            if ( len >= 2 && line[ 0 ] == '-' && line[ 1 ] == '-' )
+            {
+                /* 
+                 * it can't have been malloc'd
+                 */
+                continue;
+            }
+        }
 
-	exit( 0 );
+        dont_copy = 0;
+        exec_now = 0;
+
+        if ( bNewStyle )
+        {
+            if ( len > 0 && line[ len - 1 ] == ';' )
+            {
+                line[ len - 1 ] = '\0';
+                exec_now = 1;
+                len --;
+            }
+            else if ( len == 2 && memcmp( line, "go", 2 ) == 0 )
+            {
+                exec_now = 1;
+                dont_copy = 1;
+            }
+            else if ( len > 1 && line[ 0 ] == '\\' )
+            {
+                bufpos = 0;
+                linen = 1;
+                exec_now = 1;
+            }
+        }
+        else
+        {
+            exec_now = 1;
+        }
+
+        if ( !bNewStyle )
+        {
+            if ( len >= 4 && memcmp( line, "quit", 4 ) == 0 )
+            {
+                if ( malloced )
+                {
+                    free(line);
+                }
+                break;
+            }
+        }
+
+        /*
+         * stop on a blank line
+         */
+
+        if ( !bNewStyle )
+        {
+            if ( line[ 0 ] == '\0' )
+            {
+                break;
+            }
+        }
+
+        if ( !dont_copy )
+        {
+            /*
+             * is there space
+             */
+
+            if ( len > 0 && bufpos + len + 2 > buffer_size )
+            {
+                szSQL = realloc( szSQL, bufpos + len + 2 );
+                buffer_size = bufpos + len + 2;
+            }
+
+            /*
+             * insert space between the lines
+             * the above length check will make sure there is room for 
+             * the extra space
+             */
+            if ( linen > 1 )
+            {
+                szSQL[ bufpos ] = ' ';
+                bufpos ++;
+            }
+
+            memcpy( szSQL + bufpos, line, len );
+            bufpos += len;
+            szSQL[ bufpos ] = '\0';
+        }
+
+        if ( exec_now )
+        {
+            if ( bNewStyle )
+            {
+                if ( bufpos >= 1 && szSQL[ 0 ] == '\\' )
+                {
+                    if ( ExecuteSlash( hDbc, szSQL, cDelimiter, bColumnNames, bHTMLTable ) == 0 )
+                    {
+                        break;
+                    }
+                }
+                else
+                {
+                    ExecuteSQL( hDbc, szSQL, cDelimiter, bColumnNames, bHTMLTable );
+                }
+            }
+            else
+            {
+                if ( bufpos >= 4 && memcmp( szSQL, "help", 4 ) == 0 )
+                {
+                    ExecuteHelp( hDbc, szSQL, cDelimiter, bColumnNames, bHTMLTable );
+                }
+                else
+                {
+                    ExecuteSQL( hDbc, szSQL, cDelimiter, bColumnNames, bHTMLTable );
+                }
+            }
+            linen = 0;
+            bufpos = 0;
+        }
+
+    } while ( 1 );
+
+    /****************************
+     * DISCONNECT
+     ***************************/
+    CloseDatabase( hEnv, hDbc );
+
+    exit( 0 );
 }
 
 /****************************
  * OptimalDisplayWidth
  ***************************/
-SQLUINTEGER OptimalDisplayWidth( SQLHSTMT hStmt, SQLINTEGER nCol, int nUserWidth )
+static SQLUINTEGER
+OptimalDisplayWidth( SQLHSTMT hStmt, SQLINTEGER nCol, int nUserWidth )
 {
-	SQLUINTEGER	nLabelWidth                     = 10;
-	SQLULEN	nDataWidth                      = 10;
-	SQLUINTEGER	nOptimalDisplayWidth            = 10;
-	SQLCHAR     szColumnName[MAX_DATA_WIDTH+1];	
+    SQLUINTEGER nLabelWidth                     = 10;
+    SQLULEN nDataWidth                      = 10;
+    SQLUINTEGER nOptimalDisplayWidth            = 10;
+    SQLCHAR     szColumnName[MAX_DATA_WIDTH+1]; 
 
-	*szColumnName = '\0';
+    *szColumnName = '\0';
 
-    SQLColAttribute( hStmt, nCol, SQL_DESC_DISPLAY_SIZE, NULL, 0, NULL, &nDataWidth );
+    SQLColAttribute( hStmt, nCol, SQL_DESC_DISPLAY_SIZE, NULL, 0, NULL, (SQLLEN*)&nDataWidth );
     SQLColAttribute( hStmt, nCol, SQL_DESC_LABEL, szColumnName, sizeof(szColumnName), NULL, NULL );
     nLabelWidth = strlen((char*) szColumnName );
 
@@ -241,7 +432,7 @@ SQLUINTEGER OptimalDisplayWidth( SQLHSTMT hStmt, SQLINTEGER nCol, int nUserWidth
     if ( nUserWidth > 0 )
         nOptimalDisplayWidth = min( nOptimalDisplayWidth, nUserWidth );
 
-    if ( nOptimalDisplayWidth > MAX_DATA_WIDTH ) 
+    if ( nOptimalDisplayWidth > MAX_DATA_WIDTH )
         nOptimalDisplayWidth = MAX_DATA_WIDTH;
 
     return nOptimalDisplayWidth;
@@ -250,109 +441,120 @@ SQLUINTEGER OptimalDisplayWidth( SQLHSTMT hStmt, SQLINTEGER nCol, int nUserWidth
 /****************************
  * OpenDatabase - do everything we have to do to get a viable connection to szDSN
  ***************************/
-int OpenDatabase( SQLHENV *phEnv, SQLHDBC *phDbc, char *szDSN, char *szUID, char *szPWD )
+static int
+OpenDatabase( SQLHENV *phEnv, SQLHDBC *phDbc, char *szDSN, char *szUID, char *szPWD )
 {
-	if ( SQLAllocEnv( phEnv ) != SQL_SUCCESS )
-	{
-		fprintf( stderr, "[ISQL]ERROR: Could not SQLAllocEnv\n" );
-		return 0;
-	}
+    if ( version3 )
+    {
+        if ( SQLAllocHandle( SQL_HANDLE_ENV, NULL, phEnv ) != SQL_SUCCESS )
+        {
+            fprintf( stderr, "[ISQL]ERROR: Could not SQLAllocHandle( SQL_HANDLE_ENV )\n" );
+            return 0;
+        }
 
-	if ( SQLAllocConnect( *phEnv, phDbc ) != SQL_SUCCESS )
-	{
-        if ( bVerbose ) DumpODBCLog( hEnv, 0, 0 );
-		fprintf( stderr, "[ISQL]ERROR: Could not SQLAllocConnect\n" );
-		SQLFreeEnv( *phEnv );
-		return 0;
-	}
+        if ( SQLSetEnvAttr( *phEnv, SQL_ATTR_ODBC_VERSION, (SQLPOINTER) 3, 0 ) != SQL_SUCCESS )
+        {
+            if ( bVerbose ) DumpODBCLog( hEnv, 0, 0 );
+            fprintf( stderr, "[ISQL]ERROR: Could not SQLSetEnvAttr( SQL_HANDLE_DBC )\n" );
+            SQLFreeHandle( SQL_HANDLE_ENV, *phEnv );
+            return 0;
+        }
 
-    if ( !SQL_SUCCEEDED( SQLConnect( *phDbc, (SQLCHAR*)szDSN, SQL_NTS, (SQLCHAR*)szUID, SQL_NTS, (SQLCHAR*)szPWD, SQL_NTS )))
-	{
-        if ( bVerbose ) DumpODBCLog( hEnv, hDbc, 0 );
-		fprintf( stderr, "[ISQL]ERROR: Could not SQLConnect\n" );
-		SQLFreeConnect( *phDbc );
-		SQLFreeEnv( *phEnv );
-		return 0;
-	}
+        if ( SQLAllocHandle( SQL_HANDLE_DBC, *phEnv, phDbc ) != SQL_SUCCESS )
+        {
+            if ( bVerbose ) DumpODBCLog( hEnv, 0, 0 );
+            fprintf( stderr, "[ISQL]ERROR: Could not SQLAllocHandle( SQL_HANDLE_DBC )\n" );
+            SQLFreeHandle( SQL_HANDLE_ENV, *phEnv );
+            return 0;
+        }
 
-	return 1;
+        if ( !SQL_SUCCEEDED( SQLConnect( *phDbc, (SQLCHAR*)szDSN, SQL_NTS, (SQLCHAR*)szUID, SQL_NTS, (SQLCHAR*)szPWD, SQL_NTS )))
+        {
+            if ( bVerbose ) DumpODBCLog( hEnv, hDbc, 0 );
+            fprintf( stderr, "[ISQL]ERROR: Could not SQLConnect\n" );
+            SQLFreeHandle( SQL_HANDLE_DBC, *phDbc );
+            SQLFreeHandle( SQL_HANDLE_ENV, *phEnv );
+            return 0;
+        }
+    }
+    else
+    {
+        if ( SQLAllocEnv( phEnv ) != SQL_SUCCESS )
+        {
+            fprintf( stderr, "[ISQL]ERROR: Could not SQLAllocEnv\n" );
+            return 0;
+        }
+
+        if ( SQLAllocConnect( *phEnv, phDbc ) != SQL_SUCCESS )
+        {
+            if ( bVerbose ) DumpODBCLog( hEnv, 0, 0 );
+            fprintf( stderr, "[ISQL]ERROR: Could not SQLAllocConnect\n" );
+            SQLFreeEnv( *phEnv );
+            return 0;
+        }
+
+        if ( !SQL_SUCCEEDED( SQLConnect( *phDbc, (SQLCHAR*)szDSN, SQL_NTS, (SQLCHAR*)szUID, SQL_NTS, (SQLCHAR*)szPWD, SQL_NTS )))
+        {
+            if ( bVerbose ) DumpODBCLog( hEnv, hDbc, 0 );
+            fprintf( stderr, "[ISQL]ERROR: Could not SQLConnect\n" );
+            SQLFreeConnect( *phDbc );
+            SQLFreeEnv( *phEnv );
+            return 0;
+        }
+    }
+
+    /*
+     * does the driver support SQLMoreResults
+     */
+
+    if ( !SQL_SUCCEEDED( SQLGetFunctions( *phDbc, SQL_API_SQLMORERESULTS, &has_moreresults )))
+    {
+        has_moreresults = 0;
+    }
+
+    return 1;
 }
 
-/****************************
- * ExecuteSQL - create a statement, execute the SQL, and get rid of the statement
- *            - show results as per request; bHTMLTable has precedence over other options
- ***************************/
-int ExecuteSQL( SQLHDBC hDbc, char *szSQL, char cDelimiter, int bColumnNames, int bHTMLTable )
+static void display_result_set( SQLHDBC hDbc, SQLHSTMT hStmt )
 {
-	SQLHSTMT		hStmt;
+    SQLCHAR         *szSepLine;
+    SQLRETURN       ret;
+    int             mr;
     SQLSMALLINT     cols;
     SQLLEN          nRows                   = 0;
-    SQLINTEGER      ret;
-	SQLCHAR			*szSepLine;
 
-	szSepLine = calloc(1, 32001);
-
-	/****************************
-	 * EXECUTE SQL
-	 ***************************/
-	if ( SQLAllocStmt( hDbc, &hStmt ) != SQL_SUCCESS )
-	{
-        if ( bVerbose ) DumpODBCLog( hEnv, hDbc, 0 );
-		fprintf( stderr, "[ISQL]ERROR: Could not SQLAllocStmt\n" );
-		free(szSepLine);
-		return 0;
-	}
-
-	if ( SQLPrepare( hStmt, (SQLCHAR*)szSQL, SQL_NTS ) != SQL_SUCCESS )
-	{
-        if ( bVerbose ) DumpODBCLog( hEnv, hDbc, hStmt );
-		fprintf( stderr, "[ISQL]ERROR: Could not SQLPrepare\n" );
-		SQLFreeStmt( hStmt, SQL_DROP );
-		free(szSepLine);
-		return 0;
-	}
-
-    ret =  SQLExecute( hStmt );
-
-    if ( ret == SQL_NO_DATA )
-    {
-		fprintf( stderr, "[ISQL]INFO: SQLExecute returned SQL_NO_DATA\n" );
-    }
-    else if ( ret == SQL_SUCCESS_WITH_INFO )
-    {
-        if ( bVerbose ) DumpODBCLog( hEnv, hDbc, hStmt );
-		fprintf( stderr, "[ISQL]INFO: SQLExecute returned SQL_SUCCESS_WITH_INFO\n" );
-    }
-    else if ( ret != SQL_SUCCESS )
-	{
-        if ( bVerbose ) DumpODBCLog( hEnv, hDbc, hStmt );
-		fprintf( stderr, "[ISQL]ERROR: Could not SQLExecute\n" );
-		SQLFreeStmt( hStmt, SQL_DROP );
-		free(szSepLine);
-		return 0;
-	}
-
+    szSepLine = calloc(1, 32001);
     /*
      * Loop while SQLMoreResults returns success
      */
 
+    mr = 0;
+
     do
     {
-        strcpy ( szSepLine, "" ) ;
+        if ( mr )
+        {
+            if ( ret == SQL_SUCCESS_WITH_INFO )
+            {
+                if ( bVerbose ) DumpODBCLog( hEnv, hDbc, hStmt );
+                fprintf( stderr, "[ISQL]INFO: SQLMoreResults returned SQL_SUCCESS_WITH_INFO\n" );
+            }
+        }
+        mr = 1;
+        strcpy ((char*) szSepLine, "" ) ;
 
         /*
          * check to see if it has generated a result set
          */
-    
+
         if ( SQLNumResultCols( hStmt, &cols ) != SQL_SUCCESS )
         {
             if ( bVerbose ) DumpODBCLog( hEnv, hDbc, hStmt );
-		    fprintf( stderr, "[ISQL]ERROR: Could not SQLNunResultCols\n" );
-		    SQLFreeStmt( hStmt, SQL_DROP );
-	   	    free(szSepLine);
-		    return 0;
+            fprintf( stderr, "[ISQL]ERROR: Could not SQLNumResultCols\n" );
+            SQLFreeStmt( hStmt, SQL_DROP );
+            free(szSepLine);
         }
-    
+
         if ( cols > 0 )
         {
             /****************************
@@ -364,7 +566,7 @@ int ExecuteSQL( SQLHDBC hDbc, char *szSQL, char cDelimiter, int bColumnNames, in
                 WriteHeaderNormal( hStmt, szSepLine );
             else if ( cDelimiter && bColumnNames )
                 WriteHeaderDelimited( hStmt, cDelimiter );
-    
+
             /****************************
              * WRITE BODY
              ***************************/
@@ -375,7 +577,7 @@ int ExecuteSQL( SQLHDBC hDbc, char *szSQL, char cDelimiter, int bColumnNames, in
             else
                 WriteBodyDelimited( hStmt, cDelimiter );
         }
-    
+
         /****************************
          * WRITE FOOTER
          ***************************/
@@ -384,198 +586,620 @@ int ExecuteSQL( SQLHDBC hDbc, char *szSQL, char cDelimiter, int bColumnNames, in
         else if ( cDelimiter == 0 )
             WriteFooterNormal( hStmt, szSepLine, nRows );
     }
-    while ( SQL_SUCCEEDED( SQLMoreResults( hStmt )));
+    while ( has_moreresults && SQL_SUCCEEDED( ret = SQLMoreResults( hStmt )));
 
-	/****************************
-	 * CLEANUP
-	 ***************************/
-	SQLFreeStmt( hStmt, SQL_DROP );
-	free(szSepLine);
+    free( szSepLine );
+}
 
-	return 1;
+static int display_tables( SQLHDBC hDbc )
+{
+    SQLHSTMT hStmt;
+    SQLRETURN ret;
+
+    if ( version3 )
+    {
+        if ( SQLAllocHandle( SQL_HANDLE_STMT, hDbc, &hStmt ) != SQL_SUCCESS )
+        {
+            if ( bVerbose ) DumpODBCLog( hEnv, hDbc, 0 );
+            fprintf( stderr, "[ISQL]ERROR: Could not SQLAllocHandle( SQL_HANDLE_STMT )\n" );
+            return 0;
+        }
+    }
+    else
+    {
+        if ( SQLAllocStmt( hDbc, &hStmt ) != SQL_SUCCESS )
+        {
+            if ( bVerbose ) DumpODBCLog( hEnv, hDbc, 0 );
+            fprintf( stderr, "[ISQL]ERROR: Could not SQLAllocStmt\n" );
+            return 0;
+        }
+    }
+
+    ret = SQLTables( hStmt, NULL, 0, NULL, 0, NULL, 0, NULL, 0 );
+    if ( ret == SQL_ERROR )
+    {
+        if ( bVerbose ) DumpODBCLog( hEnv, hDbc, hStmt );
+        fprintf( stderr, "[ISQL]ERROR: Could not SQLTables\n" );
+    }
+    else
+    {
+        display_result_set( hDbc, hStmt );
+    }
+
+    SQLFreeStmt( hStmt, SQL_DROP );
+
+    return 1;
+}
+
+static int  display_columns( SQLHDBC hDbc, char *sql )
+{
+    SQLHSTMT hStmt;
+    SQLRETURN ret;
+    char *args[10];
+    int n_args;
+    SQLCHAR *table;
+    int len;
+
+    if ( version3 )
+    {
+        if ( SQLAllocHandle( SQL_HANDLE_STMT, hDbc, &hStmt ) != SQL_SUCCESS )
+        {
+            if ( bVerbose ) DumpODBCLog( hEnv, hDbc, 0 );
+            fprintf( stderr, "[ISQL]ERROR: Could not SQLAllocHandle( SQL_HANDLE_STMT )\n" );
+            return 0;
+        }
+    }
+    else
+    {
+        if ( SQLAllocStmt( hDbc, &hStmt ) != SQL_SUCCESS )
+        {
+            if ( bVerbose ) DumpODBCLog( hEnv, hDbc, 0 );
+            fprintf( stderr, "[ISQL]ERROR: Could not SQLAllocStmt\n" );
+            return 0;
+        }
+    }
+
+    n_args = get_args(sql, &args[0], sizeof(args) / sizeof(args[0]));
+
+    if ( n_args == 0 )
+    {
+        table = NULL;
+        len = 0;
+    }
+    else
+    {
+        table = (SQLCHAR*)args[ 0 ];
+        len = SQL_NTS;
+    }
+
+    ret = SQLColumns( hStmt, NULL, 0, NULL, 0, table, len, NULL, 0 );
+    if ( ret == SQL_ERROR )
+    {
+        if ( bVerbose ) DumpODBCLog( hEnv, hDbc, hStmt );
+        fprintf( stderr, "[ISQL]ERROR: Could not SQLTables\n" );
+    }
+    else
+    {
+        display_result_set( hDbc, hStmt );
+    }
+
+    SQLFreeStmt( hStmt, SQL_DROP );
+    free_args(args, sizeof(args) / sizeof(args[0]));
+
+    return 1;
+}
+
+/****************************
+ * ExecuteSlash - meta commands
+ ***************************/
+static int
+ExecuteSlash( SQLHDBC hDbc, char *szSQL, char cDelimiter, int bColumnNames, int bHTMLTable )
+{
+    SQLRETURN ret;
+
+    szSQL ++;
+
+    if ( memcmp( szSQL, "tables", 6 ) == 0 )
+    {
+        return display_tables( hDbc );
+    }
+    else if ( memcmp( szSQL, "columns", 7 ) == 0 )
+    {
+        return display_columns( hDbc, szSQL + 7 );
+    }
+    else if ( memcmp( szSQL, "ac", 2 ) == 0 )
+    {
+        if ( version3 )
+        {
+            ret = SQLSetConnectAttr( hDbc, SQL_ATTR_AUTOCOMMIT, 
+                                     (SQLPOINTER)SQL_AUTOCOMMIT_ON, 0 );
+
+            if ( SQL_SUCCEEDED( ret ) )
+            {
+                ac_off = 0;
+            }
+        }
+        else
+        {
+            ret = SQLSetConnectOption( hDbc, SQL_ATTR_AUTOCOMMIT, 
+                                       SQL_AUTOCOMMIT_ON );
+
+            if ( SQL_SUCCEEDED( ret ) )
+            {
+                ac_off = 0;
+            }
+        }
+
+        if ( !bBatch )
+        {
+            printf( "AUTOCOMMIT ON (return status = %d)\n", ret );
+        }
+
+        if ( bVerbose && !SQL_SUCCEEDED( ret ))
+        {
+            DumpODBCLog( hEnv, hDbc, 0 );
+        }
+    }
+    else if ( memcmp( szSQL, "noac", 4 ) == 0 )
+    {
+        if ( version3 )
+        {
+            ret = SQLSetConnectAttr( hDbc, SQL_ATTR_AUTOCOMMIT, 
+                                     (SQLPOINTER)SQL_AUTOCOMMIT_OFF, 0 );
+
+            if ( SQL_SUCCEEDED( ret ) )
+            {
+                ac_off = 1;
+            }
+        }
+        else
+        {
+            ret = SQLSetConnectOption( hDbc, SQL_ATTR_AUTOCOMMIT, 
+                                       SQL_AUTOCOMMIT_OFF );
+
+            if ( SQL_SUCCEEDED( ret ) )
+            {
+                ac_off = 1;
+            }
+        }
+
+        if ( !bBatch )
+        {
+            printf( "AUTOCOMMIT OFF (return status = %d)\n", ret );
+        }
+
+        if ( bVerbose && !SQL_SUCCEEDED( ret ))
+        {
+            DumpODBCLog( hEnv, hDbc, 0 );
+        }
+    }
+    else if ( memcmp( szSQL, "commit", 6 ) == 0 )
+    {
+        if ( version3 )
+        {
+            ret = SQLEndTran( SQL_HANDLE_DBC, hDbc, SQL_COMMIT );
+        }
+        else
+        {
+            ret = SQLTransact( hEnv, hDbc, SQL_COMMIT );
+        }
+
+        if ( !bBatch )
+        {
+            printf( "COMMIT (return status = %d)\n", ret );
+        }
+
+        if ( bVerbose && !SQL_SUCCEEDED( ret ))
+        {
+            DumpODBCLog( hEnv, hDbc, 0 );
+        }
+    }
+    else if ( memcmp( szSQL, "rollback", 8 ) == 0 )
+    {
+        if ( version3 )
+        {
+            ret = SQLEndTran( SQL_HANDLE_DBC, hDbc, SQL_ROLLBACK );
+        }
+        else
+        {
+            ret = SQLTransact( hEnv, hDbc, SQL_ROLLBACK );
+        }
+
+        if ( !bBatch )
+        {
+            printf( "ROLLBACK (return status = %d)\n", ret );
+        }
+
+        if ( bVerbose && !SQL_SUCCEEDED( ret ))
+        {
+            DumpODBCLog( hEnv, hDbc, 0 );
+        }
+    }
+    else if ( memcmp( szSQL, "quit", 4 ) == 0 )
+    {
+        return 0;
+    }
+    else
+    {
+        printf( "\nUnknown metacommand '%s'\n\n", szSQL );
+    }
+
+    return 1;
+}
+
+/****************************
+ * ExecuteSQL - create a statement, execute the SQL, and get rid of the statement
+ *            - show results as per request; bHTMLTable has precedence over other options
+ ***************************/
+static int
+ExecuteSQL( SQLHDBC hDbc, char *szSQL, char cDelimiter, int bColumnNames, int bHTMLTable )
+{
+    SQLHSTMT        hStmt;
+    SQLSMALLINT     cols;
+    SQLLEN          nRows                   = 0;
+    SQLINTEGER      ret;
+    SQLCHAR         *szSepLine;
+    int             mr;
+
+    szSepLine = calloc(1, 32001);
+
+    /****************************
+     * EXECUTE SQL
+     ***************************/
+    if ( version3 )
+    {
+        if ( SQLAllocHandle( SQL_HANDLE_STMT, hDbc, &hStmt ) != SQL_SUCCESS )
+        {
+            if ( bVerbose ) DumpODBCLog( hEnv, hDbc, 0 );
+            fprintf( stderr, "[ISQL]ERROR: Could not SQLAllocHandle( SQL_HANDLE_STMT )\n" );
+            free(szSepLine);
+            return 0;
+        }
+    }
+    else
+    {
+        if ( SQLAllocStmt( hDbc, &hStmt ) != SQL_SUCCESS )
+        {
+            if ( bVerbose ) DumpODBCLog( hEnv, hDbc, 0 );
+            fprintf( stderr, "[ISQL]ERROR: Could not SQLAllocStmt\n" );
+            free(szSepLine);
+            return 0;
+        }
+    }
+
+    if ( SQLPrepare( hStmt, (SQLCHAR*)szSQL, SQL_NTS ) != SQL_SUCCESS )
+    {
+        if ( bVerbose ) DumpODBCLog( hEnv, hDbc, hStmt );
+        fprintf( stderr, "[ISQL]ERROR: Could not SQLPrepare\n" );
+        SQLFreeStmt( hStmt, SQL_DROP );
+        free(szSepLine);
+        return 0;
+    }
+
+    ret =  SQLExecute( hStmt );
+
+    if ( ret == SQL_NO_DATA )
+    {
+        fprintf( stderr, "[ISQL]INFO: SQLExecute returned SQL_NO_DATA\n" );
+    }
+    else if ( ret == SQL_SUCCESS_WITH_INFO )
+    {
+        if ( bVerbose ) DumpODBCLog( hEnv, hDbc, hStmt );
+        fprintf( stderr, "[ISQL]INFO: SQLExecute returned SQL_SUCCESS_WITH_INFO\n" );
+    }
+    else if ( ret != SQL_SUCCESS )
+    {
+        if ( bVerbose ) DumpODBCLog( hEnv, hDbc, hStmt );
+        fprintf( stderr, "[ISQL]ERROR: Could not SQLExecute\n" );
+        SQLFreeStmt( hStmt, SQL_DROP );
+        free(szSepLine);
+        return 0;
+    }
+
+    /*
+     * Loop while SQLMoreResults returns success
+     */
+
+    mr = 0;
+
+    do
+    {
+        if ( mr )
+        {
+            if ( ret == SQL_SUCCESS_WITH_INFO )
+            {
+                if ( bVerbose ) DumpODBCLog( hEnv, hDbc, hStmt );
+                fprintf( stderr, "[ISQL]INFO: SQLMoreResults returned SQL_SUCCESS_WITH_INFO\n" );
+            }
+        }
+        mr = 1;
+        strcpy ((char*) szSepLine, "" ) ;
+
+        /*
+         * check to see if it has generated a result set
+         */
+
+        if ( SQLNumResultCols( hStmt, &cols ) != SQL_SUCCESS )
+        {
+            if ( bVerbose ) DumpODBCLog( hEnv, hDbc, hStmt );
+            fprintf( stderr, "[ISQL]ERROR: Could not SQLNumResultCols\n" );
+            SQLFreeStmt( hStmt, SQL_DROP );
+            free(szSepLine);
+            return 0;
+        }
+
+        if ( cols > 0 )
+        {
+            /****************************
+             * WRITE HEADER
+             ***************************/
+            if ( bHTMLTable )
+                WriteHeaderHTMLTable( hStmt );
+            else if ( cDelimiter == 0 )
+                WriteHeaderNormal( hStmt, szSepLine );
+            else if ( cDelimiter && bColumnNames )
+                WriteHeaderDelimited( hStmt, cDelimiter );
+
+            /****************************
+             * WRITE BODY
+             ***************************/
+            if ( bHTMLTable )
+                WriteBodyHTMLTable( hStmt );
+            else if ( cDelimiter == 0 )
+                nRows = WriteBodyNormal( hStmt );
+            else
+                WriteBodyDelimited( hStmt, cDelimiter );
+        }
+
+        /****************************
+         * WRITE FOOTER
+         ***************************/
+        if ( bHTMLTable )
+            WriteFooterHTMLTable( hStmt );
+        else if ( cDelimiter == 0 )
+            WriteFooterNormal( hStmt, szSepLine, nRows );
+    }
+    while ( has_moreresults && SQL_SUCCEEDED( ret = SQLMoreResults( hStmt )));
+
+    /****************************
+     * CLEANUP
+     ***************************/
+    SQLFreeStmt( hStmt, SQL_DROP );
+    free(szSepLine);
+
+    return 1;
 }
 
 /****************************
  * ExecuteHelp - create a statement, execute the SQL, and get rid of the statement
  *             - show results as per request; bHTMLTable has precedence over other options
  ***************************/
-int ExecuteHelp( SQLHDBC hDbc, char *szSQL, char cDelimiter, int bColumnNames, int bHTMLTable )
+static int
+ExecuteHelp( SQLHDBC hDbc, char *szSQL, char cDelimiter, int bColumnNames, int bHTMLTable )
 {
-	char 			szTable[250];
-	SQLHSTMT		hStmt;
-	/*SQLCHAR			szSepLine[32001]	= "";	*/
-    SQLLEN          nRows               = 0;
-    SQLRETURN       nReturn;
-	SQLCHAR			*szSepLine;
+    SQLHSTMT hStmt;
+    SQLLEN nRows = 0;
+    SQLRETURN nReturn;
+    SQLCHAR *szSepLine;
+    char *args[10];
+    int n_args;
 
-	szSepLine = calloc(1, 32001);
-    *szTable = '\0';
+    if (!(szSepLine = calloc(1, 32001)))
+    {
+        fprintf(stderr, "[ISQL]ERROR: Failed to allocate line");
+        return 0;
+    }
 
-	/****************************
-	 * EXECUTE SQL
-	 ***************************/
-	if ( SQLAllocStmt( hDbc, &hStmt ) != SQL_SUCCESS )
-	{
-        if ( bVerbose ) DumpODBCLog( hEnv, hDbc, 0 );
-		fprintf( stderr, "[ISQL]ERROR: Could not SQLAllocStmt\n" );
-		free(szSepLine);
-		return 0;
-	}
+    /****************************
+     * EXECUTE SQL
+     ***************************/
+    if ( version3 )
+    {
+        if ( SQLAllocHandle( SQL_HANDLE_STMT, hDbc, &hStmt ) != SQL_SUCCESS )
+        {
+            if ( bVerbose ) DumpODBCLog( hEnv, hDbc, 0 );
+            fprintf( stderr, "[ISQL]ERROR: Could not SQLAllocHandle( SQL_HANDLE_STMT )\n" );
+            free(szSepLine);
+            return 0;
+        }
+    }
+    else
+    {
+        if ( SQLAllocStmt( hDbc, &hStmt ) != SQL_SUCCESS )
+        {
+            if ( bVerbose ) DumpODBCLog( hEnv, hDbc, 0 );
+            fprintf( stderr, "[ISQL]ERROR: Could not SQLAllocStmt\n" );
+            free(szSepLine);
+            return 0;
+        }
+    }
+    n_args = get_args(szSQL, &args[0], sizeof(args) / sizeof(args[0]));
 
-	if ( iniElement( szSQL, ' ', '\0', 1, szTable, sizeof(szTable) ) == INI_SUCCESS )
-	{
-		/* COLUMNS */
-		nReturn = SQLColumns( hStmt, NULL, 0, NULL, 0, (SQLCHAR*)szTable, SQL_NTS, NULL, 0 );
+    if (n_args == 2 )
+    {
+        if (strcmp(args[1], "help") == 0)
+        {
+            output_help();
+            free(szSepLine);
+            return 0;
+        }
+
+        /* COLUMNS */
+        nReturn = SQLColumns( hStmt, NULL, 0, NULL, 0, (SQLCHAR*)args[1], SQL_NTS, NULL, 0 );
         if ( (nReturn != SQL_SUCCESS) && (nReturn != SQL_SUCCESS_WITH_INFO) )
-		{
-			if ( bVerbose ) DumpODBCLog( hEnv, hDbc, hStmt );
-			fprintf( stderr, "[ISQL]ERROR: Could not SQLColumns\n" );
-			SQLFreeStmt( hStmt, SQL_DROP );
-			free(szSepLine);
-			return 0;
-		}
-	}
-	else
-	{
-		/* TABLES */
-		nReturn = SQLTables( hStmt, NULL, 0, NULL, 0, NULL, 0, NULL, 0 );
-        if ( (nReturn != SQL_SUCCESS) && (nReturn != SQL_SUCCESS_WITH_INFO) )
-		{
-			if ( bVerbose ) DumpODBCLog( hEnv, hDbc, hStmt );
-			fprintf( stderr, "[ISQL]ERROR: Could not SQLTables\n" );
-			SQLFreeStmt( hStmt, SQL_DROP );
-			free(szSepLine);
-			return 0;
-		}
-	}
+        {
+            if ( bVerbose ) DumpODBCLog( hEnv, hDbc, hStmt );
+            fprintf( stderr, "[ISQL]ERROR: Could not SQLColumns\n" );
+            SQLFreeStmt( hStmt, SQL_DROP );
+            free(szSepLine);
+            return 0;
+        }
+    }
+    else
+    {
+        SQLCHAR *catalog = NULL;
+        SQLCHAR *schema = NULL;
+        SQLCHAR *table = NULL;
+        SQLCHAR *type = NULL;
 
-	/****************************
-	 * WRITE HEADER
-	 ***************************/
-	if ( bHTMLTable )
-		WriteHeaderHTMLTable( hStmt );
-	else if ( cDelimiter == 0 )
-		WriteHeaderNormal( hStmt, szSepLine );
+        if (n_args > 2)
+        {
+            catalog = (SQLCHAR*)args[1];
+            schema = (SQLCHAR*)args[2];
+            table = (SQLCHAR*)args[3];
+            type = (SQLCHAR*)args[4];
+        }
+
+        /* TABLES */
+        nReturn = SQLTables( hStmt, catalog, SQL_NTS, schema, SQL_NTS,
+                             table, SQL_NTS, type, SQL_NTS );
+        if ( (nReturn != SQL_SUCCESS) && (nReturn != SQL_SUCCESS_WITH_INFO) )
+        {
+            if ( bVerbose ) DumpODBCLog( hEnv, hDbc, hStmt );
+            fprintf( stderr, "[ISQL]ERROR: Could not SQLTables\n" );
+            SQLFreeStmt( hStmt, SQL_DROP );
+            free(szSepLine);
+            free_args(args, sizeof(args) / sizeof(args[0]));
+            return 0;
+        }
+    }
+
+    /****************************
+     * WRITE HEADER
+     ***************************/
+    if ( bHTMLTable )
+        WriteHeaderHTMLTable( hStmt );
+    else if ( cDelimiter == 0 )
+        WriteHeaderNormal( hStmt, szSepLine );
     else if ( cDelimiter && bColumnNames )
         WriteHeaderDelimited( hStmt, cDelimiter );
 
-	/****************************
-	 * WRITE BODY
-	 ***************************/
-	if ( bHTMLTable )
-		WriteBodyHTMLTable( hStmt );
-	else if ( cDelimiter == 0 )
-		nRows = WriteBodyNormal( hStmt );
-	else
-		WriteBodyDelimited( hStmt, cDelimiter );
+    /****************************
+     * WRITE BODY
+     ***************************/
+    if ( bHTMLTable )
+        WriteBodyHTMLTable( hStmt );
+    else if ( cDelimiter == 0 )
+        nRows = WriteBodyNormal( hStmt );
+    else
+        WriteBodyDelimited( hStmt, cDelimiter );
 
-	/****************************
-	 * WRITE FOOTER
-	 ***************************/
-	if ( bHTMLTable )
-		WriteFooterHTMLTable( hStmt );
-	else if ( cDelimiter == 0 )
-		WriteFooterNormal( hStmt, szSepLine, nRows );
+    /****************************
+     * WRITE FOOTER
+     ***************************/
+    if ( bHTMLTable )
+        WriteFooterHTMLTable( hStmt );
+    else if ( cDelimiter == 0 )
+        WriteFooterNormal( hStmt, szSepLine, nRows );
 
-	/****************************
-	 * CLEANUP
-	 ***************************/
-	SQLFreeStmt( hStmt, SQL_DROP );
-	free(szSepLine);
-
-	return 1;
+    /****************************
+     * CLEANUP
+     ***************************/
+    SQLFreeStmt( hStmt, SQL_DROP );
+    free(szSepLine);
+    free_args(args, sizeof(args) / sizeof(args[0]));
+    return 1;
 }
 
 
 /****************************
  * CloseDatabase - cleanup in prep for exiting the program
  ***************************/
-int	CloseDatabase( SQLHENV hEnv, SQLHDBC hDbc )
+static int CloseDatabase( SQLHENV hEnv, SQLHDBC hDbc )
 {
-	SQLDisconnect( hDbc );
-	SQLFreeConnect( hDbc );
-	SQLFreeEnv( hEnv );
+    SQLDisconnect( hDbc );
+    if ( version3 )
+    {
+        SQLFreeHandle( SQL_HANDLE_DBC, hDbc );
+        SQLFreeHandle( SQL_HANDLE_ENV, hEnv );
+    }
+    else
+    {
+        SQLFreeConnect( hDbc );
+        SQLFreeEnv( hEnv );
+    }
 
-	return 1;
+    return 1;
 }
 
 
 /****************************
  * WRITE HTML
  ***************************/
-void WriteHeaderHTMLTable( SQLHSTMT hStmt )
+static void WriteHeaderHTMLTable( SQLHSTMT hStmt )
 {
-    SQLINTEGER    	nCol            				= 0;
-	SQLSMALLINT		nColumns						= 0;
-	SQLCHAR			szColumnName[MAX_DATA_WIDTH+1];	
+    SQLINTEGER      nCol                            = 0;
+    SQLSMALLINT     nColumns                        = 0;
+    SQLCHAR         szColumnName[MAX_DATA_WIDTH+1]; 
 
-	*szColumnName = '\0';
+    *szColumnName = '\0';
 
-	printf( "<table BORDER>\n" );
-	printf( "<tr BGCOLOR=#000099>\n" );
+    printf( "<table BORDER>\n" );
+    printf( "<tr BGCOLOR=#000099>\n" );
 
     if ( SQLNumResultCols( hStmt, &nColumns ) != SQL_SUCCESS )
         nColumns = -1;
 
-	for( nCol = 1; nCol <= nColumns; nCol++ )
-	{
-		SQLColAttribute( hStmt, nCol, SQL_DESC_LABEL, szColumnName, sizeof(szColumnName), NULL, NULL );
-		printf( "<td>\n" );
-		printf( "<font face=Arial,Helvetica><font color=#FFFFFF>\n" );
-		printf( "%s\n", szColumnName );
-		printf( "</font></font>\n" );
-		printf( "</td>\n" );
-	}
-	printf( "</tr>\n" );
+    for ( nCol = 1; nCol <= nColumns; nCol++ )
+    {
+        SQLColAttribute( hStmt, nCol, SQL_DESC_LABEL, szColumnName, sizeof(szColumnName), NULL, NULL );
+        printf( "<td>\n" );
+        printf( "<font face=Arial,Helvetica><font color=#FFFFFF>\n" );
+        printf( "%s\n", szColumnName );
+        printf( "</font></font>\n" );
+        printf( "</td>\n" );
+    }
+    printf( "</tr>\n" );
 }
 
-void WriteBodyHTMLTable( SQLHSTMT hStmt )
+static void WriteBodyHTMLTable( SQLHSTMT hStmt )
 {
-    SQLINTEGER    	nCol            				= 0;
-	SQLSMALLINT		nColumns						= 0;
-	SQLLEN		    nIndicator						= 0;
-	SQLCHAR			szColumnValue[MAX_DATA_WIDTH+1];
-	SQLRETURN		nReturn							= 0;
+    SQLINTEGER      nCol                            = 0;
+    SQLSMALLINT     nColumns                        = 0;
+    SQLLEN          nIndicator                      = 0;
+    SQLCHAR         szColumnValue[MAX_DATA_WIDTH+1];
+    SQLRETURN       nReturn                         = 0;
     SQLRETURN       ret;
 
-	*szColumnValue = '\0';
+    *szColumnValue = '\0';
 
     if ( SQLNumResultCols( hStmt, &nColumns ) != SQL_SUCCESS )
         nColumns = -1;
 
-    while( (ret = SQLFetch( hStmt )) == SQL_SUCCESS ) /* ROWS */
+    while ( (ret = SQLFetch( hStmt )) == SQL_SUCCESS ) /* ROWS */
     {
-		printf( "<tr>\n" );
-		
-        for( nCol = 1; nCol <= nColumns; nCol++ ) /* COLS */
+        printf( "<tr>\n" );
+
+        for ( nCol = 1; nCol <= nColumns; nCol++ ) /* COLS */
         {
-			printf( "<td>\n" );
-			printf( "<font face=Arial,Helvetica>\n" );
+            printf( "<td>\n" );
+            printf( "<font face=Arial,Helvetica>\n" );
 
             nReturn = SQLGetData( hStmt, nCol, SQL_C_CHAR, (SQLPOINTER)szColumnValue, sizeof(szColumnValue), &nIndicator );
             if ( nReturn == SQL_SUCCESS && nIndicator != SQL_NULL_DATA )
             {
                 fputs((char*) szColumnValue, stdout );
             }
-	    else if ( nReturn == SQL_ERROR ) {
-		ret = SQL_ERROR;
-		break;
-	    }
+            else if ( nReturn == SQL_ERROR )
+            {
+                ret = SQL_ERROR;
+                break;
+            }
             else
                 printf( "%s\n", "" );
 
-			printf( "</font>\n" );
-			printf( "</td>\n" );
+            printf( "</font>\n" );
+            printf( "</td>\n" );
         }
-	if (ret != SQL_SUCCESS)
-	    break;
-		printf( "</tr>\n" );
+        if (ret != SQL_SUCCESS)
+            break;
+        printf( "</tr>\n" );
     }
 }
 
-void WriteFooterHTMLTable( SQLHSTMT hStmt )
+static void WriteFooterHTMLTable( SQLHSTMT hStmt )
 {
-	printf( "</table>\n" );
+    printf( "</table>\n" );
 }
 
 /****************************
@@ -584,162 +1208,225 @@ void WriteFooterHTMLTable( SQLHSTMT hStmt )
  * - last column no longer has a delimit char (it is implicit)...
  *   this is consistent with odbctxt
  ***************************/
-void WriteHeaderDelimited( SQLHSTMT hStmt, char cDelimiter )
+static void WriteHeaderDelimited( SQLHSTMT hStmt, char cDelimiter )
 {
-    SQLINTEGER    	nCol            				= 0;
-	SQLSMALLINT		nColumns						= 0;
-	SQLCHAR			szColumnName[MAX_DATA_WIDTH+1];	
+    SQLINTEGER      nCol                            = 0;
+    SQLSMALLINT     nColumns                        = 0;
+    SQLCHAR         szColumnName[MAX_DATA_WIDTH+1]; 
 
-	*szColumnName = '\0';
+    *szColumnName = '\0';
 
     if ( SQLNumResultCols( hStmt, &nColumns ) != SQL_SUCCESS )
         nColumns = -1;
 
-	for( nCol = 1; nCol <= nColumns; nCol++ )
-	{
-		SQLColAttribute( hStmt, nCol, SQL_DESC_LABEL, szColumnName, sizeof(szColumnName), NULL, NULL );
+    for ( nCol = 1; nCol <= nColumns; nCol++ )
+    {
+        SQLColAttribute( hStmt, nCol, SQL_DESC_LABEL, szColumnName, sizeof(szColumnName), NULL, NULL );
         fputs((char*) szColumnName, stdout );
         if ( nCol < nColumns )
             putchar( cDelimiter );
-	}
+    }
     putchar( '\n' );
 }
 
-void WriteBodyDelimited( SQLHSTMT hStmt, char cDelimiter )
+static void WriteBodyDelimited( SQLHSTMT hStmt, char cDelimiter )
 {
-    SQLINTEGER    	nCol            				= 0;
-	SQLSMALLINT		nColumns						= 0;
-	SQLLEN		    nIndicator						= 0;
-	SQLCHAR			szColumnValue[MAX_DATA_WIDTH+1];
-	SQLRETURN		nReturn							= 0;
+    SQLINTEGER      nCol                            = 0;
+    SQLSMALLINT     nColumns                        = 0;
+    SQLLEN          nIndicator                      = 0;
+    SQLCHAR         szColumnValue[MAX_DATA_WIDTH+1];
+    SQLRETURN       nReturn                         = 0;
     SQLRETURN       ret;
+    SQLINTEGER      *types;
 
-	*szColumnValue = '\0';
+    *szColumnValue = '\0';
 
     if ( SQLNumResultCols( hStmt, &nColumns ) != SQL_SUCCESS )
         nColumns = -1;
 
-	/* ROWS */
-    while(( ret = SQLFetch( hStmt )) == SQL_SUCCESS )
+    if ( bQuote && nColumns > 0 )
     {
-		/* COLS */
-        for( nCol = 1; nCol <= nColumns; nCol++ )
+        types = malloc( nColumns * sizeof ( SQLINTEGER ));
+        for ( nCol = 1; nCol <= nColumns && types; nCol++ )
+        {
+            SQLSMALLINT type = 0;
+            nReturn = SQLDescribeCol( hStmt, nCol, NULL, 0, NULL, &type, NULL, NULL, NULL );
+            switch ( type )
+            {
+                case SQL_CHAR:
+                case SQL_VARCHAR:
+                case SQL_WCHAR:
+                case SQL_WVARCHAR:
+                case SQL_LONGVARCHAR:
+                case SQL_WLONGVARCHAR:
+                    types[ nCol - 1 ] = 1;
+                    break;
+
+                default:
+                    types[ nCol - 1 ] = 0;
+                    break;
+            }
+        }
+    }
+    else
+    {
+        types = NULL;
+    }
+
+    /* ROWS */
+    while (( ret = SQLFetch( hStmt )) == SQL_SUCCESS )
+    {
+        /* COLS */
+        for ( nCol = 1; nCol <= nColumns; nCol++ )
         {
             nReturn = SQLGetData( hStmt, nCol, SQL_C_CHAR, (SQLPOINTER)szColumnValue, sizeof(szColumnValue), &nIndicator );
             if ( nReturn == SQL_SUCCESS && nIndicator != SQL_NULL_DATA )
             {
+                if ( types && types[ nCol - 1 ] )
+                {
+                    putchar( '"' );
+                }
                 fputs((char*) szColumnValue, stdout );
+                if ( types && types[ nCol - 1 ] )
+                {
+                    putchar( '"' );
+                }
                 if ( nCol < nColumns )
+                {
                     putchar( cDelimiter );
+                }
             }
-	        else if ( nReturn == SQL_ERROR ) 
+            else if ( nReturn == SQL_ERROR )
             {
-		        ret = SQL_ERROR;
-		        break;
-	        }
+                ret = SQL_ERROR;
+                break;
+            }
             else
             {
                 if ( nCol < nColumns )
+                {
                     putchar( cDelimiter );
+                }
             }
         }
-	    if (ret != SQL_SUCCESS)
-	        break;
+        if (ret != SQL_SUCCESS)
+        {
+            break;
+        }
+
         printf( "\n" );
     }
+
     if ( ret == SQL_ERROR )
-    {  
+    {
         if ( bVerbose ) DumpODBCLog( 0, 0, hStmt );
+    }
+
+    if ( types )
+    {
+        free( types );
     }
 }
 
 /****************************
  * WRITE NORMAL
  ***************************/
-void WriteHeaderNormal( SQLHSTMT hStmt, SQLCHAR *szSepLine )
+static void WriteHeaderNormal( SQLHSTMT hStmt, SQLCHAR *szSepLine )
 {
-    SQLINTEGER    	nCol            				= 0;
-	SQLSMALLINT		nColumns						= 0;
-	SQLCHAR			szColumn[MAX_DATA_WIDTH+20];	
-	SQLCHAR			szColumnName[MAX_DATA_WIDTH+1];	
-	/*SQLCHAR			szHdrLine[32001]				= "";	*/
-	SQLCHAR			*szHdrLine;
-	SQLUINTEGER		nOptimalDisplayWidth            = 10;
+    SQLINTEGER      nCol                            = 0;
+    SQLSMALLINT     nColumns                        = 0;
+    SQLCHAR         szColumn[MAX_DATA_WIDTH+20];    
+    SQLCHAR         szColumnName[MAX_DATA_WIDTH+1]; 
+    /*SQLCHAR			szHdrLine[32001]				= "";	*/
+    SQLCHAR         *szHdrLine;
+    SQLUINTEGER     nOptimalDisplayWidth            = 10;
 
-	szHdrLine = calloc(1, 32001);
+    szHdrLine = calloc(1, 32001);
 
-	*szColumn = '\0';
-	*szColumnName = '\0';
+    *szColumn = '\0';
+    *szColumnName = '\0';
 
     if ( SQLNumResultCols( hStmt, &nColumns ) != SQL_SUCCESS )
         nColumns = -1;
 
-	for( nCol = 1; nCol <= nColumns; nCol++ )
-	{
+    for ( nCol = 1; nCol <= nColumns; nCol++ )
+    {
+        int sret;
+
         nOptimalDisplayWidth = OptimalDisplayWidth( hStmt, nCol, nUserWidth );
         SQLColAttribute( hStmt, nCol, SQL_DESC_LABEL, szColumnName, sizeof(szColumnName), NULL, NULL );
 
-		/* SEP */
+        /* SEP */
         memset( szColumn, '\0', sizeof(szColumn) );
-		memset( szColumn, '-', nOptimalDisplayWidth + 1 );
-		strcat((char*) szSepLine, "+" );
-		strcat((char*) szSepLine,(char*) szColumn );
+        memset( szColumn, '-', nOptimalDisplayWidth + 1 );
+        strcat((char*) szSepLine, "+" );
+        strcat((char*) szSepLine,(char*) szColumn );
 
-		/* HDR */
-		sprintf( (char*)szColumn, "| %-*.*s", nOptimalDisplayWidth, nOptimalDisplayWidth, szColumnName );
+        /* HDR */
+        sret = sprintf( (char*)szColumn, "| %-*.*s",
+                        nOptimalDisplayWidth, nOptimalDisplayWidth, szColumnName );
+        if (sret < 0)
+            sprintf((char *)szColumn, "| %-*.*s",
+                    nOptimalDisplayWidth, nOptimalDisplayWidth, "**ERROR**");
         strcat( (char*)szHdrLine,(char*) szColumn );
-	}
-	strcat((char*) szSepLine, "+\n" );
-	strcat((char*) szHdrLine, "|\n" );
-	
-	printf((char*) szSepLine );
-	printf((char*) szHdrLine );
-	printf((char*) szSepLine );
-	free(szHdrLine);
+    }
+    strcat((char*) szSepLine, "+\n" );
+    strcat((char*) szHdrLine, "|\n" );
+
+    printf((char*) szSepLine );
+    printf((char*) szHdrLine );
+    printf((char*) szSepLine );
+    free(szHdrLine);
 }
 
-SQLLEN WriteBodyNormal( SQLHSTMT hStmt )
+static SQLLEN WriteBodyNormal( SQLHSTMT hStmt )
 {
-    SQLINTEGER    	nCol            				= 0;
-	SQLSMALLINT		nColumns						= 0;
-	SQLLEN		    nIndicator						= 0;
-	SQLCHAR			szColumn[MAX_DATA_WIDTH+20];
-	SQLCHAR			szColumnValue[MAX_DATA_WIDTH+1];
-	SQLRETURN		nReturn							= 0;
+    SQLINTEGER      nCol                            = 0;
+    SQLSMALLINT     nColumns                        = 0;
+    SQLLEN          nIndicator                      = 0;
+    SQLCHAR         szColumn[MAX_DATA_WIDTH+20];
+    SQLCHAR         szColumnValue[MAX_DATA_WIDTH+1];
+    SQLRETURN       nReturn                         = 0;
     SQLLEN          nRows                           = 0;
-	SQLUINTEGER		nOptimalDisplayWidth            = 10;
+    SQLUINTEGER     nOptimalDisplayWidth            = 10;
 
-	*szColumn = '\0';
-	*szColumnValue = '\0';
+    *szColumn = '\0';
+    *szColumnValue = '\0';
 
     nReturn = SQLNumResultCols( hStmt, &nColumns );
     if ( nReturn != SQL_SUCCESS && nReturn != SQL_SUCCESS_WITH_INFO )
         nColumns = -1;
 
-	/* ROWS */
+    /* ROWS */
     nReturn = SQLFetch( hStmt );
     while ( nReturn == SQL_SUCCESS || nReturn == SQL_SUCCESS_WITH_INFO )
     {
-		/* COLS */
-        for( nCol = 1; nCol <= nColumns; nCol++ )
+        /* COLS */
+        for ( nCol = 1; nCol <= nColumns; nCol++ )
         {
+            int sret;
+
             nOptimalDisplayWidth = OptimalDisplayWidth( hStmt, nCol, nUserWidth );
             nReturn = SQLGetData( hStmt, nCol, SQL_C_CHAR, (SQLPOINTER)szColumnValue, sizeof(szColumnValue), &nIndicator );
             szColumnValue[MAX_DATA_WIDTH] = '\0';
 
             if ( nReturn == SQL_SUCCESS && nIndicator != SQL_NULL_DATA )
             {
-                sprintf( (char*)szColumn, "| %-*.*s", nOptimalDisplayWidth, nOptimalDisplayWidth, szColumnValue );
+                sret = sprintf( (char*)szColumn, "| %-*.*s",
+                                nOptimalDisplayWidth, nOptimalDisplayWidth, szColumnValue );
+                if (sret < 0) sprintf( (char*)szColumn, "| %-*.*s",
+                                       nOptimalDisplayWidth, nOptimalDisplayWidth, "**ERROR**" );
+
             }
-	        else if ( nReturn == SQL_ERROR ) 
+            else if ( nReturn == SQL_ERROR )
             {
-		        break;
-	        }
+                break;
+            }
             else
             {
                 sprintf( (char*)szColumn, "| %-*s", nOptimalDisplayWidth, "" );
             }
-			fputs( (char*)szColumn, stdout );
+            fputs( (char*)szColumn, stdout );
         } /* for columns */
 
         nRows++;
@@ -755,54 +1442,153 @@ SQLLEN WriteBodyNormal( SQLHSTMT hStmt )
     return nRows;
 }
 
-void WriteFooterNormal( SQLHSTMT hStmt, SQLCHAR	*szSepLine, SQLLEN nRows )
+static void
+WriteFooterNormal( SQLHSTMT hStmt, SQLCHAR  *szSepLine, SQLLEN nRows )
 {
-    SQLLEN  nRowsAffected	= -1;
+    SQLLEN  nRowsAffected   = -1;
 
-	printf( (char*)szSepLine );
+    printf( (char*)szSepLine );
 
     SQLRowCount( hStmt, &nRowsAffected );
     printf( "SQLRowCount returns %d\n", nRowsAffected );
 
     if ( nRows )
     {
-    	printf( "%d rows fetched\n", nRows );
+        printf( "%d rows fetched\n", nRows );
     }
 }
 
 
 
-int DumpODBCLog( SQLHENV hEnv, SQLHDBC hDbc, SQLHSTMT hStmt )
+static int DumpODBCLog( SQLHENV hEnv, SQLHDBC hDbc, SQLHSTMT hStmt )
 {
-	SQLCHAR		szError[501];
-	SQLCHAR		szSqlState[10];
+    SQLCHAR     szError[501];
+    SQLCHAR     szSqlState[10];
     SQLINTEGER  nNativeError;
-    SQLSMALLINT	nErrorMsg;
+    SQLSMALLINT nErrorMsg;
 
-	if ( hStmt )
-	{
-		while ( SQLError( hEnv, hDbc, hStmt, szSqlState, &nNativeError, szError, 500, &nErrorMsg ) == SQL_SUCCESS )
-		{
-			printf( "[%s]%s\n", szSqlState, szError );
-		}
-	}
+    if ( version3 )
+    {
+        int rec;
+        if ( hStmt )
+        {
+            rec = 0;
+            while ( SQLGetDiagRec( SQL_HANDLE_STMT, hStmt, ++rec, szSqlState, &nNativeError, szError, 500, &nErrorMsg ) == SQL_SUCCESS )
+            {
+                printf( "[%s]%s\n", szSqlState, szError );
+            }
+        }
 
-	if ( hDbc )
-	{
-		while ( SQLError( hEnv, hDbc, 0, szSqlState, &nNativeError, szError, 500, &nErrorMsg ) == SQL_SUCCESS )
-		{
-			printf( "[%s]%s\n", szSqlState, szError );
-		}
-	}
+        if ( hDbc )
+        {
+            rec = 0;
+            while ( SQLGetDiagRec( SQL_HANDLE_DBC, hDbc, ++rec, szSqlState, &nNativeError, szError, 500, &nErrorMsg ) == SQL_SUCCESS )
+            {
+                printf( "[%s]%s\n", szSqlState, szError );
+            }
+        }
 
-	if ( hEnv )
-	{
-		while ( SQLError( hEnv, 0, 0, szSqlState, &nNativeError, szError, 500, &nErrorMsg ) == SQL_SUCCESS )
-		{
-			printf( "[%s]%s\n", szSqlState, szError );
-		}
-	}
+        if ( hEnv )
+        {
+            rec = 0;
+            while ( SQLGetDiagRec( SQL_HANDLE_ENV, hEnv, ++rec, szSqlState, &nNativeError, szError, 500, &nErrorMsg ) == SQL_SUCCESS )
+            {
+                printf( "[%s]%s\n", szSqlState, szError );
+            }
+        }
+    }
+    else
+    {
+        if ( hStmt )
+        {
+            while ( SQLError( hEnv, hDbc, hStmt, szSqlState, &nNativeError, szError, 500, &nErrorMsg ) == SQL_SUCCESS )
+            {
+                printf( "[%s]%s\n", szSqlState, szError );
+            }
+        }
 
-	return 1;
+        if ( hDbc )
+        {
+            while ( SQLError( hEnv, hDbc, 0, szSqlState, &nNativeError, szError, 500, &nErrorMsg ) == SQL_SUCCESS )
+            {
+                printf( "[%s]%s\n", szSqlState, szError );
+            }
+        }
+
+        if ( hEnv )
+        {
+            while ( SQLError( hEnv, 0, 0, szSqlState, &nNativeError, szError, 500, &nErrorMsg ) == SQL_SUCCESS )
+            {
+                printf( "[%s]%s\n", szSqlState, szError );
+            }
+        }
+    }
+
+    return 1;
+}
+
+static int get_args(char *string, char **args, int maxarg) {
+    int nargs = 0;
+    char *copy;
+    char *p;
+    const char *sep = " ";
+    char *arg;
+    unsigned int i;
+
+    if (!string || !args) return 0;
+
+    if (!(copy = strdup(string))) return 0;
+
+    for (i = 0; i < maxarg; i++)
+    {
+        args[i] = NULL;
+    }
+
+    p = copy;
+    while ((arg = strtok(p, sep)))
+    {
+        p = NULL;
+
+        if (strcmp(arg, "\"\"") == 0)
+            args[nargs++] = strdup("");
+        else if (strcmp(arg, "null") == 0)
+            args[nargs++] = NULL;
+        else
+            args[nargs++] = strdup(arg);
+        if (nargs > maxarg) return maxarg;
+    }
+    free(copy);
+    return nargs;
+}
+
+static void free_args(char **args, int maxarg) {
+    unsigned int i;
+
+    for (i = 0; i < maxarg; i++)
+    {
+        if (args[i])
+        {
+            free(args[i]);
+            args[i] = NULL;
+        }
+    }
+}
+
+static void output_help(void) {
+    fprintf(stderr, \
+            "help usage:\n\n" \
+            "help help - output this help\n" \
+            "help - call SQLTables and output the result-set\n" \
+            "help table_name - call SQLColumns for table_name and output the result-set\n" \
+            "help catalog schema table type - call SQLTables with these arguments\n" \
+            "  where any argument may be specified as \"\" (for the empty string) \n" \
+            "  or null to pass a null pointer argument.\n" \
+            "\n" \
+            " e.g.\n" \
+            " help %% \"\" \"\" \"\" - output list of catalogs\n" \
+            " help \"\" %% \"\" \"\" - output list of schemas\n" \
+            " help null null b%% null - output all tables beginning with b\n" \
+            " help null null null VIEW - output list of views\n" \
+            "\n");
 }
 

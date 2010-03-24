@@ -33,6 +33,7 @@ int _SQLGetInstalledDrivers(    LPCSTR  pszSection,
     char    szValue[INI_MAX_PROPERTY_VALUE+1];
     char    szIniName[ INI_MAX_OBJECT_NAME + 1 ];
     char    *ptr;
+    char    b1[ 256 ], b2[ 256 ];
 
     /* SANITY CHECKS */
     if ( pRetBuffer == NULL || nRetBuffer < 2 )
@@ -41,22 +42,39 @@ int _SQLGetInstalledDrivers(    LPCSTR  pszSection,
         return -1;
     }
 
+    /*
+     * first try in the system odbcinst.ini
+     */
+
 #ifdef VMS
-    sprintf( szIniName, "%sODBCINST.INI", odbcinst_system_file_path() );
+    sprintf( szIniName, "%s:%s", odbcinst_system_file_path( b1 ), odbcinst_system_file_name( b2 ));
 #else
-    sprintf( szIniName, "%s/odbcinst.ini", odbcinst_system_file_path() );
+    sprintf( szIniName, "%s/%s", odbcinst_system_file_path( b1 ), odbcinst_system_file_name( b2 ));
 #endif
 
     /* PROCESS ODBC INI FILE */
 #ifdef __OS2__
-    if ( iniOpen( &hIni, szIniName, "#;", '[', ']', '=', TRUE, 1L ) != INI_SUCCESS )
+    if ( iniOpen( &hIni, szIniName, "#;", '[', ']', '=', 1, 1L ) != INI_SUCCESS )
 #else
-    if ( iniOpen( &hIni, szIniName, "#;", '[', ']', '=', TRUE ) != INI_SUCCESS )
+    if ( iniOpen( &hIni, szIniName, "#;", '[', ']', '=', 1 ) != INI_SUCCESS )
 #endif
     {
         inst_logPushMsg( __FILE__, __FILE__, __LINE__, LOG_CRITICAL, ODBC_ERROR_COMPONENT_NOT_FOUND, "" );
         return -1;
     }
+
+    /*
+     * now try the user odbcinst.ini if it exists
+     */
+
+#ifdef VMS
+    sprintf( szIniName, "%s:%s", odbcinst_user_file_path( b1 ), odbcinst_user_file_name( b2 ));
+#else
+    sprintf( szIniName, "%s/%s", odbcinst_user_file_path( b1 ), odbcinst_user_file_name( b2 ));
+#endif
+
+    /* PROCESS .ODBCINST INI FILE */
+    iniAppend( hIni, szIniName );
 
     nBufPos = 0;
     if ( pszSection == NULL )
@@ -136,8 +154,15 @@ int _SQLGetInstalledDrivers(    LPCSTR  pszSection,
         /* TRY TO GET THE ONE ITEM MATCHING Section & Entry */
         if ( iniPropertySeek( hIni, (char *)pszSection, (char *)pszEntry, "" ) != INI_SUCCESS )
         {
-            strncpy( (char *)pRetBuffer, pszDefault, nRetBuffer );
-            ((char*)pRetBuffer)[ nRetBuffer - 1 ] = '\0';
+            /* try to use any default provided */
+            if ( pRetBuffer && nRetBuffer > 0 )
+            {
+                if ( pszDefault )
+                {
+                    strncpy( (char *)pRetBuffer, pszDefault, nRetBuffer );
+                    ((char*)pRetBuffer)[ nRetBuffer - 1 ] = '\0';
+                }
+            }
         }
         else
         {
@@ -147,6 +172,10 @@ int _SQLGetInstalledDrivers(    LPCSTR  pszSection,
                 nStrToCopy = nRetBuffer - nBufPos - 2;
             strncpy( (char *)&(pRetBuffer[nBufPos]), szValue, nStrToCopy );
             nBufPos += nStrToCopy;
+			/*
+			 * length doesn't include NULL
+			 */
+			nBufPos--;
         }
     }
 

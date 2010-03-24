@@ -306,8 +306,12 @@ CC_Destructor(ConnectionClass *self)
 
 			free(self->col_info[i]);
 		}
+
+		CC_set_errormsg(self, NULL);
 		free(self->col_info);
 	}
+
+	CC_set_errormsg(self, NULL);
 
 	free(self);
 
@@ -798,7 +802,7 @@ another_version_retry:
 		} while (!ReadyForQuery);
 	}
 
-
+	CC_set_errormsg(self, NULL);
 	CC_clear_error(self);	/* clear any password error */
 
 	/* send an empty query in order to find out whether the specified */
@@ -811,6 +815,11 @@ another_version_retry:
 		CC_set_error(self, CONNECTION_NO_SUCH_DATABASE, "The database does not exist on the server\nor user authentication failed.");
 		if (res != NULL)
 			QR_Destructor(res);
+        if( self->sock ) {
+            SOCK_Destructor(self->sock);
+            self->sock = NULL;
+        }
+	
 		return 0;
 	}
 	if (res)
@@ -832,6 +841,7 @@ another_version_retry:
 	CC_lookup_lo(self);		/* a hack to get the oid of our large object oid type */
 	CC_lookup_pg_version(self);	/* Get PostgreSQL version for SQLGetInfo use */
 
+	CC_set_errormsg(self, NULL);
 	CC_clear_error(self);	/* clear any initial command errors */
 	self->status = CONN_CONNECTED;
 
@@ -1085,6 +1095,15 @@ char cmdbuffer[MAX_MESSAGE_LEN+1];	/* QR_set_command() dups this string so dont 
 
 				while( ! clear) {
 					id = SOCK_get_char(sock);
+					if ((SOCK_get_errcode(sock) != 0) || (id == EOF)) {
+						CC_set_error(self, CONNECTION_NO_RESPONSE, "No response from the backend");
+						if (res) {
+							QR_Destructor(res);
+						}
+						mylog("send_query: id=%d error=%s \n", id, "No response from the backend");
+						CC_set_no_trans(self);
+						return NULL;
+					}
 					switch(id) {
 					case 'I':
 						(void) SOCK_get_char(sock);

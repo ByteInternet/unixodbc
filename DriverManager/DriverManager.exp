@@ -137,6 +137,8 @@ SQLSetStmtAttr
 SQLSetStmtAttrW
 SQLSetStmtAttrA
 SQLSetStmtOption
+SQLSetStmtOptionA
+SQLSetStmtOptionW
 SQLSpecialColumns
 SQLSpecialColumnsW
 SQLSpecialColumnsA
@@ -155,3 +157,5 @@ uodbc_open_stats
 uodbc_close_stats
 uodbc_get_stats
 uodbc_stats_error
+ODBCSetTryWaitValue
+ODBCGetTryWaitValue

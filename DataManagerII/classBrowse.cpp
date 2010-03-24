@@ -12,12 +12,21 @@
 
 #include "classBrowse.h"
 #include "classODBC.h"
+#ifdef QT_V4LAYOUT
+#include <Qt/q3header.h>
+#include <Qt/qwhatsthis.h>
+#include <Qt/qfiledialog.h>
+#include <Qt/q3valuelist.h>
+#include <Qt/qlayout.h>
+#include <Qt/qpixmap.h>
+#else
 #include <qheader.h>
 #include <qwhatsthis.h>
 #include <qfiledialog.h>
 #include <qvaluelist.h>
 #include <qlayout.h>
 #include <qpixmap.h>
+#endif
 #include "LinuxODBC.xpm"
 
 #define MAX_ROWS_IN_TABLE 25000 // give a resonable number back
@@ -41,7 +50,7 @@ char *szHelpData = \
 "4. Insert new rows of data\n" \
 "5. Add a blank row for inserting later\n" \
 "6. Copy an existing row for inserting later\n\n" \
-"NOTE: The insert and delete operatoins are performed with\n" \
+"NOTE: The insert and delete operations are performed with\n" \
 "the current columns shown in the result table\n" ;
 
 
@@ -56,23 +65,41 @@ classBrowse::classBrowse( SQLHDBC hDbc, const QString& qsTable, const QString& q
 
     // FILTER LABEL
     labelFilter = new QLabel( "FILTER" , this );
+#ifdef QT_V4LAYOUT
+    labelFilter->setPalette( QPalette( QColor(Qt::lightGray) ) );
+    labelFilter->setAlignment( Qt::AlignCenter );
+#else
     labelFilter->setPalette( QPalette( QColor(lightGray) ) );
     labelFilter->setAlignment( AlignCenter );
+#endif
 
     // FILTER TABLE
+#ifdef QT_V4LAYOUT
+    tableQuery = new Q3Table( 3, 1, this );
+#else
     tableQuery = new QTable( 3, 1, this );
+#endif
     tableQuery->setColumnMovingEnabled ( TRUE );
     tableQuery->setMinimumSize( 78, 105 );
     tableQuery->setLeftMargin( 84 ) ;
+#ifdef QT_V4LAYOUT
+    Q3Header * headerQuery = tableQuery->verticalHeader();
+#else
     QHeader * headerQuery = tableQuery->verticalHeader();
+#endif
     headerQuery->setLabel( 0, QString( tr("Expression") ));
     headerQuery->setLabel( 1, QString( tr("Show"      ) ));
     headerQuery->setLabel( 2, QString( tr("Sort"      ) ));
 
     // DATA LABEL
     labelResults = new QLabel( "RESULTS", this );
+#ifdef QT_V4LAYOUT
+    labelResults->setPalette( QPalette( QColor(Qt::lightGray) ) );
+    labelResults->setAlignment( Qt::AlignCenter );
+#else
     labelResults->setPalette( QPalette( QColor(lightGray) ) );
     labelResults->setAlignment( AlignCenter );
+#endif
 
     // DATA TABLE
     tableData = new myQTable( 0, 0, this );
@@ -81,11 +108,20 @@ classBrowse::classBrowse( SQLHDBC hDbc, const QString& qsTable, const QString& q
 
     // STATUS LABEL
     QLabel *labelStatus = new QLabel( "STATUS", this );
+#ifdef QT_V4LAYOUT
+    labelStatus->setAlignment( Qt::AlignCenter );
+#else
     labelStatus->setAlignment( AlignCenter );
+#endif
 
     // STATUS LISTBOX
+#ifdef QT_V4LAYOUT
+    listStatus = new Q3ListBox( this );
+    listStatus->setSelectionMode( Q3ListBox::NoSelection );
+#else
     listStatus = new QListBox( this );
     listStatus->setSelectionMode( QListBox::NoSelection );
+#endif
 
     // LAYOUT
     layoutMain->addWidget( labelFilter  );
@@ -160,20 +196,20 @@ int classBrowse::RowAction( const QString &shortDesc, const QString &sql, const 
   int nRowsAffected = 0 ;
   int nCols = tableData->numCols();
 
-  addStatus( QString().sprintf("%s: SQL=%s", shortDesc.upper().data(), sql.data() ) ) ;
+  addStatus( QString().sprintf("%s: SQL=%s", shortDesc.upper().ascii(), sql.ascii() ) ) ;
 
   // LOOP THROUGH THE ROWS
   ListRows::ConstIterator it ;
   for (it = listRows.begin(); it != listRows.end() && SQL_SUCCEEDED(nReturn) ; it++ )
   {
     int nRow = *it ;
-    addStatus( QString().sprintf("%s: row %d in progress...", shortDesc.upper().data(), nRow+1) ) ;
+    addStatus( QString().sprintf("%s: row %d in progress...", shortDesc.upper().ascii(), nRow+1) ) ;
 
     // CREATE A STATEMENT
     StatementScoper stmt( hDbc ) ; if ( !stmt() ) return 0 ;
 
     // PREPARE
-    if (!SQL_SUCCEEDED(nReturn=SQLPrepare( stmt(), (SQLCHAR*)sql.data(), SQL_NTS ) ) )
+    if (!SQL_SUCCEEDED(nReturn=SQLPrepare( stmt(), (SQLCHAR*)sql.ascii(), SQL_NTS ) ) )
       my_msgBox( "classBrowse", "SQLPrepare", nReturn, NULL, NULL, stmt(), sql ) ;
 
     // BIND PARAMETERS
@@ -184,7 +220,7 @@ int classBrowse::RowAction( const QString &shortDesc, const QString &sql, const 
     for (int nCol = 0; nCol < nCols ; nCol++ )
     {
       parmValues[nCol] = tableData->text(nRow, nCol) ;
-      if (!SQL_SUCCEEDED(nReturn=SQLBindParameter( stmt(), nCol+1, SQL_PARAM_INPUT, SQL_C_CHAR, SQL_CHAR, parmValues[nCol].length(), 0, (void*)parmValues[nCol].data(), 0, 0 ) ) )
+      if (!SQL_SUCCEEDED(nReturn=SQLBindParameter( stmt(), nCol+1, SQL_PARAM_INPUT, SQL_C_CHAR, SQL_CHAR, parmValues[nCol].length(), 0, (void*)parmValues[nCol].ascii(), 0, 0 ) ) )
         my_msgBox( "classBrowse", "SQLBindParameter", nReturn, NULL, NULL, stmt(), sql ) ;
     }
 
@@ -205,9 +241,9 @@ int classBrowse::RowAction( const QString &shortDesc, const QString &sql, const 
   }
 
   if (SQL_SUCCEEDED(nReturn))
-    addStatus( QString().sprintf("%s: %d row(s) completed", shortDesc.upper().data(), nRowsAffected) ) ;
+    addStatus( QString().sprintf("%s: %d row(s) completed", shortDesc.upper().ascii(), nRowsAffected) ) ;
   else
-    addStatus( QString().sprintf("%s: %d row(s), ERROR rc=%d, %d row(s) affected", shortDesc.upper().data(), listRows.count(), nReturn, nRowsAffected) ) ;
+    addStatus( QString().sprintf("%s: %d row(s), ERROR rc=%d, %d row(s) affected", shortDesc.upper().ascii(), listRows.count(), nReturn, nRowsAffected) ) ;
 
   return nRowsAffected ;
 }
@@ -378,8 +414,8 @@ bool classBrowse::Save()        // DATA
     WriteHTML( &hFile, TRUE );
     hFile.close();
 
-    labelResults->setText( QString().sprintf("RESULTS (%s)", qsDataFileName.data() ) );
-    addStatus( QString().sprintf("SAVE: results saved as %s", qsDataFileName.data() ) ) ;
+    labelResults->setText( QString().sprintf("RESULTS (%s)", qsDataFileName.ascii() ) );
+    addStatus( QString().sprintf("SAVE: results saved as %s", qsDataFileName.ascii() ) ) ;
 
     return TRUE;
 }
@@ -414,12 +450,12 @@ bool classBrowse::SaveSQL()        // SAVE QUERY
     }
     QString qsSQL;
     CreateSQL( qsSQL ) ;
-    hFile.writeBlock( qsSQL.data(), qsSQL.length() ) ;
+    hFile.writeBlock( qsSQL.ascii(), qsSQL.length() ) ;
     hFile.close();
 
     qsSQLFileName = fileName ;
-    labelFilter->setText( QString().sprintf("FILTER (%s)", qsSQLFileName.data() ) );
-    addStatus( QString().sprintf("SAVE SQL: sql filter saved as %s", qsSQLFileName.data() ) ) ;
+    labelFilter->setText( QString().sprintf("FILTER (%s)", qsSQLFileName.ascii() ) );
+    addStatus( QString().sprintf("SAVE SQL: sql filter saved as %s", qsSQLFileName.ascii() ) ) ;
 
     return TRUE;
 }
@@ -430,13 +466,17 @@ void classBrowse::InitQuery()
     SQLCHAR         szColumnName[MAX_COLUMN_WIDTH];
     SQLLEN          nCols             = 0;
     int             nCol              = 0;
+#ifdef QT_V4LAYOUT
+    Q3Header         *headerQuery = tableQuery->horizontalHeader();
+#else
     QHeader         *headerQuery = tableQuery->horizontalHeader();
+#endif
 
     // CREATE A STATEMENT
     StatementScoper stmt( hDbc ) ; if ( !stmt() ) return ;
 
     // EXECUTE
-    if (!SQL_SUCCEEDED(nReturn=SQLColumns( stmt(), 0, 0, (SQLCHAR*)qsLibrary.data(), SQL_NTS, (SQLCHAR*)qsTable.data(), SQL_NTS, 0, 0 ) ) )
+    if (!SQL_SUCCEEDED(nReturn=SQLColumns( stmt(), 0, 0, (SQLCHAR*)qsLibrary.ascii(), SQL_NTS, (SQLCHAR*)qsTable.ascii(), SQL_NTS, 0, 0 ) ) )
       return my_msgBox( "classBrowse", "SQLColumns", nReturn, NULL, NULL, stmt() ) ;
 
     // GET NUMBER OF COLUMNS AFFECTED
@@ -482,11 +522,11 @@ void classBrowse::Exec()        // RUN QUERY
     StatementScoper stmt( hDbc ) ; if ( !stmt() ) return ;
 
     // PREPATE
-    if (!SQL_SUCCEEDED(nReturn=SQLPrepare(stmt(), (SQLCHAR*)qsSQL.data(), SQL_NTS) ) )
+    if (!SQL_SUCCEEDED(nReturn=SQLPrepare(stmt(), (SQLCHAR*)qsSQL.ascii(), SQL_NTS) ) )
       return my_msgBox( "classBrowse", "SQLPrepare", nReturn, NULL, NULL, stmt(), qsSQL ) ;
 
     // EXECUTE
-    addStatus( QString().sprintf( "RUN: filter sql=%s", qsSQL.data() ) ) ;
+    addStatus( QString().sprintf( "RUN: filter sql=%s", qsSQL.ascii() ) ) ;
     if(!SQL_SUCCEEDED(nReturn=SQLExecute(stmt()) ) )
       return my_msgBox( "classBrowse", "SQLExecute", nReturn, NULL, NULL, stmt(), qsSQL ) ;
 
@@ -554,6 +594,25 @@ int classBrowse::ExecBody( SQLHSTMT hStmt, SWORD nColumns )
   return nRow ; // return the actual number of rows in the result set
 }
 
+QString classBrowse::GetColumnQuote( SQLHDBC hDbc ) 
+{
+      SQLCHAR quoteChar[20];
+	  SQLSMALLINT len;
+	  QString q;
+
+      SQLGetInfo( hDbc, SQL_IDENTIFIER_QUOTE_CHAR, quoteChar, sizeof( quoteChar ), &len );
+	  if ( len == 0  )
+	  {
+	  	q = "";
+	  	return q;
+	  }
+	  else 
+	  {
+	  	q = (char*)quoteChar;
+		return q;
+	  }
+}
+
 bool classBrowse::CreateSQL( QString& qsSQL )
 {
     int nCols = tableQuery->numCols();
@@ -563,11 +622,12 @@ bool classBrowse::CreateSQL( QString& qsSQL )
     QString qsComma1 ;
     QString qsComma2 ;
     QString qsSorts ;
+	QString quote = GetColumnQuote( hDbc );
 
     for (int nCol=0; nCol<nCols; nCol++ )
     {
         QString qsColumn     = tableQuery->horizontalHeader()->label( nCol );
-        qsColumn.prepend('"').append('"') ;  // Quote column name in case it matches SQL keyword
+        qsColumn.prepend(quote).append(quote) ;  // Quote column name in case it matches SQL keyword
         QString qsExpression = tableQuery->text( QUERY_ROW_EXPRESSION, nCol );
         QString qsShow       = tableQuery->text( QUERY_ROW_SHOW, nCol ).upper();
         QString qsSort       = tableQuery->text( QUERY_ROW_SORT, nCol ).upper();
@@ -619,7 +679,11 @@ void classBrowse::ChangeAllColumns( int row, const char * text )
 {
   int nCol  = 0;
   int nCols = tableQuery->numCols();
+#ifdef QT_V4LAYOUT
+  Q3Header *header;
+#else
   QHeader *header;
+#endif
 
   header = tableQuery->horizontalHeader();
   for ( nCol=0; nCol<nCols; nCol++ )
@@ -652,7 +716,11 @@ void classBrowse::WriteHTML( QFile *hFile, bool bPage )
     int nCols = tableData->numCols();
     int nRow  = 0;
     int nRows = tableData->numRows();
+#ifdef QT_V4LAYOUT
+    Q3Header *header;
+#else
     QHeader *header;
+#endif
 
     header = tableData->horizontalHeader();
 
@@ -690,9 +758,11 @@ void classBrowse::WriteHTML( QFile *hFile, bool bPage )
         hFile->writeBlock( "</BODY></HTML>", sizeof("</BODY></HTML>")-1 );
 }
 
-
-
+#ifdef QT_V4LAYOUT
+void classBrowse::ClearCells( Q3Table *table )
+#else
 void classBrowse::ClearCells( QTable *table )
+#endif
 {
     int nCol  = 0;
     int nCols = table->numCols();

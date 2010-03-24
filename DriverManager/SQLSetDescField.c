@@ -27,9 +27,15 @@
  *
  **********************************************************************
  *
- * $Id: SQLSetDescField.c,v 1.4 2003/10/30 18:20:46 lurcher Exp $
+ * $Id: SQLSetDescField.c,v 1.6 2007/05/25 16:42:32 lurcher Exp $
  *
  * $Log: SQLSetDescField.c,v $
+ * Revision 1.6  2007/05/25 16:42:32  lurcher
+ * Sync up
+ *
+ * Revision 1.5  2005/11/21 17:25:43  lurcher
+ * A few DM fixes for Oracle's ODBC driver
+ *
  * Revision 1.4  2003/10/30 18:20:46  lurcher
  *
  * Fix broken thread protection
@@ -108,7 +114,7 @@
 
 #include "drivermanager.h"
 
-static char const rcsid[]= "$RCSfile: SQLSetDescField.c,v $ $Revision: 1.4 $";
+static char const rcsid[]= "$RCSfile: SQLSetDescField.c,v $ $Revision: 1.6 $";
 
 SQLRETURN SQLSetDescFieldA( SQLHDESC descriptor_handle,
            SQLSMALLINT rec_number, 
@@ -195,8 +201,44 @@ SQLRETURN SQLSetDescField( SQLHDESC descriptor_handle,
         return function_return( SQL_HANDLE_DESC, descriptor, SQL_ERROR );
     }
 
-    if ( !CHECK_SQLSETDESCFIELD( descriptor -> connection ))
+    if ( CHECK_SQLSETDESCFIELD( descriptor -> connection ))
     {
+      ret = SQLSETDESCFIELD( descriptor -> connection,
+              descriptor -> driver_desc,
+              rec_number, 
+              field_identifier,
+              value, 
+              buffer_length );
+    }
+    else if ( CHECK_SQLSETDESCFIELDW( descriptor -> connection ))
+    {
+      SQLWCHAR *s1 = NULL;
+
+      if (field_identifier == SQL_DESC_NAME)
+      {
+        s1 = ansi_to_unicode_alloc( value, buffer_length, descriptor -> connection);
+
+      }
+      else
+      {
+              s1 = value;
+      }
+      ret = SQLSETDESCFIELDW( descriptor -> connection,
+                descriptor -> driver_desc,
+                rec_number, 
+                field_identifier,
+                s1, 
+                buffer_length );
+       
+       if (field_identifier == SQL_DESC_NAME)
+       {
+        if (s1)
+          free(s1); 
+       }
+     
+    }
+    else 
+	{
         dm_log_write( __FILE__, 
                 __LINE__, 
                 LOG_INFO, 
@@ -209,13 +251,6 @@ SQLRETURN SQLSetDescField( SQLHDESC descriptor_handle,
 
         return function_return( SQL_HANDLE_DESC, descriptor, SQL_ERROR );
     }
-
-    ret = SQLSETDESCFIELD( descriptor -> connection,
-            descriptor -> driver_desc,
-            rec_number, 
-            field_identifier,
-            value, 
-            buffer_length );
 
     if ( log_info.log_flag )
     {

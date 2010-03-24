@@ -13,7 +13,7 @@
 #include <rmsdef.h>
 #include <fabdef.h>
 #include <namdef.h>
-
+#include <unixlib.h>
 
 static int	error_status = SS$_NORMAL;
 static char	error_buffer[256];
@@ -37,6 +37,14 @@ int lt_dlinit (void)
     return 0;
 }
 
+char translate_buffer[NAM$C_MAXRSS+1];
+
+int to_vms_callback(char *name, int type)
+{
+	strcpy(translate_buffer, name);
+	return 1;
+}
+
 void * lt_dlopen (const char *filename)
 {
 
@@ -56,11 +64,27 @@ void * lt_dlopen (const char *filename)
     struct NAM  imgnam;
     char defimg[NAM$C_MAXRSS+1];
     char *defpath;
+	char local_fspec[NAM$C_MAXRSS+1];
 
     if (filename == NULL) 
     {
 	error_status = SS$_UNSUPPORTED;
 	return NULL;
+    }
+
+	strcpy(local_fspec, filename);
+
+    /* 
+     * The driver manager will handle a hard-coded path from a .ini file, but
+     * only if it's an absolute path in unix syntax.  To make those acceptable
+     * to lib$find_image_symbol, we have to convert to VMS syntax.  N.B. Because
+     * of the static buffer, this is not thread-safe, but copying immediately to
+     * local storage should limit the damage.
+     */
+	
+    if (filename[0] == '/') {
+        int num_translated = decc$to_vms(local_fspec, to_vms_callback, 0, 1);
+        if (num_translated == 1) strcpy(local_fspec, translate_buffer);
     }
 
     dh = (vms_dl *)malloc (sizeof (vms_dl));  
@@ -72,8 +96,8 @@ void * lt_dlopen (const char *filename)
     }
 
     imgfab = cc$rms_fab;
-    imgfab.fab$l_fna = (char *) filename;
-    imgfab.fab$b_fns = (int) strlen (filename);
+	imgfab.fab$l_fna = local_fspec;
+	imgfab.fab$b_fns = (int) strlen (local_fspec);
     imgfab.fab$w_ifi = 0;  
 
    /* If the logical name LTDL_LIBRARY_PATH does not exist, we'll depend

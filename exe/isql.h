@@ -11,8 +11,8 @@
  **************************************************/
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <sqlext.h>
-#include <ini.h>
 
 #ifdef HAVE_STRTOL
 
@@ -37,20 +37,25 @@ char *szSyntax =
 "* -mn        limit column display width to n *\n" \
 "* -v         verbose.                        *\n" \
 "* -lx        set locale to x                 *\n" \
+"* -q         wrap char fields in dquotes     *\n" \
+"* -3         Use ODBC 3 calls                *\n" \
+"* -n         Use new line processing         *\n" \
 "* --version  version                         *\n" \
 "*                                            *\n" \
-"* Notes                                      *\n" \
+"* Commands                                   *\n" \
 "*                                            *\n" \
-"*      isql supports redirection and piping  *\n" \
-"*      for batch processing.                 *\n" \
+"* help - list tables                         *\n" \
+"* help table - list columns in table         *\n" \
+"* help help - list all help options          *\n" \
 "*                                            *\n" \
 "* Examples                                   *\n" \
 "*                                            *\n" \
-"*      cat My.sql | isql WebDB MyID MyPWD -w *\n" \
+"*      isql WebDB MyID MyPWD -w < My.sql     *\n" \
 "*                                            *\n" \
 "*      Each line in My.sql must contain      *\n" \
 "*      exactly 1 SQL command except for the  *\n" \
-"*      last line which must be blank.        *\n" \
+"*      last line which must be blank (unless *\n" \
+"*      -n option specified).                 *\n" \
 "*                                            *\n" \
 "* Please visit;                              *\n" \
 "*                                            *\n" \
@@ -81,16 +86,19 @@ char *szSyntax =
 "*            (only used when -d)             *\n" \
 "* -mn        limit column display width to n *\n" \
 "* -v         verbose.                        *\n" \
+"* -q         wrap char fields in dquotes     *\n" \
+"* --version  version                         *\n" \
 "* --version  version                         *\n" \
 "*                                            *\n" \
-"* Notes                                      *\n" \
+"* Commands                                   *\n" \
 "*                                            *\n" \
-"*      isql supports redirection and piping  *\n" \
-"*      for batch processing.                 *\n" \
+"* help - list tables                         *\n" \
+"* help table - list columns in table         *\n" \
+"* help help - list all help options          *\n" \
 "*                                            *\n" \
 "* Examples                                   *\n" \
 "*                                            *\n" \
-"*      cat My.sql | isql WebDB MyID MyPWD -w *\n" \
+"*      isql WebDB MyID MyPWD -w < My.sql     *\n" \
 "*                                            *\n" \
 "*      Each line in My.sql must contain      *\n" \
 "*      exactly 1 SQL command except for the  *\n" \
@@ -115,20 +123,25 @@ char *szSyntax =
 #define min( a, b ) (((a) < (b)) ? (a) : (b))
 #endif
 
-int OpenDatabase( SQLHENV *phEnv, SQLHDBC *phDbc, char *szDSN, char *szUID, char *szPWD );
-int ExecuteSQL( SQLHDBC hDbc, char *szSQL, char cDelimiter, int bColumnNames, int bHTMLTable );
-int ExecuteHelp( SQLHDBC hDbc, char *szSQL, char cDelimiter, int bColumnNames, int bHTMLTable );
-int	CloseDatabase( SQLHENV hEnv, SQLHDBC hDbc );
+static int OpenDatabase( SQLHENV *phEnv, SQLHDBC *phDbc, char *szDSN, char *szUID, char *szPWD );
+static int ExecuteSQL( SQLHDBC hDbc, char *szSQL, char cDelimiter, int bColumnNames, int bHTMLTable );
+static int ExecuteHelp( SQLHDBC hDbc, char *szSQL, char cDelimiter, int bColumnNames, int bHTMLTable );
+static int ExecuteSlash( SQLHDBC hDbc, char *szSQL, char cDelimiter, int bColumnNames, int bHTMLTable );
+static int	CloseDatabase( SQLHENV hEnv, SQLHDBC hDbc );
 
-void WriteHeaderHTMLTable( SQLHSTMT hStmt );
-void WriteHeaderNormal( SQLHSTMT hStmt, SQLCHAR	*szSepLine );
-void WriteHeaderDelimited( SQLHSTMT hStmt, char cDelimiter );
-void WriteBodyHTMLTable( SQLHSTMT hStmt );
-SQLLEN WriteBodyNormal( SQLHSTMT hStmt );
-void WriteBodyDelimited( SQLHSTMT hStmt, char cDelimiter );
-void WriteFooterHTMLTable( SQLHSTMT hStmt );
-void WriteFooterNormal( SQLHSTMT hStmt, SQLCHAR	*szSepLine, SQLLEN nRows );
+static void WriteHeaderHTMLTable( SQLHSTMT hStmt );
+static void WriteHeaderNormal( SQLHSTMT hStmt, SQLCHAR	*szSepLine );
+static void WriteHeaderDelimited( SQLHSTMT hStmt, char cDelimiter );
+static void WriteBodyHTMLTable( SQLHSTMT hStmt );
+static SQLLEN WriteBodyNormal( SQLHSTMT hStmt );
+static void WriteBodyDelimited( SQLHSTMT hStmt, char cDelimiter );
+static void WriteFooterHTMLTable( SQLHSTMT hStmt );
+static void WriteFooterNormal( SQLHSTMT hStmt, SQLCHAR	*szSepLine, SQLLEN nRows );
 
-int DumpODBCLog( SQLHENV hEnv, SQLHDBC hDbc, SQLHSTMT hStmt );
+static int DumpODBCLog( SQLHENV hEnv, SQLHDBC hDbc, SQLHSTMT hStmt );
+static int get_args(char *string, char **args, int maxarg);
+static void free_args(char **args, int maxarg);
+static void output_help(void);
+
 
 

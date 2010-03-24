@@ -23,9 +23,17 @@
  *
  **********************************************************************
  *
- * $Id: SQLFetch.c,v 1.3 2003/10/06 15:43:47 lurcher Exp $
+ * $Id: SQLFetch.c,v 1.5 2005/10/27 17:54:49 lurcher Exp $
  *
  * $Log: SQLFetch.c,v $
+ * Revision 1.5  2005/10/27 17:54:49  lurcher
+ * fix what I suspect is a typo in qt.m4
+ *
+ * Revision 1.4  2005/07/08 12:11:24  lurcher
+ *
+ * Fix a cursor lib problem (it was broken if you did metadata calls)
+ * Alter the params to SQLParamOptions to use SQLULEN
+ *
  * Revision 1.3  2003/10/06 15:43:47  lurcher
  *
  * Fix cursor lib to work with SQLFetch as well as the other fetch calls
@@ -61,6 +69,11 @@ SQLRETURN CLFetch( SQLHSTMT statement_handle )
 {
     CLHSTMT cl_statement = (CLHSTMT) statement_handle; 
 
+    if ( cl_statement -> not_from_select ) 
+    {
+    	return SQLFETCH( cl_statement -> cl_connection, cl_statement -> driver_stmt );
+    }
+
     if ( !cl_statement -> bound_columns )
     {
         cl_statement -> cl_connection -> dh.__post_internal_error( &cl_statement -> dm_statement -> error,
@@ -75,5 +88,6 @@ SQLRETURN CLFetch( SQLHSTMT statement_handle )
             SQL_FETCH_NEXT, 
             0,
             cl_statement -> row_status_ptr,
-            cl_statement -> rows_fetched_ptr );
+            cl_statement -> rows_fetched_ptr,
+			0 );
 }

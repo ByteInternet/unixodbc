@@ -161,7 +161,12 @@ BOOL _odbcinst_SystemINI(
 	char *pszFileName,
 	BOOL bVerify );
 
-char * INSTAPI odbcinst_system_file_path( void );
+BOOL _odbcinst_FileINI(	char *pszPath );
+
+char * INSTAPI odbcinst_system_file_path( char *buffer );
+char * INSTAPI odbcinst_system_file_name( char *buffer );
+char * INSTAPI odbcinst_user_file_path( char *buffer );
+char * INSTAPI odbcinst_user_file_name( char *buffer );
 
 BOOL _odbcinst_ConfigModeINI( 	
 	char *pszFileName );
@@ -184,12 +189,15 @@ int _SQLGetInstalledDrivers(
 	LPCSTR	pszEntry,
 	LPCSTR	pszDefault,
 	LPCSTR	pRetBuffer,
-	int		nRetBuffer );
+	int     nRetBuffer );
 
 BOOL _SQLWriteInstalledDrivers(
 	LPCSTR	pszSection,
 	LPCSTR	pszEntry,
 	LPCSTR	pszString );
+
+void __set_config_mode( int mode );
+int __get_config_mode( void );
 
 int inst_logPushMsg( 
         char *pszModule, 
@@ -199,10 +207,9 @@ int inst_logPushMsg(
         int nCode, 
         char *pszMessage );
 
-int inst_logPopMsg( 
-        char *pszMsgHdr, 
-        int *pnCode, 
-        char *pszMsg );
+int inst_logPeekMsg( long nMsg, HLOGMSG *phMsg );
+int inst_logClear();
+
 
 /*
  * we should look at caching this info, the calls can become expensive
@@ -300,6 +307,25 @@ typedef struct	tODBCINSTPROPERTY
 	void 	*hDLL;									/* for odbcinst internal use... only first property has valid one 						*/
 } ODBCINSTPROPERTY, *HODBCINSTPROPERTY;
 
+/*
+ * Conversion routines for wide interface
+ */
+
+char* _multi_string_alloc_and_copy( LPCWSTR in );
+char* _single_string_alloc_and_copy( LPCWSTR in );
+void _single_string_copy_to_wide( SQLWCHAR *out, LPCSTR in, int len );
+void _multi_string_copy_to_wide( SQLWCHAR *out, LPCSTR in, int len );
+void _single_copy_to_wide( SQLWCHAR *out, LPCSTR in, int len );
+SQLWCHAR* _multi_string_alloc_and_expand( LPCSTR in );
+SQLWCHAR* _single_string_alloc_and_expand( LPCSTR in );
+void _single_copy_from_wide( SQLCHAR *out, LPCWSTR in, int len );
+
+/*
+ * To support finding UI plugin
+ */
+char *_getUIPluginName( char *pszName, char *pszUI );
+char *_appendUIPluginExtension( char *pszNameAndExtension, char *pszName );
+char *_prependUIPluginPath( char *pszPathAndName, char *pszName );
 
 #if defined(__cplusplus)
          extern  "C" {

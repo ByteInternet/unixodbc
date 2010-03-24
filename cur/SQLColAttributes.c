@@ -23,9 +23,12 @@
  *
  **********************************************************************
  *
- * $Id: SQLColAttributes.c,v 1.1.1.1 2001/10/17 16:40:15 lurcher Exp $
+ * $Id: SQLColAttributes.c,v 1.2 2007/11/13 15:04:57 lurcher Exp $
  *
  * $Log: SQLColAttributes.c,v $
+ * Revision 1.2  2007/11/13 15:04:57  lurcher
+ * Fix 64 bit cursor lib issues
+ *
  * Revision 1.1.1.1  2001/10/17 16:40:15  lurcher
  *
  * First upload to SourceForge
@@ -50,7 +53,7 @@ SQLRETURN CLColAttributes( SQLHSTMT statement_handle,
            SQLPOINTER   character_attribute,
            SQLSMALLINT  buffer_length,
            SQLSMALLINT  *string_length,
-           SQLINTEGER   *numeric_attribute )
+           SQLLEN   *numeric_attribute )
 {
     CLHSTMT cl_statement = (CLHSTMT) statement_handle; 
 

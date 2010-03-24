@@ -13,13 +13,33 @@
 #define classBrowseFrame_included
 
 #include "classBrowse.h"
+#ifdef QT_V4LAYOUT
+#include <Qt/qwidget.h>
+#include <Qt/qevent.h>
+#include <Qt/q3mainwindow.h>
+#include <Qt/q3popupmenu.h>
+#include <Qt/qstring.h>
+#else
 #include <qwidget.h>
 #include <qmainwindow.h>
 #include <qpopupmenu.h>
 #include <qstring.h>
+#endif
 #include <sqlext.h>
 
-class classBrowseFrame : public QMainWindow
+#ifdef QT_V4LAYOUT
+#define LView			Q3ListView
+#define LViewItem		Q3ListViewItem
+#define MWindow			Q3MainWindow
+#define PMenu			Q3PopupMenu
+#else
+#define LView			QListView
+#define LViewItem		QListViewItem
+#define MWindow			QMainWindow
+#define PMenu			QPopupMenu
+#endif
+
+class classBrowseFrame : public MWindow
 {
     Q_OBJECT
 
@@ -32,10 +52,11 @@ public:
 
 public slots:
     void autoRefresh();
+    void Resize(int,int); 
 
 protected:
     classBrowse *browse;
-    QPopupMenu  *pResults;
+    PMenu  		*pResults;
     int         nAutoRefresh;
 };
 #endif

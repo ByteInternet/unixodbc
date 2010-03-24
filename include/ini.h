@@ -380,6 +380,7 @@ int iniCursor( HINI hIni, HINI hIniCursor );
  *
  ******************************/
 int iniElement( char *pszData, char cSeperator, char cTerminator, int nElement, char *pszElement, int nMaxElement );
+int iniElementMax( char *pData, char cSeperator, int nDataLen, int nElement, char *pszElement, int nMaxElement );
 int iniElementToEnd( char *pszData, char cSeperator, char cTerminator, int nElement, char *pszElement, int nMaxElement );
 int iniElementEOL( char *pszData, char cSeperator, char cTerminator, int nElement, char *pszElement, int nMaxElement );
 
@@ -457,6 +458,7 @@ FILE *uo_fopen( const char *filename, const char *mode );
 int uo_fclose( FILE *stream );
 char *uo_fgets( char *szbuffer, int n, FILE *stream );
 int uo_fprintf( FILE *stream, const char *fmt, ...);
+int uo_vfprintf( FILE *stream, const char *fmt, va_list ap);
 
 #else
 
@@ -464,6 +466,7 @@ int uo_fprintf( FILE *stream, const char *fmt, ...);
 #define uo_fclose  fclose
 #define uo_fgets   fgets
 #define uo_fprintf fprintf
+#define uo_vfprintf vfprintf
 
 #endif
 

@@ -13,7 +13,7 @@ override_dh_auto_configure: autotools
 	# Add here commands to configure the package.
 	CXXFLAGS="-g -O2 -pipe" \
 	dh_auto_configure -- --with-qt-includes=/usr/include/qt3 \
-		--enable-static --enable-ltdllib
+		--enable-static --enable-ltdllib --without-pth
 
 override_dh_auto_clean:
 	dh_auto_clean
@@ -22,7 +22,7 @@ override_dh_auto_install:
 	dh_auto_install
 	sed -i "/^dependency_libs=/ s/'.*'/''/" debian/tmp/usr/lib/*.la
 	mkdir -p $(CURDIR)/debian/tmp/usr/lib/odbc
-	cp -L $(CURDIR)/debian/tmp/usr/lib/lib*S.so $(CURDIR)/debian/tmp/usr/lib/odbc
+	cp -L $(CURDIR)/debian/tmp/usr/lib/lib*S.so $(CURDIR)/debian/tmp/usr/lib/libnn.so $(CURDIR)/debian/tmp/usr/lib/odbc
 
 # The autotools target adds a forced build-time dependency on
 # autotools-dev (for /usr/share/misc/config.*)

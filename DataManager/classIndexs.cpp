@@ -13,19 +13,31 @@
 
 #include "keysilver2.xpm"
 
+#ifdef QT_V4LAYOUT
+classIndexs::classIndexs( Q3ListView *pParent, classCanvas *pCanvas, SQLHDBC hDbc, char *pszTable )
+#else
 classIndexs::classIndexs( QListView *pParent, classCanvas *pCanvas, SQLHDBC hDbc, char *pszTable )
+#endif
     : classNode( pParent, pCanvas )
 {
 	Init( hDbc, pszTable );
 }
 
+#ifdef QT_V4LAYOUT
+classIndexs::classIndexs( Q3ListViewItem *pParent, classCanvas *pCanvas, SQLHENV hDbc, char *pszTable )
+#else
 classIndexs::classIndexs( QListViewItem *pParent, classCanvas *pCanvas, SQLHENV hDbc, char *pszTable )
+#endif
     : classNode( pParent, pCanvas )
 {
 	Init( hDbc, pszTable );
 }
 
+#ifdef QT_V4LAYOUT
+classIndexs::classIndexs( Q3ListViewItem *pParent, Q3ListViewItem *pAfter, classCanvas *pCanvas, SQLHENV hDbc, char *pszTable )
+#else
 classIndexs::classIndexs( QListViewItem *pParent, QListViewItem *pAfter, classCanvas *pCanvas, SQLHENV hDbc, char *pszTable )
+#endif
     : classNode( pParent, pAfter, pCanvas )
 {
 	Init( hDbc, pszTable );
@@ -53,13 +65,21 @@ void classIndexs::setOpen( bool o )
 	{
 		LoadIndexs();
     }
+#ifdef QT_V4LAYOUT
+    Q3ListViewItem::setOpen( o );
+#else
     QListViewItem::setOpen( o );
+#endif
 }
 
 void classIndexs::setup()
 {
     setExpandable( TRUE );
+#ifdef QT_V4LAYOUT
+    Q3ListViewItem::setup();
+#else
     QListViewItem::setup();
+#endif
 }
 
 void classIndexs::LoadIndexs()
@@ -83,7 +103,11 @@ void classIndexs::LoadIndexs()
 	}
 
 	// EXECUTE OUR SQL/CALL
+#ifdef QT_V4LAYOUT
+	strcpy( (char *)szTableName, qsTable.ascii() );
+#else
 	strcpy( (char *)szTableName, qsTable.data() );
+#endif
 	if ( SQL_SUCCESS != (nReturn=SQLStatistics( hstmt, 0, 0, 0, 0, szTableName, SQL_NTS, 0, 0 )) )
 	{
 		QMessageBox::warning( pCanvas, "Data Manager",  "Failed to SQLStatistics" );
@@ -120,7 +144,11 @@ void classIndexs::LoadIndexs()
 
 }
 
+#ifdef QT_V4LAYOUT
+void classIndexs::selectionChanged( Q3ListViewItem *p )
+#else
 void classIndexs::selectionChanged( QListViewItem *p )
+#endif
 {
 	classIndex	*pIndex;
 

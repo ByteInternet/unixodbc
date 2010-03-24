@@ -11,7 +11,11 @@
  **************************************************/
 
 #include "classODBC.h"
+#ifdef QT_V4LAYOUT
+#include <Qt/qpixmap.h>
+#else
 #include <qpixmap.h>
+#endif
 #include <classDrivers.h>
 #include <classDataSources.h>
 #include "ODBC.xpm"
@@ -62,7 +66,11 @@ void my_msgBox( const QString & className,
 // ***********************************
 // ***********************************
 
+#ifdef QT_V4LAYOUT
+classODBC::classODBC( Q3ListView *pParent, classCanvas *pCanvas )
+#else
 classODBC::classODBC( QListView *pParent, classCanvas *pCanvas )
+#endif
     : classNode( pParent, pCanvas ) , pDrivers ( NULL ) , pDataSourcesUser( NULL ) , pDataSourcesSystem( NULL )
 {
   setPixmap( 0, QPixmap(xpmODBC) );
@@ -82,10 +90,18 @@ void classODBC::setOpen( bool bOpen )
     pDataSourcesUser   = new classDataSources( this, pDataSourcesSystem, pCanvas, User   );
   }
 
+#ifdef QT_V4LAYOUT
+  Q3ListViewItem::setOpen( bOpen );
+#else
   QListViewItem::setOpen( bOpen );
+#endif
 }
 
+#ifdef QT_V4LAYOUT
+void classODBC::selectionChanged( Q3ListViewItem *p )
+#else
 void classODBC::selectionChanged( QListViewItem *p )
+#endif
 {
   if ( pDataSourcesUser )   pDataSourcesUser->selectionChanged( p );
   if ( pDataSourcesSystem ) pDataSourcesSystem->selectionChanged( p );

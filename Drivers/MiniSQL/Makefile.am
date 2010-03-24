@@ -1,7 +1,7 @@
 if MSQL
 lib_LTLIBRARIES = libodbcmini.la
 
-INCLUDES = -I@top_srcdir@/include -I. -I@msql_headers@ -I${INCLTDL}
+INCLUDES = -I@top_srcdir@/include -I. -I@msql_headers@ -I${LTDLINCL}
 
 # PAH - Redundant?
 # DEFS = -DUNIXODBC @DEFS@ -DDRIVER_NAME=\"odbcminisql\"
@@ -196,6 +196,6 @@ EXTRA_DIST = \
 	sqlFreeEnv.c \
 	sqlFreeStmt.c 
 
-libodbcmini_la_LDFLAGS = -version-info 1:0:0 \
+libodbcmini_la_LDFLAGS = -no-undefined -version-info 1:0:0 \
 	-L@msql_libraries@ -lmsql -module
 

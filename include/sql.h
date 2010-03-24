@@ -597,10 +597,13 @@ extern "C" {
 #if (ODBCVER >= 0x0300)
     SQLRETURN  SQL_API SQLCloseCursor(SQLHSTMT StatementHandle);
 
-    SQLRETURN  SQL_API SQLColAttribute (SQLHSTMT StatementHandle,
+    SQLRETURN  SQL_API SQLColAttribute(SQLHSTMT StatementHandle,
                                         SQLUSMALLINT ColumnNumber, SQLUSMALLINT FieldIdentifier,
                                         SQLPOINTER CharacterAttribute, SQLSMALLINT BufferLength,
-                                        SQLSMALLINT *StringLength, SQLPOINTER NumericAttribute /* spec says (SQLPOINTER) not (SQLEN*) - PAH */ );
+                                        SQLSMALLINT *StringLength, SQLLEN *NumericAttribute 
+										/* spec says (SQLPOINTER) not (SQLEN*) - PAH */ );
+										/* Ms now say SQLLEN* http://msdn.microsoft.com/library/en-us/odbc/htm/dasdkodbcoverview_64bit.asp - NG */
+										
 #endif
 
 
@@ -655,7 +658,7 @@ extern "C" {
 
 #if (ODBCVER >= 0x0300)
     SQLRETURN  SQL_API SQLFetchScroll(SQLHSTMT StatementHandle,
-                                      SQLSMALLINT FetchOrientation, SQLROWOFFSET FetchOffset);
+                                      SQLSMALLINT FetchOrientation, SQLLEN FetchOffset);
 #endif
 
     SQLRETURN  SQL_API SQLFreeConnect(SQLHDBC ConnectionHandle);
@@ -791,7 +794,7 @@ extern "C" {
 #endif
 
     SQLRETURN  SQL_API SQLSetStmtOption(SQLHSTMT StatementHandle,
-                                        SQLUSMALLINT Option, SQLROWCOUNT Value);
+                                        SQLUSMALLINT Option, SQLULEN Value);
 
     SQLRETURN  SQL_API SQLSpecialColumns(SQLHSTMT StatementHandle,
                                          SQLUSMALLINT IdentifierType, SQLCHAR *CatalogName,

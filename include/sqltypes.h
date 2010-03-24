@@ -45,14 +45,15 @@ extern "C" {
 
 /*
  * this is defined by configure, but will not be on a normal application build
+ * the install creates a unixodbc_conf.h file that contains the current build settings
  */
 
-#ifndef SIZEOF_LONG
-# if defined(__alpha) || defined(__sparcv9) || defined(__LP64__) || (defined(__HOS_AIX__) && defined(_LP64))
-# define SIZEOF_LONG        8
-#else
-# define SIZEOF_LONG        4
+#ifndef SIZEOF_LONG_INT
+#include <unixodbc_conf.h>
 #endif
+
+#ifndef SIZEOF_LONG_INT
+#error "Needs to know how big a long int is to continue!!!"
 #endif
 
 /****************************
@@ -93,7 +94,7 @@ typedef void				VOID;
 #endif
 
 typedef unsigned short		WORD;
-#if (SIZEOF_LONG == 4)
+#if (SIZEOF_LONG_INT == 4)
 typedef unsigned long		DWORD;
 #else
 typedef unsigned int		DWORD;
@@ -108,6 +109,7 @@ typedef unsigned short 		WCHAR;
 
 typedef WCHAR* 	            LPWSTR;
 typedef const char*         LPCSTR;
+typedef const WCHAR*        LPCWSTR;
 typedef TCHAR*              LPTSTR;
 typedef char*               LPSTR;
 typedef DWORD*           	LPDWORD;
@@ -134,43 +136,26 @@ typedef double          SQLFLOAT;
  */
 
 /*
- * I (Nick) have made these changes, to cope with the new 3.52 MS
- * changes for 64 bit ODBC, but looking at MS's spec they havn't
- * finished it themself. For example, SQLBindCol now expects the
- * indicator variable to be a SQLLEN which then is a pointer to 
- * a 64 bit value. However the online book that comes with the 
- * headers, then goes on to describe the indicator_ptr in the 
- * descriptor record (which is set by SQLBindCol) as a pointer
- * to a SQLINTEGER (32 bit). So I don't think its ready for the
- * big time yet. Thats not to mention all the ODBC apps on 64 bit
- * platforms that this would break...
- *
- * I have just discovered that on win64 sizeof(long) == 4, so its
- * all smoke and mirrors...
+ * Hopefully by now it should be safe to assume most drivers know about SQLLEN now
+ * and the defaukt is now sizeof( SQLLEN ) = 8 on 64 bit platforms
  * 
  */
 
-/*
- * Failing to define this is *absolutely* broken on 64-bit archs, and we
- * are setting it in the Debian build, so use of this ABI is mandatory.
- * If you don't like it, go build your own non-64-bit-clean library instead.
- * SRL 2006-03-04
- */
-#ifndef BUILD_REAL_64_BIT_MODE
-#define BUILD_REAL_64_BIT_MODE
-#endif
-
-#if (SIZEOF_LONG == 8)
-#ifndef BUILD_REAL_64_BIT_MODE
+#if (SIZEOF_LONG_INT == 8)
+#ifdef BUILD_LEGACY_64_BIT_MODE
 typedef int             SQLINTEGER;
 typedef unsigned int    SQLUINTEGER;
 #define SQLLEN          SQLINTEGER
 #define SQLULEN         SQLUINTEGER
 #define SQLSETPOSIROW   SQLUSMALLINT
-typedef SQLULEN         SQLROWCOUNT;
-typedef SQLULEN         SQLROWSETSIZE;
-typedef SQLULEN         SQLTRANSID;
-typedef SQLLEN          SQLROWOFFSET;
+/* 
+ * These are not supprted on 64bit ODBC according to MS, removed, so use at your peril
+ *
+ typedef SQLULEN         SQLROWCOUNT;
+ typedef SQLULEN         SQLROWSETSIZE;
+ typedef SQLULEN         SQLTRANSID;
+ typedef SQLLEN          SQLROWOFFSET;
+*/
 #else
 typedef int             SQLINTEGER;
 typedef unsigned int    SQLUINTEGER;
@@ -178,12 +163,13 @@ typedef long            SQLLEN;
 typedef unsigned long   SQLULEN;
 typedef unsigned long   SQLSETPOSIROW;
 /* 
- * These are not supprted on 64bit ODBC according to MS 
- * typedef SQLULEN SQLTRANSID;
+ * These are not supprted on 64bit ODBC according to MS, removed, so use at your peril
+ *
+ typedef SQLULEN 		SQLTRANSID;
+ typedef SQLULEN 		SQLROWCOUNT;
+ typedef SQLUINTEGER 	SQLROWSETSIZE;
+ typedef SQLLEN 		SQLROWOFFSET;
  */
-typedef SQLULEN SQLROWCOUNT;
-typedef SQLUINTEGER SQLROWSETSIZE;
-typedef SQLLEN SQLROWOFFSET;
 #endif
 #else
 typedef long            SQLINTEGER;
@@ -260,7 +246,7 @@ typedef void *          	    HSTMT;
 typedef unsigned char           UCHAR;
 typedef signed char             SCHAR;
 typedef SCHAR                   SQLSCHAR;
-#if (SIZEOF_LONG == 4)
+#if (SIZEOF_LONG_INT == 4)
 typedef long int                SDWORD;
 typedef unsigned long int       UDWORD;
 #else
@@ -380,15 +366,16 @@ typedef struct tagSQL_INTERVAL_STRUCT
 /****************************
  *
  ***************************/
-#if (ODBCVER >= 0x0300)
-#if (SIZEOF_LONG == 8)
-#  define ODBCINT64	    long
-#  define UODBCINT64	unsigned long
-#else
-# ifdef HAVE_LONG_LONG
-#  define ODBCINT64	    long long
-#  define UODBCINT64	unsigned long long
+#ifndef ODBCINT64
+# if (ODBCVER >= 0x0300)
+# if (SIZEOF_LONG_INT == 8)
+#   define ODBCINT64	    long
+#   define UODBCINT64	unsigned long
 # else
+#  ifdef HAVE_LONG_LONG
+#   define ODBCINT64	    long long
+#   define UODBCINT64	unsigned long long
+#  else
 /*
  * may fail in some cases, but what else can we do ?
  */
@@ -402,16 +389,18 @@ struct __bigint_struct_u
     unsigned int    hiword;
     unsigned int    loword;
 };
-#  define ODBCINT64	    struct __bigint_struct
-#  define UODBCINT64	struct __bigint_struct_u
+#   define ODBCINT64	    struct __bigint_struct
+#   define UODBCINT64	struct __bigint_struct_u
+#  endif
 # endif
 #endif
+#endif
+
 #ifdef ODBCINT64
 typedef ODBCINT64	SQLBIGINT;
 #endif
 #ifdef UODBCINT64
 typedef UODBCINT64	SQLUBIGINT;
-#endif
 #endif
 
 

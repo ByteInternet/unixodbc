@@ -1,37 +1,22 @@
 if QT
+if QT4
+
+else
 
 bin_PROGRAMS = DataManagerII
 
-INCLUDES = -I@top_srcdir@/include @QT_INCLUDES@
+INCLUDES = -I@top_srcdir@/include $(QT_CXXFLAGS)
 
-DataManagerII_LDADD = @X_LDFLAGS@ \
-	@QT_LDFLAGS@ \
-	@USER_LDFLAGS@ \
-	@LIB_QT@ \
+DataManagerII_LDADD = \
+	$(QT_LDFLAGS) \
+	$(QT_LIBS) \
+	../ini/libinilc.la \
 	../odbcinst/libodbcinst.la \
 	../DriverManager/libodbc.la 
 
 DataManagerII_DEPENDANCIES = \
     ../odbcinst/libodbcinst.la \
 	../DriverManager/libodbc.la 
-
-CLEANFILES = \
-	mclassDataManager.cpp \
-	mclassCanvas.cpp \
-	mclassLogin.cpp \
-	mclassISQL.cpp \
-	mclassConnectionFrame.cpp \
-	mclassBrowseFrame.cpp \
-	mclassBrowse.cpp 
-
-nodist_DataManagerII_SOURCES = \
-	mclassDataManager.cpp \
-	mclassCanvas.cpp \
-	mclassLogin.cpp \
-	mclassISQL.cpp \
-	mclassConnectionFrame.cpp \
-	mclassBrowseFrame.cpp \
-	mclassBrowse.cpp 
 
 DataManagerII_SOURCES = \
 	classBrowse.cpp \
@@ -53,7 +38,14 @@ DataManagerII_SOURCES = \
 	classSpecialColumns.cpp \
 	classTable.cpp \
 	classTables.cpp \
-	main.cpp
+	main.cpp \
+	mclassDataManager.cpp \
+	mclassCanvas.cpp \
+	mclassLogin.cpp \
+	mclassISQL.cpp \
+	mclassConnectionFrame.cpp \
+	mclassBrowseFrame.cpp \
+	mclassBrowse.cpp 
 
 mclassDataManager.cpp: @srcdir@/classDataManager.h
 	@MOC@ @srcdir@/classDataManager.h -o mclassDataManager.cpp
@@ -76,12 +68,23 @@ mclassBrowseFrame.cpp: @srcdir@/classBrowseFrame.h
 mclassBrowse.cpp: @srcdir@/classBrowse.h
 	@MOC@ @srcdir@/classBrowse.h -o mclassBrowse.cpp
 
+CLEANFILES = \
+	mclassBrowseFrame.cpp \
+	mclassDataManager.cpp \
+	mclassCanvas.cpp \
+	mclassISQL.cpp \
+	mclassBrowse.cpp \
+	mclassConnectionFrame.cpp \
+	mclassLogin.cpp 
+
+endif
 endif
 
 EXTRA_DIST = \
 	classCanvas.h \
 	classColumn.h \
 	classDataManager.h \
+	classDataManager4.h \
 	classDataSource.h \
 	classDataSources.h \
 	classDriver.h \

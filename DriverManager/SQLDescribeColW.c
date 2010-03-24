@@ -27,9 +27,24 @@
  *
  **********************************************************************
  *
- * $Id: SQLDescribeColW.c,v 1.8 2003/10/30 18:20:45 lurcher Exp $
+ * $Id: SQLDescribeColW.c,v 1.13 2008/08/29 08:01:38 lurcher Exp $
  *
  * $Log: SQLDescribeColW.c,v $
+ * Revision 1.13  2008/08/29 08:01:38  lurcher
+ * Alter the way W functions are passed to the driver
+ *
+ * Revision 1.12  2008/05/20 13:43:47  lurcher
+ * Vms fixes
+ *
+ * Revision 1.11  2007/04/02 10:50:18  lurcher
+ * Fix some 64bit problems (only when sizeof(SQLLEN) == 8 )
+ *
+ * Revision 1.10  2007/02/28 15:37:47  lurcher
+ * deal with drivers that call internal W functions and end up in the driver manager. controlled by the --enable-handlemap configure arg
+ *
+ * Revision 1.9  2007/01/02 10:27:50  lurcher
+ * Fix descriptor leak with unicode only driver
+ *
  * Revision 1.8  2003/10/30 18:20:45  lurcher
  *
  * Fix broken thread protection
@@ -124,6 +139,41 @@ SQLRETURN SQLDescribeColW( SQLHSTMT statement_handle,
                     LOG_INFO, 
                     "Error: SQL_INVALID_HANDLE" );
 
+#ifdef WITH_HANDLE_REDIRECT
+		{
+			DMHSTMT parent_statement;
+
+			parent_statement = find_parent_handle( statement, SQL_HANDLE_STMT );
+
+			if ( parent_statement ) {
+        		dm_log_write( __FILE__, 
+                	__LINE__, 
+                    	LOG_INFO, 
+                    	LOG_INFO, 
+                    	"Info: found parent handle" );
+
+				if ( CHECK_SQLDESCRIBECOLW( parent_statement -> connection ))
+				{
+        			dm_log_write( __FILE__, 
+                		__LINE__, 
+                   		 	LOG_INFO, 
+                   		 	LOG_INFO, 
+                   		 	"Info: calling redirected driver function" );
+
+                	return  SQLDESCRIBECOLW( parent_statement -> connection,
+							statement_handle,
+							column_number,
+							column_name,
+							buffer_length,
+							name_length,
+							data_type,
+							column_size,
+							decimal_digits,
+							nullable );
+				}
+			}
+		}
+#endif
         return SQL_INVALID_HANDLE;
     }
 
@@ -290,7 +340,8 @@ SQLRETURN SQLDescribeColW( SQLHSTMT statement_handle,
         }
     }
 
-    if ( statement -> connection -> unicode_driver )
+    if ( statement -> connection -> unicode_driver ||
+      CHECK_SQLDESCRIBECOLW( statement -> connection ))
     {
         if ( !CHECK_SQLDESCRIBECOLW( statement -> connection ))
         {
@@ -379,7 +430,13 @@ SQLRETURN SQLDescribeColW( SQLHSTMT statement_handle,
 
     if ( log_info.log_flag )
     {
-        sprintf( statement -> msg, 
+		if ( !SQL_SUCCEEDED( ret )) {
+        	sprintf( statement -> msg, 
+                "\n\t\tExit:[%s]",
+                    __get_return_status( ret, s6 ));
+		}
+		else {
+        	sprintf( statement -> msg, 
                 "\n\t\tExit:[%s]\
                 \n\t\t\tColumn Name = %s\
                 \n\t\t\tData Type = %s\
@@ -390,9 +447,10 @@ SQLRETURN SQLDescribeColW( SQLHSTMT statement_handle,
                     __sdata_as_string( s1, SQL_CHAR, 
                         name_length, column_name ),
                     __sptr_as_string( s2, data_type ),
-                    __ptr_as_string( s3, (void*)column_size ),
+                    __ptr_as_string( s3, (SQLLEN*)column_size ),
                     __sptr_as_string( s4, decimal_digits ),
                     __sptr_as_string( s5, nullable ));
+		}
 
         dm_log_write( __FILE__, 
                 __LINE__, 

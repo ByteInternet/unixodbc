@@ -12,19 +12,31 @@
 #include "classDriver.h"
 #include "driver.xpm"
 
+#ifdef QT_V4LAYOUT
+classDriver::classDriver( Q3ListView *pParent, classCanvas *pCanvas, char *pszDriverName, SQLHENV	hEnv  )
+#else
 classDriver::classDriver( QListView *pParent, classCanvas *pCanvas, char *pszDriverName, SQLHENV	hEnv  )
+#endif
     : classNode( pParent, pCanvas )
 {
 	Init( pszDriverName, hEnv );
 }
 
+#ifdef QT_V4LAYOUT
+classDriver::classDriver( Q3ListViewItem *pParent, classCanvas *pCanvas, char *pszDriverName, SQLHENV	hEnv )
+#else
 classDriver::classDriver( QListViewItem *pParent, classCanvas *pCanvas, char *pszDriverName, SQLHENV	hEnv )
+#endif
     : classNode( pParent, pCanvas )
 {
 	Init( pszDriverName, hEnv );
 }
 
+#ifdef QT_V4LAYOUT
+classDriver::classDriver( Q3ListViewItem *pParent, Q3ListViewItem *pAfter, classCanvas *pCanvas, char *pszDriverName, SQLHENV	hEnv )
+#else
 classDriver::classDriver( QListViewItem *pParent, QListViewItem *pAfter, classCanvas *pCanvas, char *pszDriverName, SQLHENV	hEnv )
+#endif
     : classNode( pParent, pAfter, pCanvas )
 {
 	Init( pszDriverName, hEnv );
@@ -58,7 +70,7 @@ void classDriver::Init( char *pszDriverName, SQLHENV hEnv )
 
 	szResults[0] 		= '\0';
     szPropertyValue[0]	= '\0';
-	if ( SQLGetPrivateProfileString((char*) qsDriverName.data(), "Description", "", szResults, sizeof(szResults), "odbcinst" ) > 0 )
+	if ( SQLGetPrivateProfileString((char*) qsDriverName.ascii(), "Description", "", szResults, sizeof(szResults), "odbcinst" ) > 0 )
 		iniElement( szResults, '\0', '\0', 0, szPropertyValue, INI_MAX_PROPERTY_VALUE );
 	else
 	{
@@ -78,17 +90,29 @@ void classDriver::setOpen( bool o )
 	{
 		setExpandable( FALSE );
     }
+#ifdef QT_V4LAYOUT
+    Q3ListViewItem::setOpen( o );
+#else
     QListViewItem::setOpen( o );
+#endif
 }
 
 void classDriver::setup()
 {
     setExpandable( TRUE );
+#ifdef QT_V4LAYOUT
+    Q3ListViewItem::setup();
+#else
     QListViewItem::setup();
+#endif
 }
 
 
+#ifdef QT_V4LAYOUT
+void classDriver::selectionChanged( Q3ListViewItem *p )
+#else
 void classDriver::selectionChanged( QListViewItem *p )
+#endif
 {
 	if ( p == this )
 	{

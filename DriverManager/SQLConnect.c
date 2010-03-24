@@ -27,9 +27,58 @@
  *
  **********************************************************************
  *
- * $Id: SQLConnect.c,v 1.45 2005/03/01 14:24:40 lurcher Exp $
+ * $Id: SQLConnect.c,v 1.60 2008/09/29 14:02:43 lurcher Exp $
  *
  * $Log: SQLConnect.c,v $
+ * Revision 1.60  2008/09/29 14:02:43  lurcher
+ * Fix missing dlfcn group option
+ *
+ * Revision 1.59  2008/08/29 08:01:38  lurcher
+ * Alter the way W functions are passed to the driver
+ *
+ * Revision 1.58  2008/06/17 16:14:13  lurcher
+ * Fix for iconv memory leak and some fixes for CYGWIN
+ *
+ * Revision 1.57  2008/05/30 12:04:55  lurcher
+ * Fix a couple of build problems and get ready for the next release
+ *
+ * Revision 1.56  2007/07/13 14:01:18  lurcher
+ * Fix problem when not using iconv
+ *
+ * Revision 1.55  2007/03/13 10:35:38  lurcher
+ * clear the iconv handles after use
+ *
+ * Revision 1.54  2007/03/07 22:53:29  lurcher
+ * Fix pooling iconv leak, and try and allow the W entry point in a setup lib to be used
+ *
+ * Revision 1.53  2007/01/02 10:27:50  lurcher
+ * Fix descriptor leak with unicode only driver
+ *
+ * Revision 1.52  2006/10/13 08:43:10  lurcher
+ *
+ *
+ * Remove debug printf
+ *
+ * Revision 1.51  2006/06/28 08:08:41  lurcher
+ * Add timestamp with timezone to Postgres7.1 driver
+ *
+ * Revision 1.50  2006/04/11 10:22:56  lurcher
+ * Fix a data type check
+ *
+ * Revision 1.49  2005/11/08 09:37:10  lurcher
+ * Allow the driver and application to have different length handles
+ *
+ * Revision 1.48  2005/10/06 08:50:58  lurcher
+ * Fix problem with SQLDrivers not returning first entry
+ *
+ * Revision 1.47  2005/07/08 12:11:23  lurcher
+ *
+ * Fix a cursor lib problem (it was broken if you did metadata calls)
+ * Alter the params to SQLParamOptions to use SQLULEN
+ *
+ * Revision 1.46  2005/05/24 16:51:57  lurcher
+ * Fix potential for the driver to no have its handle closed
+ *
  * Revision 1.45  2005/03/01 14:24:40  lurcher
  * Change DontDLClose default
  *
@@ -521,7 +570,7 @@
 
 #include "drivermanager.h"
 
-static char const rcsid[]= "$RCSfile: SQLConnect.c,v $ $Revision: 1.45 $";
+static char const rcsid[]= "$RCSfile: SQLConnect.c,v $ $Revision: 1.60 $";
 
 #ifdef __OS2__
 #define CURSOR_LIB	"ODBCCR"
@@ -883,6 +932,8 @@ int __connect_part_one( DMHDBC connection, char *driver_lib, char *driver_name, 
         dbc_change_thread_support( connection, threading_level );
     }
 
+	connection -> threading_level = threading_level;
+
     /*
      * do we want to disable the SQLFetch -> SQLExtendedFetch 
      * mapping ?
@@ -996,8 +1047,8 @@ int __connect_part_one( DMHDBC connection, char *driver_lib, char *driver_name, 
      * open the lib
      */
 
-    connection -> driver_env = (SQLHANDLE)NULL;
-    connection -> driver_dbc = (SQLHANDLE)NULL;
+    connection -> driver_env = (DRV_SQLHANDLE)NULL;
+    connection -> driver_dbc = (DRV_SQLHANDLE)NULL;
     connection -> functions = NULL;
     connection -> dl_handle = NULL;
 
@@ -1208,8 +1259,6 @@ int __connect_part_one( DMHDBC connection, char *driver_lib, char *driver_name, 
             connection -> environment -> requested_version;
         }
         /* end of fix */
-
-        mutex_lib_exit();
     }
     else
     {
@@ -1221,8 +1270,6 @@ int __connect_part_one( DMHDBC connection, char *driver_lib, char *driver_name, 
         connection -> env_list_ent = env_lib_list;
 
         connection -> environment -> env_lib_list = env_lib_list;
-
-        mutex_lib_exit();
 
         __set_local_attributes( connection, SQL_HANDLE_ENV );
 
@@ -1257,8 +1304,6 @@ int __connect_part_one( DMHDBC connection, char *driver_lib, char *driver_name, 
 
             if ( env_lib_list -> count == 1 )
             {
-                mutex_lib_entry();
-
                 if ( env_lib_prev )
                 {
                     env_lib_prev -> next = env_lib_list -> next;
@@ -1270,18 +1315,13 @@ int __connect_part_one( DMHDBC connection, char *driver_lib, char *driver_name, 
 
                 free( env_lib_list -> lib_name );
                 free( env_lib_list );
-
-                mutex_lib_exit();
             }
             else
             {
-                mutex_lib_entry();
-
                 env_lib_list -> count --;
-
-                mutex_lib_exit();
             }
             
+    		mutex_lib_exit();
             return 0;
         }
 
@@ -1301,8 +1341,6 @@ int __connect_part_one( DMHDBC connection, char *driver_lib, char *driver_name, 
 
             if ( env_lib_list -> count == 1 )
             {
-                mutex_lib_entry();
-
                 if ( env_lib_prev )
                 {
                     env_lib_prev -> next = env_lib_list -> next;
@@ -1314,18 +1352,13 @@ int __connect_part_one( DMHDBC connection, char *driver_lib, char *driver_name, 
 
                 free( env_lib_list -> lib_name );
                 free( env_lib_list );
-
-                mutex_lib_exit();
             }
             else
             {
-                mutex_lib_entry();
-
                 env_lib_list -> count --;
-
-                mutex_lib_exit();
             }
 
+    		mutex_lib_exit();
             return 0;
         }
 
@@ -1389,6 +1422,8 @@ int __connect_part_one( DMHDBC connection, char *driver_lib, char *driver_name, 
          */
         __set_attributes( connection, SQL_HANDLE_ENV );
     }
+
+    mutex_lib_exit();
 
     /*
      * allocate a connection handle
@@ -1691,6 +1726,7 @@ int __connect_part_one( DMHDBC connection, char *driver_lib, char *driver_name, 
         struct save_attr *sa;
 
         sa = connection -> save_attr;
+
         if ( sa -> str_attr )
         {
             if (CHECK_SQLSETCONNECTATTR( connection ))
@@ -1719,7 +1755,7 @@ int __connect_part_one( DMHDBC connection, char *driver_lib, char *driver_name, 
                             connection -> driver_dbc,
                             sa -> attr_type,
                             sa -> int_attr,
-                            0 );
+                            sa -> str_len );
             }
             else if (CHECK_SQLSETCONNECTOPTION(connection))
             {
@@ -2045,13 +2081,12 @@ int __connect_part_two( DMHDBC connection )
      */
 
     connection -> driver_act_ver = 0;
-    if ( CHECK_SQLGETINFO( connection ))
+    if ( CHECK_SQLGETINFO( connection ) || CHECK_SQLGETINFOW( connection ))
     {
         char txt[ 20 ];
         SQLRETURN ret;
 
-        ret = SQLGETINFO( connection,
-                    connection -> driver_dbc,
+        ret = __SQLGetInfo( connection,
                     SQL_DRIVER_ODBC_VER,
                     txt,
                     sizeof( txt ),
@@ -2064,8 +2099,7 @@ int __connect_part_two( DMHDBC connection )
 
         if ( connection -> driver_act_ver == SQL_OV_ODBC3 )
         {
-            ret = SQLGETINFO( connection,
-                    connection -> driver_dbc,
+            ret = __SQLGetInfo( connection,
                     SQL_XOPEN_CLI_YEAR,
                     txt, 
                     sizeof( connection -> cli_year ),
@@ -2097,7 +2131,7 @@ int __connect_part_two( DMHDBC connection )
          * get scrollable info
          */
 
-        if ( !CHECK_SQLGETINFO( connection ))
+        if ( !CHECK_SQLGETINFO( connection ) && !CHECK_SQLGETINFOW( connection ))
         {
             /*
              * bit of a retarded driver, better give up
@@ -2116,11 +2150,10 @@ int __connect_part_two( DMHDBC connection )
             if ( connection -> driver_act_ver ==
                     SQL_OV_ODBC3 )
             {
-                ret = SQLGETINFO( connection,
-                        connection -> driver_dbc,
+                ret = __SQLGetInfo( connection,
                         SQL_STATIC_CURSOR_ATTRIBUTES1,
                         &val,
-                        NULL,
+                        sizeof( val ),
                         NULL );
 
                 if ( ret != SQL_SUCCESS )
@@ -2144,11 +2177,10 @@ int __connect_part_two( DMHDBC connection )
             }
             else
             {
-                ret = SQLGETINFO( connection,
-                        connection -> driver_dbc,
+                ret = __SQLGetInfo( connection,
                         SQL_FETCH_DIRECTION,
                         &val,
-                        NULL,
+                        sizeof( val ),
                         NULL );
 
                 if ( ret != SQL_SUCCESS )
@@ -2316,18 +2348,24 @@ static void release_env( DMHDBC connection )
         {
             if ( connection -> driver_version == SQL_OV_ODBC3 )
             {
+				ret = SQL_ERROR;
                 if ( CHECK_SQLFREEHANDLE( connection ))
                 {
                     ret = SQLFREEHANDLE( connection,
                             SQL_HANDLE_ENV,
                             connection -> driver_env );
-
-                    if ( !ret )
-                        connection -> driver_env = (SQLHANDLE)NULL;
                 }
+				else if ( CHECK_SQLFREEENV( connection ))
+                {
+                    ret = SQLFREEENV( connection,
+                            connection -> driver_env );
+				}
+				if ( !ret )
+					connection -> driver_env = (DRV_SQLHANDLE)NULL;
             }
             else
             {
+				ret = SQL_ERROR;
                 if ( CHECK_SQLFREEENV( connection ))
                 {
                     ret = SQLFREEENV( connection,
@@ -2341,7 +2379,7 @@ static void release_env( DMHDBC connection )
                 }
 
                 if ( !ret )
-                    connection -> driver_env = (SQLHANDLE)NULL;
+                    connection -> driver_env = (DRV_SQLHANDLE)NULL;
             }
 
             /*
@@ -2379,7 +2417,7 @@ static void release_env( DMHDBC connection )
 
 void __disconnect_part_one( DMHDBC connection )
 {
-    int ret;
+    int ret = SQL_ERROR;
 
     /*
      * try a version 3 disconnect first on the connection
@@ -2393,31 +2431,39 @@ void __disconnect_part_one( DMHDBC connection )
                 ret = SQLFREEHANDLE( connection,
                         SQL_HANDLE_DBC,
                         connection -> driver_dbc );
+			}
+			else if ( CHECK_SQLFREECONNECT( connection ))
+			{
+				ret = SQLFREECONNECT( connection,
+						connection -> driver_dbc );
+			}
 
-                if ( !ret )
-                    connection -> driver_dbc = (SQLHANDLE)NULL;
+			if ( !ret )
+			{
+				connection -> driver_dbc = (DRV_SQLHANDLE)NULL;
             }
         }
+		else 
+		{
+			if ( CHECK_SQLFREECONNECT( connection ))
+			{
+				ret = SQLFREECONNECT( connection,
+						connection -> driver_dbc );
+			}
+			else if ( CHECK_SQLFREEHANDLE( connection ))
+            {
+                ret = SQLFREEHANDLE( connection,
+                        SQL_HANDLE_DBC,
+                        connection -> driver_dbc );
+			}
 
-        /*
-         * is it still open ?
-         */
-
-        if (  connection -> driver_dbc &&
-                CHECK_SQLFREECONNECT( connection ))
-        {
-            SQLFREECONNECT( connection,
-                    connection -> driver_dbc );
-        }
-        else
-        {
-            /*
-             * not a lot we can do here
-             */
-        }
-
+			if ( !ret ) 
+			{
+				connection -> driver_dbc = (DRV_SQLHANDLE)NULL;
+            }
+		}
+    	connection -> driver_dbc = (DRV_SQLHANDLE)NULL;
     }
-    connection -> driver_dbc = (SQLHANDLE)NULL;
 
     /*
      * now disconnect the environment, if its the last usage on the connection
@@ -2428,7 +2474,7 @@ void __disconnect_part_one( DMHDBC connection )
         release_env( connection );
     }
 
-    connection -> driver_env = (SQLHANDLE)NULL;
+    connection -> driver_env = (DRV_SQLHANDLE)NULL;
 
     /*
      * unload the lib
@@ -2489,7 +2535,7 @@ void __disconnect_part_four( DMHDBC connection )
 
     release_env( connection );
 
-    connection -> driver_env = (SQLHANDLE)NULL;
+    connection -> driver_env = (DRV_SQLHANDLE)NULL;
 
     /*
      * unload the lib
@@ -2581,7 +2627,7 @@ void __disconnect_part_three( DMHDBC connection )
         }
     }
 
-    connection -> driver_dbc = (SQLHANDLE)NULL;
+    connection -> driver_dbc = (DRV_SQLHANDLE)NULL;
 
     __disconnect_part_four( connection );
 }
@@ -2709,7 +2755,7 @@ static void close_pooled_connection( CPOOL *ptr )
             }
         }
 
-        ptr -> connection.driver_dbc = (SQLHANDLE)NULL;
+        ptr -> connection.driver_dbc = (DRV_SQLHANDLE)NULL;
 
         /*
          * Only call freeenv if its the last connection to the driver
@@ -2717,7 +2763,7 @@ static void close_pooled_connection( CPOOL *ptr )
 
         release_env( &ptr -> connection );
 
-        ptr -> connection.driver_env = (SQLHANDLE)NULL;
+        ptr -> connection.driver_env = (DRV_SQLHANDLE)NULL;
 
         /*
          * unload the lib
@@ -2750,6 +2796,12 @@ static void close_pooled_connection( CPOOL *ptr )
             }
             ptr -> connection.dl_handle = NULL;
         }
+
+    	/*
+     	 * shutdown unicode
+     	 */
+
+    	unicode_shutdown( &ptr -> connection );
 
         /*
          * free some memory
@@ -2767,8 +2819,8 @@ static void close_pooled_connection( CPOOL *ptr )
          * All we can do is tidy up
          */
 
-        ptr -> connection.driver_dbc = (SQLHANDLE)NULL;
-        ptr -> connection.driver_env = (SQLHANDLE)NULL;
+        ptr -> connection.driver_dbc = (DRV_SQLHANDLE)NULL;
+        ptr -> connection.driver_env = (DRV_SQLHANDLE)NULL;
 
         /*
          * unload the lib
@@ -2801,6 +2853,12 @@ static void close_pooled_connection( CPOOL *ptr )
             }
             ptr -> connection.dl_handle = NULL;
         }
+
+    	/*
+     	 * shutdown unicode
+     	 */
+
+    	unicode_shutdown( &ptr -> connection );
 
         /*
          * free some memory
@@ -3367,6 +3425,13 @@ void return_to_pool( DMHDBC connection )
         ptr -> connection.environment = connection -> environment;
         strcpy( ptr -> connection.probe_sql, connection -> probe_sql );
 
+#ifdef HAVE_ICONV
+    	ptr -> connection.iconv_cd_uc_to_ascii = connection -> iconv_cd_uc_to_ascii;
+    	ptr -> connection.iconv_cd_ascii_to_uc = connection -> iconv_cd_ascii_to_uc;
+	connection -> iconv_cd_uc_to_ascii = (iconv_t) -1;
+	connection -> iconv_cd_ascii_to_uc = (iconv_t) -1;
+#endif
+
         if ( connection -> server_length < 0 )
         {
             strcpy( ptr -> server, connection -> server );
@@ -3922,7 +3987,7 @@ SQLRETURN SQLConnect( SQLHDBC connection_handle,
             return function_return( SQL_HANDLE_DBC, connection, ret_from_connect );
         }
 
-        connection -> unicode_driver = 0;
+	connection -> unicode_driver = 0;
     }
     else
     {
@@ -4132,4 +4197,22 @@ SQLRETURN SQLConnect( SQLHDBC connection_handle,
     }
 
     return function_return( SQL_HANDLE_DBC, connection, ret_from_connect );
+}
+
+/*
+ * connection pooling setup, just stubs for the moment
+ */
+
+BOOL ODBCSetTryWaitValue ( DWORD dwValue )
+{
+	return 0;
+}
+
+#ifdef __cplusplus
+DWORD ODBCGetTryWaitValue ( )
+#else
+DWORD ODBCGetTryWaitValue ( VOID )
+#endif
+{
+	return 0;
 }

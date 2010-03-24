@@ -27,9 +27,39 @@
  *
  **********************************************************************
  *
- * $Id: __info.c,v 1.38 2005/02/07 11:46:45 lurcher Exp $
+ * $Id: __info.c,v 1.48 2008/09/29 14:02:45 lurcher Exp $
  *
  * $Log: __info.c,v $
+ * Revision 1.48  2008/09/29 14:02:45  lurcher
+ * Fix missing dlfcn group option
+ *
+ * Revision 1.47  2008/01/02 15:10:33  lurcher
+ * Fix problems trying to use the cursor lib on a non select statement
+ *
+ * Revision 1.46  2007/11/26 11:37:23  lurcher
+ * Sync up before tag
+ *
+ * Revision 1.45  2007/09/28 13:20:22  lurcher
+ * Add timestamp to logging
+ *
+ * Revision 1.44  2007/04/02 10:50:19  lurcher
+ * Fix some 64bit problems (only when sizeof(SQLLEN) == 8 )
+ *
+ * Revision 1.43  2007/03/05 09:49:24  lurcher
+ * Get it to build on VMS again
+ *
+ * Revision 1.42  2006/11/27 14:08:34  lurcher
+ * Sync up dirs
+ *
+ * Revision 1.41  2006/03/08 11:22:13  lurcher
+ * Add check for valid C_TYPE
+ *
+ * Revision 1.40  2005/12/19 18:43:26  lurcher
+ * Add new parts to contrib and alter how the errors are returned from the driver
+ *
+ * Revision 1.39  2005/11/08 09:37:10  lurcher
+ * Allow the driver and application to have different length handles
+ *
  * Revision 1.38  2005/02/07 11:46:45  lurcher
  * Add missing ODBC2 installer stubs
  *
@@ -417,9 +447,21 @@
  *
  **********************************************************************/
 
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <unistd.h>
+
+#if defined( HAVE_GETTIMEOFDAY ) && defined( HAVE_SYS_TIME_H )
+#include <sys/time.h>
+#elif defined( HAVE_FTIME ) && defined( HAVE_SYS_TIMEB_H )
+#include <sys/timeb.h>
+#elif defined( DHAVE_TIME ) && defined( HAVE_TIME_H ) 
+#include <time.h>
+#endif
+
 #include "drivermanager.h"
 
-static char const rcsid[]= "$RCSfile: __info.c,v $ $Revision: 1.38 $";
+static char const rcsid[]= "$RCSfile: __info.c,v $ $Revision: 1.48 $";
 
 struct log_structure log_info = { NULL, NULL, 0 };
 
@@ -627,14 +669,14 @@ char *unicode_to_ansi_alloc( SQLWCHAR *str, SQLINTEGER len, DMHDBC connection )
         return NULL;
     }
 
-    return unicode_to_ansi_copy( aptr, str, len, connection );
+    return unicode_to_ansi_copy( aptr, len, str, len, connection );
 }
 
 /*
  * copy from a unicode buffer to a ansi buffer using the chosen conversion
  */
 
-char *unicode_to_ansi_copy( char * dest, SQLWCHAR *src, SQLINTEGER buffer_len, DMHDBC connection )
+char *unicode_to_ansi_copy( char * dest, int dest_len, SQLWCHAR *src, SQLINTEGER buffer_len, DMHDBC connection )
 {
     char *aptr = (char*) src;
     int i;
@@ -648,7 +690,6 @@ char *unicode_to_ansi_copy( char * dest, SQLWCHAR *src, SQLINTEGER buffer_len, D
     {
         buffer_len = wide_strlen( src ) + 1;
     }
-
 #ifdef HAVE_ICONV
 
     mutex_iconv_entry();
@@ -657,7 +698,7 @@ char *unicode_to_ansi_copy( char * dest, SQLWCHAR *src, SQLINTEGER buffer_len, D
     {
         size_t ret;
         size_t inbl = buffer_len * sizeof( SQLWCHAR );
-        size_t obl = buffer_len;
+        size_t obl = dest_len;
         char *ipt = (char*)src;
         char *opt = (char*)dest;
 
@@ -665,7 +706,7 @@ char *unicode_to_ansi_copy( char * dest, SQLWCHAR *src, SQLINTEGER buffer_len, D
                     (ICONV_CONST char**)&ipt, &inbl,
                     &opt, &obl )) != (size_t)(-1))
         {
-    		mutex_iconv_exit();
+   		mutex_iconv_exit();
             return dest;
         }
     }
@@ -674,7 +715,7 @@ char *unicode_to_ansi_copy( char * dest, SQLWCHAR *src, SQLINTEGER buffer_len, D
 
 #endif
 
-    for ( i = 0; i < buffer_len && src[ i ] != 0; i ++ )
+    for ( i = 0; i < buffer_len && i < dest_len && src[ i ] != 0; i ++ )
     {
 #ifdef SQL_WCHART_CONVERT
         dest[ i ] = (char)(src[ i ] & 0x000000ff);
@@ -716,12 +757,17 @@ SQLWCHAR *ansi_to_unicode_copy( SQLWCHAR * dest, char *src, SQLINTEGER buffer_le
         char *ipt = (char*)src;
         char *opt = (char*)dest;
 
+		mutex_iconv_entry();
+
         if ( iconv( connection -> iconv_cd_ascii_to_uc,
                     (ICONV_CONST char**)&ipt, &inbl,
                     &opt, &obl ) != (size_t)(-1))
         {
+			mutex_iconv_exit();
             return dest;
         }
+
+		mutex_iconv_exit();
     }
 
 #endif
@@ -1095,7 +1141,21 @@ char * __data_as_string( SQLCHAR *s, SQLINTEGER type,
  * display a pointer to a int
  */
 
-char * __ptr_as_string( SQLCHAR *s, SQLINTEGER *ptr )
+char * __iptr_as_string( SQLCHAR *s, SQLINTEGER *ptr )
+{
+    if ( ptr )
+    {
+        sprintf((char*) s, "%p -> %d", (void*)ptr, (int)*ptr );
+    }
+    else
+    {
+        sprintf((char*) s, "NULLPTR" );
+    }
+
+    return (char*) s;
+}
+
+char * __ptr_as_string( SQLCHAR *s, SQLLEN *ptr )
 {
     if ( ptr )
     {
@@ -2969,7 +3029,7 @@ void __map_error_state_w( SQLWCHAR * wstate, int requested_version )
 {
     char state[ 6 ];
 
-    unicode_to_ansi_copy( state, wstate, SQL_NTS, NULL );
+    unicode_to_ansi_copy( state, 6, wstate, SQL_NTS, NULL );
 
     __map_error_state( state, requested_version );
 
@@ -3038,13 +3098,13 @@ char * __wstring_with_length( SQLCHAR *ostr, SQLWCHAR *instr, SQLINTEGER len )
         if ( ( i = wide_strlen( instr ) ) < LOG_MESSAGE_LEN )
         {
             strcpy((char*) ostr, "[" );
-            unicode_to_ansi_copy((char*) ostr + 1, instr, LOG_MESSAGE_LEN, NULL );
+            unicode_to_ansi_copy((char*) ostr + 1, LOG_MESSAGE_LEN, instr, LOG_MESSAGE_LEN, NULL );
             strcat((char*) ostr, "]" );
         }
         else
         {
             strcpy((char*) ostr, "[" );
-            unicode_to_ansi_copy((char*) ostr + 1, instr, LOG_MESSAGE_LEN, NULL );
+            unicode_to_ansi_copy((char*) ostr + 1, LOG_MESSAGE_LEN, instr, LOG_MESSAGE_LEN, NULL );
             strcat((char*) ostr, "...]" );
         }
         sprintf( tmp, "[length = %d (SQL_NTS)]", i );
@@ -3055,13 +3115,13 @@ char * __wstring_with_length( SQLCHAR *ostr, SQLWCHAR *instr, SQLINTEGER len )
         if ( len < LOG_MESSAGE_LEN )
         {
             strcpy((char*) ostr, "[" );
-            unicode_to_ansi_copy((char*) ostr + 1, instr, LOG_MESSAGE_LEN, NULL );
+            unicode_to_ansi_copy((char*) ostr + 1, LOG_MESSAGE_LEN, instr, LOG_MESSAGE_LEN, NULL );
             strcat((char*) ostr, "]" );
         }
         else
         {
             strcpy((char*) ostr, "[" );
-            unicode_to_ansi_copy((char*) ostr + 1, instr, LOG_MESSAGE_LEN, NULL );
+            unicode_to_ansi_copy((char*) ostr + 1, LOG_MESSAGE_LEN, instr, LOG_MESSAGE_LEN, NULL );
             strcat((char*) ostr, "...]" );
         }
         sprintf( tmp, "[length = %d]", len );
@@ -3463,8 +3523,8 @@ char * __get_return_status( SQLRETURN ret, SQLCHAR *buffer )
         return "SQL_NEED_DATA";
 
       default:
-        sprintf( buffer, "UNKNOWN(%d)", ret );
-        return buffer;
+        sprintf((char*) buffer, "UNKNOWN(%d)", ret );
+        return (char*)buffer;
     }
 }
 
@@ -3816,44 +3876,7 @@ void __post_internal_error_ex( EHEAD *error_header,
      */
 
     insert_into_error_list( error_header, e1 );
-
-    /*
-    error_header -> sql_error_head.error_count ++;
-
-    if ( error_header -> sql_error_head.error_list_head )
-    {
-        e1 -> next = NULL;
-        e1 -> prev = error_header -> sql_error_head.error_list_tail;
-        e1 -> prev -> next = e1;
-        error_header -> sql_error_head.error_list_tail = e1;
-    }
-    else
-    {
-        e1 -> next = e1 -> prev = NULL;
-        error_header -> sql_error_head.error_list_tail = e1;
-        error_header -> sql_error_head.error_list_head = e1;
-    }
-    */
-
     insert_into_diag_list( error_header, e2 );
-
-    /*
-    error_header -> sql_diag_head.internal_count ++;
-
-    if ( error_header -> sql_diag_head.internal_list_head )
-    {
-        e2 -> next = NULL;
-        e2 -> prev = error_header -> sql_diag_head.internal_list_tail;
-        e2 -> prev -> next = e2;
-        error_header -> sql_diag_head.internal_list_tail = e2;
-    }
-    else
-    {
-        e2 -> next = e2 -> prev = NULL;
-        error_header -> sql_diag_head.internal_list_tail = e2;
-        error_header -> sql_diag_head.internal_list_head = e2;
-    }
-    */
 }
 
 void __post_internal_error_ex_w( EHEAD *error_header,
@@ -3944,40 +3967,6 @@ void __post_internal_error_ex_w( EHEAD *error_header,
 
     insert_into_error_list( error_header, e1 );
     insert_into_diag_list( error_header, e2 );
-
-    /*
-    error_header -> sql_error_head.error_count ++;
-
-    if ( error_header -> sql_error_head.error_list_head )
-    {
-        e1 -> next = NULL;
-        e1 -> prev = error_header -> sql_error_head.error_list_tail;
-        e1 -> prev -> next = e1;
-        error_header -> sql_error_head.error_list_tail = e1;
-    }
-    else
-    {
-        e1 -> next = e1 -> prev = NULL;
-        error_header -> sql_error_head.error_list_tail = e1;
-        error_header -> sql_error_head.error_list_head = e1;
-    }
-
-    error_header -> sql_diag_head.internal_count ++;
-
-    if ( error_header -> sql_diag_head.internal_list_head )
-    {
-        e2 -> next = NULL;
-        e2 -> prev = error_header -> sql_diag_head.internal_list_tail;
-        e2 -> prev -> next = e2;
-        error_header -> sql_diag_head.internal_list_tail = e2;
-    }
-    else
-    {
-        e2 -> next = e2 -> prev = NULL;
-        error_header -> sql_diag_head.internal_list_tail = e2;
-        error_header -> sql_diag_head.internal_list_head = e2;
-    }
-    */
 }
 
 /*
@@ -4051,7 +4040,7 @@ void clear_error_head( EHEAD *error_header )
  */
 
 static void extract_diag_error( int htype,
-                            SQLHANDLE handle,
+                            DRV_SQLHANDLE handle,
                             DMHDBC connection,
                             EHEAD *head,
                             int return_code,
@@ -4085,6 +4074,7 @@ static void extract_diag_error( int htype,
                 sizeof( msg1 ),
                 &len );
 
+
         if ( SQL_SUCCEEDED( ret ))
         {
             ERROR *e = malloc( sizeof( ERROR ));
@@ -4108,24 +4098,6 @@ static void extract_diag_error( int htype,
             insert_into_error_list( head, e );
 
             /*
-            head -> sql_error_head.error_count ++;
-
-            if ( head -> sql_error_head.error_list_head )
-            {
-                e -> next = NULL;
-                e -> prev = head -> sql_error_head.error_list_tail;
-                e -> prev -> next = e;
-                head -> sql_error_head.error_list_tail = e;
-            }
-            else
-            {
-                e -> next = e -> prev = NULL;
-                head -> sql_error_head.error_list_tail = e;
-                head -> sql_error_head.error_list_head = e;
-            }
-            */
-
-            /*
              * we do this if called from a DM function that goes on to call
              * a further driver function before returning
              */
@@ -4143,24 +4115,6 @@ static void extract_diag_error( int htype,
                 e -> return_val = return_code;
 
                 insert_into_diag_list( head, e );
-
-                /*
-                head -> sql_diag_head.internal_count ++;
-
-                if ( head -> sql_diag_head.internal_list_head )
-                {
-                    e -> next = NULL;
-                    e -> prev = head -> sql_diag_head.internal_list_tail;
-                    e -> prev -> next = e;
-                    head -> sql_diag_head.internal_list_tail = e;
-                }
-                else
-                {
-                    e -> next = e -> prev = NULL;
-                    head -> sql_diag_head.internal_list_tail = e;
-                    head -> sql_diag_head.internal_list_head = e;
-                }
-                */
 
                 /*
                  * now we need to do some extra calls to get
@@ -4338,9 +4292,9 @@ static void extract_diag_error( int htype,
     while( SQL_SUCCEEDED( ret ));
 }
 
-static void extract_sql_error( SQLHANDLE henv,
-                            SQLHANDLE hdbc,
-                            SQLHANDLE hstmt,
+static void extract_sql_error( DRV_SQLHANDLE henv,
+                            DRV_SQLHANDLE hdbc,
+                            DRV_SQLHANDLE hstmt,
                             DMHDBC connection,
                             EHEAD *head, 
                             int return_code )
@@ -4398,24 +4352,6 @@ static void extract_sql_error( SQLHANDLE henv,
             insert_into_error_list( head, e );
 
             /*
-            head -> sql_error_head.error_count ++;
-
-            if ( head -> sql_error_head.error_list_head )
-            {
-                e -> next = NULL;
-                e -> prev = head -> sql_error_head.error_list_tail;
-                e -> prev -> next = e;
-                head -> sql_error_head.error_list_tail = e;
-            }
-            else
-            {
-                e -> next = e -> prev = NULL;
-                head -> sql_error_head.error_list_tail = e;
-                head -> sql_error_head.error_list_head = e;
-            }
-            */
-
-            /*
              * SQLGetDiagRec list next
              */
 
@@ -4438,24 +4374,6 @@ static void extract_sql_error( SQLHANDLE henv,
             insert_into_diag_list( head, e );
 
             /*
-            head -> sql_diag_head.error_count ++;
-
-            if ( head -> sql_diag_head.error_list_head )
-            {
-                e -> next = NULL;
-                e -> prev = head -> sql_diag_head.error_list_tail;
-                e -> prev -> next = e;
-                head -> sql_diag_head.error_list_tail = e;
-            }
-            else
-            {
-                e -> next = e -> prev = NULL;
-                head -> sql_diag_head.error_list_tail = e;
-                head -> sql_diag_head.error_list_head = e;
-            }
-            */
-            
-            /*
              * add to logfile
              */
 
@@ -4472,7 +4390,7 @@ static void extract_sql_error( SQLHANDLE henv,
 }
 
 static void extract_diag_error_w( int htype,
-                            SQLHANDLE handle,
+                            DRV_SQLHANDLE handle,
                             DMHDBC connection,
                             EHEAD *head,
                             int return_code,
@@ -4528,24 +4446,6 @@ static void extract_diag_error_w( int htype,
             insert_into_error_list( head, e );
 
             /*
-            head -> sql_error_head.error_count ++;
-
-            if ( head -> sql_error_head.error_list_head )
-            {
-                e -> next = NULL;
-                e -> prev = head -> sql_error_head.error_list_tail;
-                e -> prev -> next = e;
-                head -> sql_error_head.error_list_tail = e;
-            }
-            else
-            {
-                e -> next = e -> prev = NULL;
-                head -> sql_error_head.error_list_tail = e;
-                head -> sql_error_head.error_list_head = e;
-            }
-            */
-
-            /*
              * we do this if called from a DM function that goes on to call
              * a further driver function before returning
              */
@@ -4559,24 +4459,6 @@ static void extract_diag_error_w( int htype,
                 e -> return_val = return_code;
 
                 insert_into_diag_list( head, e );
-
-                /*
-                head -> sql_diag_head.internal_count ++;
-
-                if ( head -> sql_diag_head.internal_list_head )
-                {
-                    e -> next = NULL;
-                    e -> prev = head -> sql_diag_head.internal_list_tail;
-                    e -> prev -> next = e;
-                    head -> sql_diag_head.internal_list_tail = e;
-                }
-                else
-                {
-                    e -> next = e -> prev = NULL;
-                    head -> sql_diag_head.internal_list_tail = e;
-                    head -> sql_diag_head.internal_list_head = e;
-                }
-                */
 
                 /*
                  * now we need to do some extra calls to get
@@ -4737,9 +4619,9 @@ static void extract_diag_error_w( int htype,
     while( SQL_SUCCEEDED( ret ));
 }
 
-static void extract_sql_error_w( SQLHANDLE henv,
-                            SQLHANDLE hdbc,
-                            SQLHANDLE hstmt,
+static void extract_sql_error_w( DRV_SQLHANDLE henv,
+                            DRV_SQLHANDLE hdbc,
+                            DRV_SQLHANDLE hstmt,
                             DMHDBC connection,
                             EHEAD *head, 
                             int return_code )
@@ -4792,24 +4674,6 @@ static void extract_sql_error_w( SQLHANDLE henv,
             insert_into_error_list( head, e );
 
             /*
-            head -> sql_error_head.error_count ++;
-
-            if ( head -> sql_error_head.error_list_head )
-            {
-                e -> next = NULL;
-                e -> prev = head -> sql_error_head.error_list_tail;
-                e -> prev -> next = e;
-                head -> sql_error_head.error_list_tail = e;
-            }
-            else
-            {
-                e -> next = e -> prev = NULL;
-                head -> sql_error_head.error_list_tail = e;
-                head -> sql_error_head.error_list_head = e;
-            }
-            */
-
-            /*
              * SQLGetDiagRec list next
              */
 
@@ -4820,24 +4684,6 @@ static void extract_sql_error_w( SQLHANDLE henv,
             e -> return_val = return_code;
 
             insert_into_diag_list( head, e );
-
-            /*
-            head -> sql_diag_head.error_count ++;
-
-            if ( head -> sql_diag_head.error_list_head )
-            {
-                e -> next = NULL;
-                e -> prev = head -> sql_diag_head.error_list_tail;
-                e -> prev -> next = e;
-                head -> sql_diag_head.error_list_tail = e;
-            }
-            else
-            {
-                e -> next = e -> prev = NULL;
-                head -> sql_diag_head.error_list_tail = e;
-                head -> sql_diag_head.error_list_head = e;
-            }
-            */
 
             /*
              * add to logfile
@@ -4874,8 +4720,7 @@ int function_return_ex( int level, void * handle, int ret_code, int save_to_diag
     DMHSTMT hstmt;
     DMHDESC hdesc;
 
-    if ( ret_code == SQL_ERROR ||
-            ret_code == SQL_SUCCESS_WITH_INFO )
+    if ( ret_code == SQL_SUCCESS_WITH_INFO || ret_code == SQL_ERROR )
     {
         /*
          * find what type of handle it is
@@ -5299,6 +5144,14 @@ void __post_internal_error_api( EHEAD *error_handle,
         message = "Memory allocation error";
         break;
 
+      case ERROR_HY003:
+        if ( connection_mode == SQL_OV_ODBC3 )
+            strcpy( sqlstate, "HY003" );
+        else
+            strcpy( sqlstate, "S1003" );
+        message = "Invalid application buffer type";
+        break;
+
       case ERROR_HY004:
         if ( connection_mode == SQL_OV_ODBC3 )
             strcpy( sqlstate, "HY004" );
@@ -5534,6 +5387,13 @@ void __post_internal_error_api( EHEAD *error_handle,
         class = SUBCLASS_ODBC;
         break;
 
+      case ERROR_SL008:
+        strcpy( sqlstate, "SL008" );
+        message = "SQLGetData is not allowed on a forward only (non-buffered) cursor";
+        subclass = SUBCLASS_ODBC;
+        class = SUBCLASS_ODBC;
+        break;
+
 	  default:
         strcpy( sqlstate, "?????" );
         message = "Unknown";
@@ -5596,7 +5456,7 @@ void dm_log_write( char *function_name, int line, int type, int severity,
         }
         else
         {
-            sprintf( file_name, "%s/%s", log_info.log_file_name, __get_pid( str ));
+            sprintf( file_name, "%s/%s", log_info.log_file_name, __get_pid((SQLCHAR*) str ));
         }
         fp = uo_fopen( file_name, "a" );
 
@@ -5619,15 +5479,47 @@ void dm_log_write( char *function_name, int line, int type, int severity,
 
     if ( fp )
     {
+		char tstamp_str[ 128 ];
+
+#if defined( HAVE_GETTIMEOFDAY ) && defined( HAVE_SYS_TIME_H )
+		{
+			struct timeval tv;
+			struct timezone tz;
+
+			gettimeofday( &tv, &tz );
+
+			sprintf( tstamp_str, "[%ld.%06ld]", tv.tv_sec, tv.tv_usec );
+		}
+#elif defined( HAVE_FTIME ) && defined( HAVE_SYS_TIMEB_H )
+		{
+			struct timeb tp;
+
+			ftime( &tp );
+
+			sprintf( tstamp_str, "[%ld.%03d]", tp.time, tp.millitm );
+		}
+#elif defined( DHAVE_TIME ) && defined( HAVE_TIME_H ) 
+		{
+			time_t tv;
+
+			time( &tv );
+			sprintf( tstamp_str, "[%ld]", tv );
+		}
+#else
+		tstamp_str[ 0 ] = '\0';
+#endif
         if ( !log_info.program_name )
         {
-            uo_fprintf( fp, "[ODBC][%s][%s][%d]%s\n", __get_pid((SQLCHAR*) tmp ), 
+            uo_fprintf( fp, "[ODBC][%s]%s[%s][%d]%s\n", __get_pid((SQLCHAR*) tmp ), 
+					tstamp_str,
                     function_name, line, message );
         }
         else
         {
-            uo_fprintf( fp, "[%s][%s][%s][%d]%s\n", log_info.program_name,
-                __get_pid((SQLCHAR*) tmp ), function_name, line, message );
+            uo_fprintf( fp, "[%s][%s]%s[%s][%d]%s\n", log_info.program_name,
+                __get_pid((SQLCHAR*) tmp ), 
+				tstamp_str,
+				function_name, line, message );
         }
 
         uo_fclose( fp );
@@ -5651,7 +5543,7 @@ void dm_log_write_diag( char *message )
         }
         else
         {
-            sprintf( file_name, "%s/%s", log_info.log_file_name, __get_pid( str ));
+            sprintf( file_name, "%s/%s", log_info.log_file_name, __get_pid((SQLCHAR*) str ));
         }
         fp = uo_fopen( file_name, "a" );
 

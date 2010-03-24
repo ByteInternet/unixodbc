@@ -675,6 +675,7 @@ int lobj_fd, retval;
 #ifdef HAVE_LOCALTIME_R
 struct tm tp;
 #endif
+size_t ollen;
 
 
 	if ( ! old_statement) {
@@ -700,7 +701,8 @@ struct tm tp;
 
     param_number = -1;
 
-    for (opos = 0; opos < strlen(old_statement); opos++) {
+	ollen = strlen(old_statement);
+    for (opos = 0; opos < ollen; opos++) {
 
 		/*//	Squeeze carriage-returns/linfeed pairs to linefeed only */
 		if (old_statement[opos] == '\r' && opos+1<strlen(old_statement) && old_statement[opos+1] == '\n') {
@@ -1226,9 +1228,9 @@ char *mapFunc;
 char *
 convert_money(char *s)
 {
-size_t i = 0, out = 0;
+size_t i = 0, out = 0, slen=strlen(s);
 
-	for (i = 0; i < strlen(s); i++) {
+	for (i = 0; i < slen; i++) {
 		if (s[i] == '$' || s[i] == ',' || s[i] == ')')
 			; /*// skip these characters */
 		else if (s[i] == '(')
@@ -1400,11 +1402,10 @@ int i, y=0, val;
 int
 convert_from_pgbinary(unsigned char *value, unsigned char *rgbValue, int cbValueMax)
 {
-size_t i;
+size_t i, valen=strlen((char*)value);
 int o=0;
-
 	
-    for (i = 0; i < strlen((char*)value) && o < cbValueMax; ) 
+    for (i = 0; i < valen && o < cbValueMax; ) 
     {
 		if (value[i] == '\\') 
         {
@@ -1472,8 +1473,9 @@ void
 encode(char *in, char *out)
 {
 unsigned int i, o = 0;
+size_t inlen=strlen(in);
 
-	for (i = 0; i < strlen(in); i++) {
+	for (i = 0; i < inlen; i++) {
 		if ( in[i] == '+') {
 			sprintf(&out[o], "%%2B");
 			o += 3;
@@ -1496,8 +1498,9 @@ void
 decode(char *in, char *out)
 {
 unsigned int i, o = 0;
+size_t inlen=strlen(in);
 
-	for (i = 0; i < strlen(in); i++) {
+	for (i = 0; i < inlen; i++) {
 		if (in[i] == '+')
 			out[o++] = ' ';
 		else if (in[i] == '%') {

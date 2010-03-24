@@ -134,6 +134,8 @@ extern "C" {                         /* Assume C declarations for C++ */
 
 #define SQL_ATTR_CONNECTION_DEAD	1209	/* GetConnectAttr only */
 
+#define SQL_ATTR_DRIVER_THREADING	1028	/* Driver threading level */
+
 #if (ODBCVER >= 0x0351)
 /*	ODBC Driver Manager sets this connection attribute to a unicode driver
 	(which supports SQLConnectW) when the application is an ANSI application
@@ -177,7 +179,7 @@ extern "C" {                         /* Assume C declarations for C++ */
 #define SQL_OPT_TRACE_OFF               0UL
 #define SQL_OPT_TRACE_ON                1UL
 #define SQL_OPT_TRACE_DEFAULT           SQL_OPT_TRACE_OFF
-#define SQL_OPT_TRACE_FILE_DEFAULT      "\\SQL.LOG"
+#define SQL_OPT_TRACE_FILE_DEFAULT      "/tmp/SQL.LOG"
 
 /* SQL_ODBC_CURSORS options */
 #define SQL_CUR_USE_IF_NEEDED           0UL
@@ -524,7 +526,7 @@ extern "C" {                         /* Assume C declarations for C++ */
 #define SQL_C_USHORT     (SQL_C_SHORT+SQL_UNSIGNED_OFFSET) /* UNSIGNED SMALLINT*/
 #define SQL_C_UTINYINT   (SQL_TINYINT+SQL_UNSIGNED_OFFSET) /* UNSIGNED TINYINT*/
 
-#if (ODBCVER >= 0x0300) && (SIZEOF_LONG == 8) && defined(BUILD_REAL_64_BIT_MODE)
+#if (ODBCVER >= 0x0300) && (SIZEOF_LONG_INT == 8) && !defined(BUILD_LEGACY_64_BIT_MODE)
 #define SQL_C_BOOKMARK   SQL_C_UBIGINT                     /* BOOKMARK        */
 #else
 #define SQL_C_BOOKMARK   SQL_C_ULONG                       /* BOOKMARK        */
@@ -763,6 +765,7 @@ extern "C" {                         /* Assume C declarations for C++ */
 #define SQL_CONVERT_VARBINARY               69
 #define SQL_CONVERT_VARCHAR                 70
 #define SQL_CONVERT_LONGVARBINARY           71
+#define SQL_CONVERT_GUID           			173
 #define SQL_ODBC_SQL_OPT_IEF                73		/* SQL_INTEGRITY */
 #define SQL_CORRELATION_NAME                74
 #define SQL_NON_NULLABLE_COLUMNS            75
@@ -941,6 +944,7 @@ extern "C" {                         /* Assume C declarations for C++ */
 #define	SQL_CVT_WCHAR						0x00200000L
 #define	SQL_CVT_WLONGVARCHAR				0x00400000L
 #define	SQL_CVT_WVARCHAR					0x00800000L
+#define	SQL_CVT_GUID						0x01000000L
 
 #endif  /* ODBCVER >= 0x0300 */
 
@@ -1853,9 +1857,9 @@ SQLRETURN SQL_API SQLDescribeParam(
 SQLRETURN SQL_API SQLExtendedFetch(
     SQLHSTMT           hstmt,
     SQLUSMALLINT       fFetchType,
-    SQLROWOFFSET       irow,
-    SQLROWSETSIZE 	  *pcrow,
-    SQLUSMALLINT 	  *rgfRowStatus);
+    SQLLEN             irow,
+    SQLULEN 	  	   *pcrow,
+    SQLUSMALLINT 	   *rgfRowStatus);
 
 SQLRETURN SQL_API SQLForeignKeys(
     SQLHSTMT           hstmt,
@@ -2017,23 +2021,49 @@ SQLRETURN SQL_API SQLSetScrollOptions(    /*      Use SQLSetStmtOptions */
     SQLLEN             crowKeyset,
     SQLUSMALLINT       crowRowset);
 
-/* Tracing section */
-
-#define		TRACE_VERSION	1000		/* Version of trace API */
-
+/*!
+ * \defgroup    Tracing.
+ *
+ *              unixODBC implements a slight variation of the tracing mechanism used 
+ *              on MS platforms. The unixODBC method loses the ability to produce trace
+ *              output for invalid handles but gains the following;
+ *
+ *              - better concurrency 
+ *              - allows tracing to be turned on/off and configured at finer granularity
+ *              - hopefully; better performance
+ *
+ *              unixODBC provides a cross-platform helper library called 'trace' and an
+ *              example/default trace plugin called 'odbctrac'. Those writing an ODBC 
+ *              driver can use the 'trace' helper library (a static library). Those wanting
+ *              to create custom trace output can implement a different version of the
+ *              'odbctrac' plugin.
+ *
+ *              The text file driver (odbctxt) included with unixODBC is an example of a 
+ *              driver using the 'trace' helper library.
+ *
+ *              The 'trace' library and the example plugin 'odbctrac' are designed to be 
+ *              portable on all platforms where unixODBC is available and on MS platforms.
+ *              This will allow drivers using 'trace' and 'odbctrac' plugin to equilly 
+ *              portable. On MS platforms - this compliments traditional tracing (mostly
+ *              just used by the Driver Manager).
+ *
+ * \sa          trace
+ *              odbctxt
+ *              odbctrac
+ */
+/*@{*/
+#define	TRACE_VERSION 1000                                  /*!< Version of trace API                               */
 #ifdef UNICODE
-RETCODE	 TraceOpenLogFile(LPWSTR,LPWSTR,DWORD); 	/* open a trace log file				*/
-#endif
-#ifdef __cplusplus
-RETCODE	 TraceCloseLogFile();					    /* Request to close a trace log			*/
+RETCODE TraceOpenLogFile(SQLPOINTER,LPWSTR,LPWSTR,DWORD); 	/*!< open a trace log file				                */
 #else
-RETCODE	 TraceCloseLogFile(VOID);				    /* Request to close a trace log			*/
+RETCODE TraceOpenLogFile(SQLPOINTER,LPSTR,LPSTR,DWORD); 	/*!< open a trace log file				                */
 #endif
-VOID	 TraceReturn(RETCODE,RETCODE);			/* Processes trace after FN is called	*/
+RETCODE TraceCloseLogFile(SQLPOINTER);					    /*!< Request to close a trace log		                */
+SQLRETURN TraceReturn(SQLPOINTER,SQLRETURN);                /*!< Call to produce trace output upon function return. */
 #ifdef __cplusplus
-DWORD	 TraceVersion();							/* Returns trace API version			*/
+DWORD	 TraceVersion();							        /*!< Returns trace API version			                */
 #else
-DWORD	 TraceVersion(VOID);							/* Returns trace API version			*/
+DWORD	 TraceVersion(VOID);							    /*!< Returns trace API version			                */
 #endif
 
 /* Functions for Visual Studio Analyzer*/
@@ -2068,10 +2098,21 @@ typedef struct tagODBC_VS_ARGS {
 } ODBC_VS_ARGS, *PODBC_VS_ARGS;
 
 VOID	FireVSDebugEvent(PODBC_VS_ARGS);
-
+/*@}*/
 
 #ifdef __cplusplus
 }
+#endif
+
+/*
+ * connection pooling retry times
+ */
+
+BOOL ODBCSetTryWaitValue ( DWORD dwValue );
+#ifdef __cplusplus
+DWORD ODBCGetTryWaitValue ( );
+#else
+DWORD ODBCGetTryWaitValue ( VOID );
 #endif
 
 #ifndef __SQLUCODE_H

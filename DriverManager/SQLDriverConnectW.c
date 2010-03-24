@@ -27,9 +27,15 @@
  *
  **********************************************************************
  *
- * $Id: SQLDriverConnectW.c,v 1.13 2003/10/30 18:20:45 lurcher Exp $
+ * $Id: SQLDriverConnectW.c,v 1.15 2008/09/29 14:02:44 lurcher Exp $
  *
  * $Log: SQLDriverConnectW.c,v $
+ * Revision 1.15  2008/09/29 14:02:44  lurcher
+ * Fix missing dlfcn group option
+ *
+ * Revision 1.14  2007/02/28 15:37:47  lurcher
+ * deal with drivers that call internal W functions and end up in the driver manager. controlled by the --enable-handlemap configure arg
+ *
  * Revision 1.13  2003/10/30 18:20:45  lurcher
  *
  * Fix broken thread protection
@@ -127,16 +133,16 @@ int got_driver = 0;    /* if we have a DRIVER or FILEDSN then ignore any DSN */
 
     if ( str_len == SQL_NTS )
     {
-        len =  wide_strlen( str ) + sizeof( SQLWCHAR );
+        len =  wide_strlen( str ) + 1;
         local_str = malloc( len );
     }
     else
     {
-        len = str_len + sizeof( SQLWCHAR );
+        len = str_len + 1;
         local_str = malloc( len );
     }
 
-    unicode_to_ansi_copy( local_str, str, len, NULL );
+    unicode_to_ansi_copy( local_str, len - 1, str, len - 1, NULL );
 
     if ( !local_str || strlen( local_str ) == 0 ||
         ( strlen( local_str ) == 1 && *local_str == ';' ))
@@ -218,6 +224,40 @@ SQLRETURN SQLDriverConnectW(
                     LOG_INFO, 
                     "Error: SQL_INVALID_HANDLE" );
 
+#ifdef WITH_HANDLE_REDIRECT
+		{
+			DMHDBC parent_connection;
+
+			parent_connection = find_parent_handle( connection, SQL_HANDLE_DBC );
+
+			if ( parent_connection ) {
+        		dm_log_write( __FILE__, 
+                	__LINE__, 
+                    	LOG_INFO, 
+                    	LOG_INFO, 
+                    	"Info: found parent handle" );
+
+				if ( CHECK_SQLDRIVERCONNECTW( parent_connection ))
+				{
+        			dm_log_write( __FILE__, 
+                		__LINE__, 
+                   		 	LOG_INFO, 
+                   		 	LOG_INFO, 
+                   		 	"Info: calling redirected driver function" );
+
+					return SQLDRIVERCONNECTW( parent_connection, 
+							connection, 
+							hwnd, 
+							conn_str_in, 
+							len_conn_str_in,
+							conn_str_out,
+							conn_str_out_max,
+							ptr_conn_str_out,
+							driver_completion );
+				}
+			}
+		}
+#endif
         return SQL_INVALID_HANDLE;
     }
 
@@ -614,7 +654,7 @@ SQLRETURN SQLDriverConnectW(
                 len = len_conn_str_in + sizeof( SQLWCHAR );
             }
             in_str = malloc( len );
-            unicode_to_ansi_copy( in_str, conn_str_in, len, connection );
+            unicode_to_ansi_copy( in_str, len, conn_str_in, len, connection );
         }
         else
         {

@@ -14,10 +14,12 @@
  **************************************************/
 #include <odbcinstext.h>
 
-BOOL SQLRemoveDSNFromIni(		LPCSTR	pszDSN )
+BOOL SQLRemoveDSNFromIni(LPCSTR	pszDSN )
 {
 	HINI	hIni;
 	char	szINIFileName[ODBC_FILENAME_MAX+1];
+
+    inst_logClear();
 
 	/* SANITY CHECKS */
 	if ( pszDSN == NULL )
@@ -64,6 +66,18 @@ BOOL SQLRemoveDSNFromIni(		LPCSTR	pszDSN )
 	return TRUE;
 }
 
+BOOL INSTAPI SQLRemoveDSNFromIniW(LPCWSTR lpszDSN)
+{
+	char *dsn;
+	BOOL ret;
 
+    inst_logClear();
 
+	dsn = _single_string_alloc_and_copy( lpszDSN );
 
+	ret = SQLRemoveDSNFromIni( dsn );
+
+	free( dsn );
+
+	return ret;
+}

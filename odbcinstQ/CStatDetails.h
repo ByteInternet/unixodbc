@@ -1,6 +1,20 @@
 #ifndef CLASSSTATDETAILS_H
 #define CLASSSTATDETAILS_H
 
+#ifdef QT_V4LAYOUT
+#define QT3_SUPPORT
+#include <Qt/qwidget.h>
+#include <Qt/qframe.h>
+#include <Qt/qlabel.h>
+#include <Qt/qcheckbox.h>
+#include <Qt/q3grid.h>
+#include <Qt/q3vbox.h>
+#include <Qt/qlayout.h>
+#include <Qt/qpushbutton.h>
+#include <Qt/qtimer.h>
+#include <Qt/qstring.h>
+#include <Qt/q3table.h>
+#else
 #include <qwidget.h>
 #include <qframe.h>
 #include <qlabel.h>
@@ -12,6 +26,8 @@
 #include <qtimer.h>
 #include <qstring.h>
 #include <qtable.h>
+#endif
+
 #include <uodbc_stats.h>
 
 #define MAXPROCESSES 10
@@ -35,7 +51,11 @@ protected slots:
     void showStats();
 
 private:
+#ifdef QT_V4LAYOUT
+    Q3Table *    pTable;
+#else
     QTable *    pTable;
+#endif
     void *      hStats;
     uodbc_stats_retentry aPIDs[MAXPROCESSES];
     uodbc_stats_retentry aHandles[MAXHANDLES];

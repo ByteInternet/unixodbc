@@ -1,29 +1,32 @@
 libodbcinstQ_la_LDFLAGS = \
+		-no-undefined \
         -version-info 1:0:0 \
 		-export-dynamic \
 		-export-symbols @srcdir@/odbcinstQ.exp \
 	    -module
 
 if QT
+if QTWIZARD
+
+else
 
 lib_LTLIBRARIES = libodbcinstQ.la 
 
-INCLUDES = -I@top_srcdir@/include @QT_INCLUDES@ \
-    -DSYSTEM_FILE_PATH=\"@sysconfdir@\" -DDEFLIB_PATH=\"@libdir@\" $(INCLTDL)
+INCLUDES = -I@top_srcdir@/include $(QT_CXXFLAGS) \
+    -DSYSTEM_FILE_PATH=\"@sysconfdir@\" -DDEFLIB_PATH=\"@libdir@\" $(LTDLINCL)
 
-libodbcinstQ_la_LIBADD = @X_LDFLAGS@ \
-	@QT_LDFLAGS@ \
-	@USER_LDFLAGS@ \
-	@LIB_QT@ \
-	@LIBLTDL@ \
-	../odbcinst/libodbcinst.la \
-	../extras/libodbcextraslc.la \
-	../DriverManager/libodbc.la 
+libodbcinstQ_la_LIBADD = \
+	$(QT_LDFLAGS) \
+	$(QT_LIBS) \
+	$(LIBLTDL) $(LIBADD_DL) \
+    ../ini/libinilc.la \
+	../DriverManager/libodbc.la \
+	../odbcinst/libodbcinst.la 
 
 libodbcinstQ_la_DEPENDENCIES = \
-	../odbcinst/libodbcinst.la \
-	../extras/libodbcextraslc.la \
-	../DriverManager/libodbc.la
+    ../ini/libinilc.la \
+	../DriverManager/libodbc.la \
+	../odbcinst/libodbcinst.la 
 
 CLEANFILES = \
 	mCAbout.cpp \
@@ -35,25 +38,7 @@ CLEANFILES = \
 	mCFileList.cpp \
 	mCFileSelector.cpp \
 	mCODBCConfig.cpp \
-	mCProperties.cpp \
-	mCPropertiesFrame.cpp \
-	mCStatDetails.cpp \
-	mCStatSummary.cpp \
-	mCStats.cpp \
-	mCSystemDSN.cpp \
-	mCTracing.cpp \
-	mCUserDSN.cpp
-
-nodist_libodbcinstQ_la_SOURCES = \
-	mCAbout.cpp \
-	mCCredits.cpp \
-	mCDriverPrompt.cpp \
-	mCDrivers.cpp \
-	mCDSNList.cpp \
-	mCFileDSN.cpp \
-	mCFileList.cpp \
-	mCFileSelector.cpp \
-	mCODBCConfig.cpp \
+	mCODBCCreate.cpp \
 	mCProperties.cpp \
 	mCPropertiesFrame.cpp \
 	mCStatDetails.cpp \
@@ -74,6 +59,7 @@ libodbcinstQ_la_SOURCES = \
 	CFileList.cpp \
 	CFileSelector.cpp \
 	CODBCConfig.cpp \
+	CODBCCreate.cpp \
 	CProperties.cpp \
 	CPropertiesFrame.cpp \
 	CSplashDialog.cpp \
@@ -83,13 +69,42 @@ libodbcinstQ_la_SOURCES = \
 	CSystemDSN.cpp \
 	CTracing.cpp \
 	CUserDSN.cpp \
-	SQLManageDataSources.cpp
+	SQLManageDataSources.cpp \
+	mCAbout.cpp \
+	mCCredits.cpp \
+	mCDriverPrompt.cpp \
+	mCDrivers.cpp \
+	mCDSNList.cpp \
+	mCFileDSN.cpp \
+	mCFileList.cpp \
+	mCFileSelector.cpp \
+	mCODBCConfig.cpp \
+	mCODBCCreate.cpp \
+	mCProperties.cpp \
+	mCPropertiesFrame.cpp \
+	mCStatDetails.cpp \
+	mCStatSummary.cpp \
+	mCStats.cpp \
+	mCSystemDSN.cpp \
+	mCTracing.cpp \
+	mCUserDSN.cpp
+
+if QT4
+mCDSNList.cpp: @srcdir@/CDSNList4.h
+	@MOC@ @srcdir@/CDSNList4.h -o mCDSNList.cpp
+else
+mCDSNList.cpp: @srcdir@/CDSNList.h
+	@MOC@ @srcdir@/CDSNList.h -o mCDSNList.cpp
+endif
 
 mCDrivers.cpp: @srcdir@/CDrivers.h
 	@MOC@ @srcdir@/CDrivers.h -o mCDrivers.cpp
 
 mCODBCConfig.cpp: @srcdir@/CODBCConfig.h
 	@MOC@ @srcdir@/CODBCConfig.h -o mCODBCConfig.cpp
+
+mCODBCCreate.cpp: @srcdir@/CODBCCreate.h
+	@MOC@ @srcdir@/CODBCCreate.h -o mCODBCCreate.cpp
 
 mCSystemDSN.cpp: @srcdir@/CSystemDSN.h
 	@MOC@ @srcdir@/CSystemDSN.h -o mCSystemDSN.cpp
@@ -127,14 +142,14 @@ mCProperties.cpp: @srcdir@/CProperties.h
 mCFileSelector.cpp: @srcdir@/CFileSelector.h
 	@MOC@ @srcdir@/CFileSelector.h -o mCFileSelector.cpp
 
-mCDSNList.cpp: @srcdir@/CDSNList.h
-	@MOC@ @srcdir@/CDSNList.h -o mCDSNList.cpp
-
 mCFileList.cpp: @srcdir@/CFileList.h
 	@MOC@ @srcdir@/CFileList.h -o mCFileList.cpp
 
 mCCredits.cpp: @srcdir@/CCredits.h
 	@MOC@ @srcdir@/CCredits.h -o mCCredits.cpp
+
+
+endif
 
 endif
 
@@ -147,11 +162,13 @@ EXTRA_DIST = \
 	CStatDetails.h \
 	CDLL.h \
 	CDSNList.h \
+	CDSNList4.h \
 	CFileList.h \
 	CDriverPrompt.h \
 	CDrivers.h \
 	CFileSelector.h \
 	CODBCConfig.h \
+	CODBCCreate.h \
 	CPropertiesFrame.h \
 	CProperties.h \
 	CSystemDSN.h \

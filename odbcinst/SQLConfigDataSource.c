@@ -14,18 +14,21 @@
  **************************************************/
 #include <odbcinstext.h>
 
-BOOL SQLConfigDataSource(		HWND	hWnd,
+static BOOL SQLConfigDataSourceWide(	HWND	hWnd,
 								WORD	nRequest,
 								LPCSTR	pszDriver,				/* USER FRIENDLY NAME (not file name) */
-								LPCSTR	pszAttributes )
+								LPCSTR	pszAttributes,
+			   					LPCWSTR pszDriverW,
+								LPCWSTR pszAttributesW	)
 {
 	BOOL	(*pFunc)( HWND, WORD, LPCSTR, LPCSTR	);
+	BOOL	(*pFuncW)( HWND, WORD, LPCWSTR, LPCWSTR	);
 	BOOL	nReturn;
 	void 	*hDLL	= FALSE;
 	HINI	hIni;
 	char	szDriverSetup[INI_MAX_PROPERTY_VALUE+1];
     char    szIniName[ INI_MAX_OBJECT_NAME + 1 ];
-
+	char	b1[ 256 ], b2[ 256 ];
 
 	/* SANITY CHECKS */
 	if ( pszDriver == NULL )
@@ -33,6 +36,7 @@ BOOL SQLConfigDataSource(		HWND	hWnd,
 		inst_logPushMsg( __FILE__, __FILE__, __LINE__, LOG_CRITICAL, ODBC_ERROR_GENERAL_ERR, "" );
 		return FALSE;
 	}
+	
 	if ( pszDriver[0] == '\0' )
 	{
 		inst_logPushMsg( __FILE__, __FILE__, __LINE__, LOG_CRITICAL, ODBC_ERROR_GENERAL_ERR, "" );
@@ -54,9 +58,9 @@ BOOL SQLConfigDataSource(		HWND	hWnd,
 	}
 
 #ifdef VMS
-    sprintf( szIniName, "%sODBCINST.INI", odbcinst_system_file_path() );
+    sprintf( szIniName, "%s:%s", odbcinst_system_file_path( b1 ), odbcinst_system_file_name( b2 ) );
 #else
-    sprintf( szIniName, "%s/odbcinst.ini", odbcinst_system_file_path() );
+    sprintf( szIniName, "%s/%s", odbcinst_system_file_path( b1 ), odbcinst_system_file_name( b2 ) );
 #endif
 
 	/* OK */
@@ -87,11 +91,20 @@ BOOL SQLConfigDataSource(		HWND	hWnd,
 
 		iniClose( hIni );
 
+		if ( szDriverSetup[ 0 ] == '\0' ) 
+		{
+			char szError[ 512 ];
+			sprintf( szError, "Could not find Setup property for (%s) in system information", pszDriver );
+			inst_logPushMsg( __FILE__, __FILE__, __LINE__, LOG_CRITICAL, ODBC_ERROR_GENERAL_ERR, szError );
+        	__set_config_mode( ODBC_BOTH_DSN );
+			return FALSE;
+		}
+
 		nReturn = FALSE;
 		if ( (hDLL = lt_dlopen( szDriverSetup ))  )
 		{
 			pFunc = (BOOL (*)(HWND, WORD, LPCSTR, LPCSTR )) lt_dlsym( hDLL, "ConfigDSN" );
-/*            if ( lt_dlerror() == NULL ) */
+			pFuncW = (BOOL (*)(HWND, WORD, LPCWSTR, LPCWSTR )) lt_dlsym( hDLL, "ConfigDSNW" );
 			if ( pFunc )
             {
                 /*
@@ -103,35 +116,66 @@ BOOL SQLConfigDataSource(		HWND	hWnd,
                     case ODBC_CONFIG_DSN:
                     case ODBC_REMOVE_DSN:
                     case ODBC_REMOVE_DEFAULT_DSN:
-                      SQLSetConfigMode( ODBC_USER_DSN );
+                      __set_config_mode( ODBC_USER_DSN );
                       break;
 
                     case ODBC_ADD_SYS_DSN:
-                      SQLSetConfigMode( ODBC_SYSTEM_DSN );
+                      __set_config_mode( ODBC_SYSTEM_DSN );
                       nRequest = ODBC_ADD_DSN;
                       break;
 
                     case ODBC_CONFIG_SYS_DSN:
-                      SQLSetConfigMode( ODBC_SYSTEM_DSN );
+                      __set_config_mode( ODBC_SYSTEM_DSN );
                       nRequest = ODBC_CONFIG_DSN;
                       break;
 
                     case ODBC_REMOVE_SYS_DSN:
-                      SQLSetConfigMode( ODBC_SYSTEM_DSN );
+                      __set_config_mode( ODBC_SYSTEM_DSN );
                       nRequest = ODBC_REMOVE_DSN;
                       break;
                 }
 				nReturn = pFunc( hWnd, nRequest, pszDriver, pszAttributes );
             }
-			else
-            {
+			else if ( pFuncW ) 
+			{
+               	/*
+               	* set the mode
+               	*/
+	           	switch ( nRequest )
+               	{
+                   	case ODBC_ADD_DSN:
+                   	case ODBC_CONFIG_DSN:
+                   	case ODBC_REMOVE_DSN:
+                   	case ODBC_REMOVE_DEFAULT_DSN:
+                     	__set_config_mode( ODBC_USER_DSN );
+                     	break;
+
+                   	case ODBC_ADD_SYS_DSN:
+                     	__set_config_mode( ODBC_SYSTEM_DSN );
+                     	nRequest = ODBC_ADD_DSN;
+                     	break;
+
+                   	case ODBC_CONFIG_SYS_DSN:
+                     	__set_config_mode( ODBC_SYSTEM_DSN );
+                     	nRequest = ODBC_CONFIG_DSN;
+                     	break;
+
+                   	case ODBC_REMOVE_SYS_DSN:
+                     	__set_config_mode( ODBC_SYSTEM_DSN );
+                     	nRequest = ODBC_REMOVE_DSN;
+                     	break;
+               	}
+				nReturn = pFuncW( hWnd, nRequest, pszDriverW, pszAttributesW );
+			}
+			else 
+			{
 				inst_logPushMsg( __FILE__, __FILE__, __LINE__, LOG_CRITICAL, ODBC_ERROR_GENERAL_ERR, "" );
-            }
+			}
 		}
 		else
 			inst_logPushMsg( __FILE__, __FILE__, __LINE__, LOG_CRITICAL, ODBC_ERROR_GENERAL_ERR, "" );
 
-        SQLSetConfigMode( ODBC_BOTH_DSN );
+        __set_config_mode( ODBC_BOTH_DSN );
 		return nReturn;
 
 	}
@@ -139,9 +183,49 @@ BOOL SQLConfigDataSource(		HWND	hWnd,
 	inst_logPushMsg( __FILE__, __FILE__, __LINE__, LOG_CRITICAL, ODBC_ERROR_GENERAL_ERR, "" );
 	iniClose( hIni );
 
-    SQLSetConfigMode( ODBC_BOTH_DSN );
+    __set_config_mode( ODBC_BOTH_DSN );
 
 	return FALSE;
 }
 
+BOOL INSTAPI SQLConfigDataSourceW     (HWND       hwndParent,
+                                      WORD       fRequest,
+                                      LPCWSTR     lpszDriver,
+                                      LPCWSTR     lpszAttributes)
+{
+	char *drv, *attr;
+	BOOL ret;
 
+    inst_logClear();
+
+	drv = _single_string_alloc_and_copy( lpszDriver );
+	attr = _multi_string_alloc_and_copy( lpszAttributes );
+
+	ret = SQLConfigDataSourceWide( hwndParent, fRequest, drv, attr, lpszDriver, lpszAttributes );
+
+	free( drv );
+	free( attr );
+
+	return ret;
+}
+
+BOOL INSTAPI SQLConfigDataSource      (HWND       hwndParent,
+                                      WORD       fRequest,
+                                      LPCSTR     lpszDriver,
+                                      LPCSTR     lpszAttributes)
+{
+	SQLWCHAR *drv, *attr;
+	BOOL ret;
+
+    inst_logClear();
+
+	drv = _single_string_alloc_and_expand( lpszDriver );
+	attr = _multi_string_alloc_and_expand( lpszAttributes );
+
+	ret = SQLConfigDataSourceWide( hwndParent, fRequest, lpszDriver, lpszAttributes, drv, attr );
+
+	free( drv );
+	free( attr );
+
+	return ret;
+}

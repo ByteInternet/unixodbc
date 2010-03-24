@@ -14,7 +14,7 @@
 
 SQLRETURN SQLFetchScroll( SQLHSTMT    hDrvStmt,
                                 SQLSMALLINT nOrientation,
-                                SQLROWOFFSET  nOffset )
+                                SQLLEN  nOffset )
 {
     HDRVSTMT hStmt	= (HDRVSTMT)hDrvStmt;
 

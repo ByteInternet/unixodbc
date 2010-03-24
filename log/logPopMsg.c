@@ -11,45 +11,36 @@
 
 #include "log.h"
 
-int logPopMsg( HLOG hLog, char *pszMsgHdr, int *pnCode, char *pszMsg )
+/*! 
+ * \brief   Removes the oldest message from the log.
+ * 
+ *          The log is a FIFO stack and we implement a possible max on the
+ *          number of messages we can store. When we hot the max we 'pop'
+ *          a message out. The mem used by the message is automatically 
+ *          freed with a call to \sa _logFreeMsg.
+ *
+ * \param   hLog
+ * 
+ * \return  int
+ * \retval  LOG_NO_DATA
+ * \retval  LOG_ERROR
+ * \retval  LOG_SUCCESS
+ *
+ * \sa      logPushMsg
+ *          logPeekMsg
+ */
+int logPopMsg( HLOG hLog )
 {
-	char 	*pSeverity;
-	HLOGMSG	hMsg;
-
-
+    /* we must be logOpen to logPopMsg */
 	if ( !hLog ) return LOG_ERROR;
-	if ( !hLog->hMessages ) return LOG_NO_DATA;
-	lstLast( hLog->hMessages );
+
+    /* FIFO */
+    lstFirst( hLog->hMessages );
+
+    /* do we have a message to delete? */
 	if ( lstEOL( hLog->hMessages ) ) return LOG_NO_DATA;
 
-	hMsg = lstGet( hLog->hMessages );
-
-	switch ( hMsg->nSeverity )
-	{
-	case LOG_INFO:
-		pSeverity = "INFO:";
-		break;
-	case LOG_WARNING:
-		pSeverity = "WARNING:";
-		break;
-	case LOG_CRITICAL: 
-		pSeverity = "CRITICAL:";
-		break;
-	default: 
-		pSeverity = "UNKNOWN:";
-		break;
-	}
-
-	sprintf( pszMsgHdr, "[%s][%s][%s] %s ", hLog->pszProgramName, hMsg->pszModuleName, hMsg->pszFunctionName, pSeverity );
-	*pnCode = hMsg->nCode;
-	sprintf( pszMsg, hMsg->pszMessage );
-
-/*
-printf( "--pop-->[%s][%s][%s] %s %s\n", hLog->pszProgramName, hMsg->pszModuleName, hMsg->pszFunctionName, pSeverity, hMsg->pszMessage );
-*/
-	lstDelete( hLog->hMessages );
-
-	return LOG_SUCCESS;
+    return lstDelete( hLog->hMessages );
 }
 
 

@@ -27,9 +27,18 @@
  *
  **********************************************************************
  *
- * $Id: SQLColAttribute.c,v 1.14 2004/11/22 17:02:48 lurcher Exp $
+ * $Id: SQLColAttribute.c,v 1.17 2008/09/29 14:02:43 lurcher Exp $
  *
  * $Log: SQLColAttribute.c,v $
+ * Revision 1.17  2008/09/29 14:02:43  lurcher
+ * Fix missing dlfcn group option
+ *
+ * Revision 1.16  2007/04/02 10:50:17  lurcher
+ * Fix some 64bit problems (only when sizeof(SQLLEN) == 8 )
+ *
+ * Revision 1.15  2006/03/08 09:18:41  lurcher
+ * fix silly typo that was using sizeof( SQL_WCHAR ) instead of SQLWCHAR
+ *
  * Revision 1.14  2004/11/22 17:02:48  lurcher
  * Fix unicode/ansi conversion in the SQLGet functions
  *
@@ -169,7 +178,7 @@
 
 #include "drivermanager.h"
 
-static char const rcsid[]= "$RCSfile: SQLColAttribute.c,v $ $Revision: 1.14 $";
+static char const rcsid[]= "$RCSfile: SQLColAttribute.c,v $ $Revision: 1.17 $";
 
 SQLINTEGER map_ca_odbc3_to_2( SQLINTEGER field_identifier )
 {
@@ -216,7 +225,7 @@ SQLRETURN SQLColAttributeA( SQLHSTMT statement_handle,
            SQLPOINTER character_attribute,
            SQLSMALLINT buffer_length,
            SQLSMALLINT *string_length,
-           SQLPOINTER numeric_attribute )
+           SQLLEN *numeric_attribute )
 {
     return SQLColAttribute( statement_handle,
                             (SQLUSMALLINT) column_number,
@@ -233,7 +242,7 @@ SQLRETURN SQLColAttribute ( SQLHSTMT statement_handle,
            SQLPOINTER character_attribute,
            SQLSMALLINT buffer_length,
            SQLSMALLINT *string_length,
-           SQLPOINTER numeric_attribute )
+           SQLLEN *numeric_attribute )
 {
     DMHSTMT statement = (DMHSTMT) statement_handle;
     SQLRETURN ret = 0;
@@ -428,7 +437,7 @@ SQLRETURN SQLColAttribute ( SQLHSTMT statement_handle,
                   case SQL_DESC_NAME:
                     if ( SQL_SUCCEEDED( ret ) && character_attribute && buffer_length > 0 )
                     {
-                        s1 = malloc( sizeof( SQLWCHAR ) * ( buffer_length + 1 ));
+                        s1 = calloc( sizeof( SQLWCHAR ) * ( buffer_length + 1 ), 1);
                     }
                     break;
 
@@ -461,11 +470,11 @@ SQLRETURN SQLColAttribute ( SQLHSTMT statement_handle,
                   case SQL_DESC_NAME:
                     if ( SQL_SUCCEEDED( ret ) && character_attribute && s1 )
                     {
-                        unicode_to_ansi_copy( character_attribute, s1,  SQL_NTS, statement -> connection );
+                        unicode_to_ansi_copy( character_attribute, buffer_length, s1,  SQL_NTS, statement -> connection );
                     }
 					if ( SQL_SUCCEEDED( ret ) && string_length ) 
 					{
-						*string_length /= sizeof( SQL_WCHAR );	
+						*string_length /= sizeof( SQLWCHAR );	
 					}
                     break;
 
@@ -513,7 +522,7 @@ SQLRETURN SQLColAttribute ( SQLHSTMT statement_handle,
               case SQL_COLUMN_NAME:
                 if ( SQL_SUCCEEDED( ret ) && character_attribute && buffer_length > 0 )
                 {
-                    s1 = malloc( sizeof( SQLWCHAR ) * ( buffer_length + 1 ));
+                    s1 = calloc( sizeof( SQLWCHAR ) * ( buffer_length + 1 ), 1);
                 }
                 break;
 
@@ -546,11 +555,11 @@ SQLRETURN SQLColAttribute ( SQLHSTMT statement_handle,
               case SQL_COLUMN_NAME:
                 if ( SQL_SUCCEEDED( ret ) && character_attribute && s1 )
                 {
-                    unicode_to_ansi_copy( character_attribute, s1, SQL_NTS, statement -> connection );
+                    unicode_to_ansi_copy( character_attribute, buffer_length, s1, SQL_NTS, statement -> connection );
                 }
 				if ( SQL_SUCCEEDED( ret ) && string_length ) 
 				{
-					*string_length /= sizeof( SQL_WCHAR );	
+					*string_length /= sizeof( SQLWCHAR );	
 				}
                 break;
 

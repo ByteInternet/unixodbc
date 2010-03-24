@@ -27,9 +27,12 @@
  *
  **********************************************************************
  *
- * $Id: SQLGetConnectOption.c,v 1.6 2003/10/30 18:20:46 lurcher Exp $
+ * $Id: SQLGetConnectOption.c,v 1.7 2008/09/29 14:02:45 lurcher Exp $
  *
  * $Log: SQLGetConnectOption.c,v $
+ * Revision 1.7  2008/09/29 14:02:45  lurcher
+ * Fix missing dlfcn group option
+ *
  * Revision 1.6  2003/10/30 18:20:46  lurcher
  *
  * Fix broken thread protection
@@ -134,7 +137,7 @@
 
 #include "drivermanager.h"
 
-static char const rcsid[]= "$RCSfile: SQLGetConnectOption.c,v $ $Revision: 1.6 $";
+static char const rcsid[]= "$RCSfile: SQLGetConnectOption.c,v $ $Revision: 1.7 $";
 
 SQLRETURN SQLGetConnectOptionA( SQLHDBC connection_handle,
            SQLUSMALLINT option,
@@ -365,7 +368,7 @@ SQLRETURN SQLGetConnectOption( SQLHDBC connection_handle,
                   case SQL_ATTR_TRANSLATE_LIB:
                     if ( SQL_SUCCEEDED( ret ) && value && s1 )
                     {
-                        unicode_to_ansi_copy( value, s1, SQL_NTS, connection );
+                        unicode_to_ansi_copy( value, 1024, s1, SQL_NTS, connection );
                     }
                     break;
                 }
@@ -411,7 +414,7 @@ SQLRETURN SQLGetConnectOption( SQLHDBC connection_handle,
 
                 if ( ptr != value && SQL_SUCCEEDED( ret ))
                 {
-                    unicode_to_ansi_copy( value, ptr, SQL_NTS, connection );
+                    unicode_to_ansi_copy( value, 1024, ptr, SQL_NTS, connection );
 
                     /*
                      * are we still here ? good

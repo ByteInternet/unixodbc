@@ -23,9 +23,14 @@
  *
  **********************************************************************
  *
- * $Id: SQLGetTypeInfo.c,v 1.1.1.1 2001/10/17 16:40:15 lurcher Exp $
+ * $Id: SQLGetTypeInfo.c,v 1.2 2005/07/08 12:11:24 lurcher Exp $
  *
  * $Log: SQLGetTypeInfo.c,v $
+ * Revision 1.2  2005/07/08 12:11:24  lurcher
+ *
+ * Fix a cursor lib problem (it was broken if you did metadata calls)
+ * Alter the params to SQLParamOptions to use SQLULEN
+ *
  * Revision 1.1.1.1  2001/10/17 16:40:15  lurcher
  *
  * First upload to SourceForge
@@ -58,22 +63,7 @@ SQLRETURN CLGetTypeInfo( SQLHSTMT statement_handle,
            cl_statement -> driver_stmt,
            data_type );
 
-    if ( SQL_SUCCEEDED( ret ))
-    {
-        SQLSMALLINT column_count;
+    cl_statement -> not_from_select = 1;
 
-        ret = SQLNUMRESULTCOLS( cl_statement -> cl_connection,
-           cl_statement -> driver_stmt,
-           &column_count );
-
-        cl_statement -> column_count = column_count;
-        cl_statement -> first_fetch_done = 0;
-        cl_statement -> not_from_select = 1;
-
-        if ( column_count > 0 )
-        {
-            ret = get_column_names( cl_statement );
-        }
-    }
     return ret;
 }

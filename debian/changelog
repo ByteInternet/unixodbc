@@ -1,3 +1,28 @@
+unixodbc (2.2.14p2-1) unstable; urgency=low
+
+  * New upstream release (closes: #433312).
+    - Fixes compatibility with Oracle driver.  Closes: #567521.
+    - The txt driver has been dropped upstream.
+    - The prototype of odbcinst_system_file_path has changed, so time for
+      another package rename to odbcinst1debian2.
+    - Touch debian/unixodbc.symbols for new interfaces.
+  * Drop build-dependencies on flex-old and bison, no longer used.
+  * Build-conflict with unixodbc-dev, to work around libtool's persistent
+    relinking problems
+  * Build-depend on libqt3-compat-headers instead of patching all of the code;
+    if libqt3-compat-headers ever goes away, we should just switch to Qt4
+    instead.
+  * exe/Makefile.am: don't build dltest, this only works if we're using
+    the bundled libtool.
+  * Port AC_LIBTOOL_LANG_CXX_CONFIG changes over to the current
+    _LT_LANG_CXX_CONFIG macro.
+  * Build with --without-pth, we want pthreads even if pth is installed in the
+    build env.
+  * Fix installation of libnn.so at build time, so we don't ship a dangling
+    symlink instead.  Closes: #563283.
+
+ -- Steve Langasek <vorlon@debian.org>  Wed, 24 Mar 2010 16:22:28 -0700
+
 unixodbc (2.2.11-21) unstable; urgency=low
 
   * Fix short description of odbcinst1debian1 to not refer to the bits that

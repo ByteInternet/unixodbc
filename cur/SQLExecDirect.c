@@ -23,9 +23,12 @@
  *
  **********************************************************************
  *
- * $Id: SQLExecDirect.c,v 1.4 2002/11/19 18:52:28 lurcher Exp $
+ * $Id: SQLExecDirect.c,v 1.5 2007/11/13 15:04:57 lurcher Exp $
  *
  * $Log: SQLExecDirect.c,v $
+ * Revision 1.5  2007/11/13 15:04:57  lurcher
+ * Fix 64 bit cursor lib issues
+ *
  * Revision 1.4  2002/11/19 18:52:28  lurcher
  *
  * Alter the cursor lib to not require linking to the driver manager.
@@ -141,7 +144,7 @@ int calculate_buffers( CLHSTMT cl_statement, int column_count )
             cl_statement -> buffer_length += bcol -> bound_length;
 
             bcol -> rs_ind_offset = cl_statement -> buffer_length;
-            cl_statement -> buffer_length += sizeof( SQLUINTEGER );
+            cl_statement -> buffer_length += sizeof( SQLULEN );
         }
 
         bcol = bcol -> next;
@@ -204,7 +207,7 @@ SQLRETURN get_column_names( CLHSTMT cl_statement )
     cl_statement -> data_type = malloc( sizeof( SQLSMALLINT ) 
             * cl_statement -> column_count );
 
-    cl_statement -> column_size = malloc( sizeof( SQLUINTEGER ) 
+    cl_statement -> column_size = malloc( sizeof( SQLULEN ) 
             * cl_statement -> column_count );
 
     cl_statement -> decimal_digits = malloc( sizeof( SQLSMALLINT ) 

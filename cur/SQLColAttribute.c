@@ -23,9 +23,12 @@
  *
  **********************************************************************
  *
- * $Id: SQLColAttribute.c,v 1.3 2004/06/21 10:01:14 lurcher Exp $
+ * $Id: SQLColAttribute.c,v 1.4 2007/11/13 15:04:57 lurcher Exp $
  *
  * $Log: SQLColAttribute.c,v $
+ * Revision 1.4  2007/11/13 15:04:57  lurcher
+ * Fix 64 bit cursor lib issues
+ *
  * Revision 1.3  2004/06/21 10:01:14  lurcher
  *
  * Fix a couple of 64 bit issues
@@ -58,7 +61,7 @@ SQLRETURN CLColAttribute ( SQLHSTMT statement_handle,
            SQLPOINTER character_attribute,
            SQLSMALLINT buffer_length,
            SQLSMALLINT *string_length,
-           SQLPOINTER numeric_attribute )
+           SQLLEN 	*numeric_attribute )
 {
     CLHSTMT cl_statement = (CLHSTMT) statement_handle; 
 
@@ -73,7 +76,7 @@ SQLRETURN CLColAttribute ( SQLHSTMT statement_handle,
         {
             if ( cl_statement -> use_bookmarks )
             {
-                SQLINTEGER  ival;
+                SQLLEN  ival;
 
                 switch( field_identifier )
                 {
@@ -151,7 +154,7 @@ SQLRETURN CLColAttribute ( SQLHSTMT statement_handle,
 
                 if ( numeric_attribute )
                 {
-                    *((SQLINTEGER*)numeric_attribute) = ival;
+                    *((SQLLEN*)numeric_attribute) = ival;
                 }
 
                 return SQL_SUCCESS;

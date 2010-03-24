@@ -11,26 +11,33 @@
 
 #include "log.h"
 
+/*! 
+ * \brief   Closes log.
+ * 
+ *          This will clear all messages and close the log. All memory used
+ *          by the messages is automatically freed by calls to _logFreeMsg.
+ *          All remaining mem used by the log is also freed - including the
+ *          log handle itself.
+ *
+ * \param   hLog    A log handle init by \sa logOpen.
+ * 
+ * \return  int
+ * \retval  LOG_SUCCESS
+ *
+ * \sa      logOpen
+ */
 int logClose( HLOG hLog )
 {
-	char szMsgHdr[LOG_MSG_MAX+1];
-	int  nCode;
-	char szMsg[LOG_MSG_MAX+1];
-
+    /* we must be logOpen to logClose */
 	if ( !hLog ) return LOG_ERROR;
 
-	/***********************
-	 * POP ALL MESSAGES (freeing their mem as the go)
-	 ***********************/
-	while ( logPopMsg( hLog, szMsgHdr, &nCode, szMsg ) == LOG_SUCCESS )
-	{ }
+    /* clear all messages - including the handle                */
+    /* _logFreeMsg will automatically be called for each msg    */
+    lstClose( hLog->hMessages );
 
-	/***********************
-	 * FREE UP SOME MORE MEMORY
-	 ***********************/
+    /* free remaining mem used by log - including the handle    */
 	if ( hLog->pszProgramName ) free( hLog->pszProgramName );
 	if ( hLog->pszLogFile ) free( hLog->pszLogFile );
-	lstClose( hLog->hMessages );
 	free( hLog );
 
 	return LOG_SUCCESS;

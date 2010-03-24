@@ -825,8 +825,8 @@ RETCODE SQL_API SQLFetch(
 SQLRETURN  SQLExtendedFetch(
     SQLHSTMT           hstmt,
     SQLUSMALLINT       fFetchType,
-    SQLROWOFFSET         irow,
-    SQLROWSETSIZE 	  *pcrow,
+    SQLLEN            irow,
+    SQLULEN      	  *pcrow,
     SQLUSMALLINT 	  *rgfRowStatus)
 {
 static char* const func = "SQLExtendedFetch";

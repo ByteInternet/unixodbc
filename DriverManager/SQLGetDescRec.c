@@ -27,9 +27,21 @@
  *
  **********************************************************************
  *
- * $Id: SQLGetDescRec.c,v 1.8 2004/11/22 17:02:49 lurcher Exp $
+ * $Id: SQLGetDescRec.c,v 1.12 2008/09/29 14:02:45 lurcher Exp $
  *
  * $Log: SQLGetDescRec.c,v $
+ * Revision 1.12  2008/09/29 14:02:45  lurcher
+ * Fix missing dlfcn group option
+ *
+ * Revision 1.11  2007/04/02 10:50:19  lurcher
+ * Fix some 64bit problems (only when sizeof(SQLLEN) == 8 )
+ *
+ * Revision 1.10  2007/03/05 09:49:23  lurcher
+ * Get it to build on VMS again
+ *
+ * Revision 1.9  2006/01/06 18:44:35  lurcher
+ * Couple of unicode fixes
+ *
  * Revision 1.8  2004/11/22 17:02:49  lurcher
  * Fix unicode/ansi conversion in the SQLGet functions
  *
@@ -138,7 +150,7 @@
 
 #include "drivermanager.h"
 
-static char const rcsid[]= "$RCSfile: SQLGetDescRec.c,v $ $Revision: 1.8 $";
+static char const rcsid[]= "$RCSfile: SQLGetDescRec.c,v $ $Revision: 1.12 $";
 
 SQLRETURN SQLGetDescRecA( SQLHDESC descriptor_handle,
            SQLSMALLINT rec_number, 
@@ -296,7 +308,7 @@ SQLRETURN SQLGetDescRec( SQLHDESC descriptor_handle,
 
         if ( SQL_SUCCEEDED( ret ) && name && s1 )
         {
-            unicode_to_ansi_copy((char*) name, s1, SQL_NTS, descriptor -> connection );
+            unicode_to_ansi_copy((char*) name, buffer_length, s1, SQL_NTS, descriptor -> connection );
         }
         if ( s1 )
         {
@@ -304,7 +316,7 @@ SQLRETURN SQLGetDescRec( SQLHDESC descriptor_handle,
         }
 		if ( SQL_SUCCEEDED( ret ) && string_length ) 
 		{
-			*string_length /= sizeof( SQL_WCHAR );	
+			*string_length = strlen((char*)name);
 		}
     }
     else
@@ -354,7 +366,7 @@ SQLRETURN SQLGetDescRec( SQLHDESC descriptor_handle,
                         string_length, name ),
                     __sptr_as_string( s2, type ),
                     __sptr_as_string( s3, sub_type ),
-                    __ptr_as_string( s4, (void*)length ),
+                    __ptr_as_string( s4, length ),
                     __sptr_as_string( s5, precision ),
                     __sptr_as_string( s6, scale ),
                     __sptr_as_string( s7, nullable ));

@@ -14,7 +14,7 @@
 
 SQLRETURN SQLSetStmtOption(	SQLHSTMT  hDrvStmt,
 									UWORD   fOption,
-									SQLROWCOUNT  vParam)
+									SQLULEN  vParam)
 {
     HDRVSTMT hStmt	= (HDRVSTMT)hDrvStmt;
 

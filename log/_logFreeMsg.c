@@ -10,6 +10,16 @@
 
 #include "log.h"
 
+/*! 
+ * \brief   Callback function to free mem used by a message.
+ *
+ *          This function is set in logOpen and is automatically used
+ *          to free mem used by a message when the message is deleted.
+ * 
+ * \param   pMsg
+ *
+ * \sa      logOpen
+ */
 void _logFreeMsg( void *pMsg )
 {
 	HLOGMSG hMsg	= (HLOGMSG)pMsg;

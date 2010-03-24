@@ -27,9 +27,15 @@
  *
  **********************************************************************
  *
- * $Id: SQLGetDescFieldW.c,v 1.6 2004/11/22 17:02:49 lurcher Exp $
+ * $Id: SQLGetDescFieldW.c,v 1.8 2008/08/29 08:01:39 lurcher Exp $
  *
  * $Log: SQLGetDescFieldW.c,v $
+ * Revision 1.8  2008/08/29 08:01:39  lurcher
+ * Alter the way W functions are passed to the driver
+ *
+ * Revision 1.7  2007/02/28 15:37:48  lurcher
+ * deal with drivers that call internal W functions and end up in the driver manager. controlled by the --enable-handlemap configure arg
+ *
  * Revision 1.6  2004/11/22 17:02:49  lurcher
  * Fix unicode/ansi conversion in the SQLGet functions
  *
@@ -110,6 +116,38 @@ SQLRETURN SQLGetDescFieldW( SQLHDESC descriptor_handle,
                     LOG_INFO, 
                     "Error: SQL_INVALID_HANDLE" );
 
+#ifdef WITH_HANDLE_REDIRECT
+		{
+			DMHDESC parent_desc;
+
+			parent_desc = find_parent_handle( descriptor, SQL_HANDLE_DESC );
+
+			if ( parent_desc ) {
+        		dm_log_write( __FILE__, 
+                	__LINE__, 
+                    	LOG_INFO, 
+                    	LOG_INFO, 
+                    	"Info: found parent handle" );
+
+				if ( CHECK_SQLGETDESCFIELDW( parent_desc -> connection ))
+				{
+        			dm_log_write( __FILE__, 
+                		__LINE__, 
+                   		 	LOG_INFO, 
+                   		 	LOG_INFO, 
+                   		 	"Info: calling redirected driver function" );
+
+                	return  SQLGETDESCFIELDW( parent_desc -> connection,
+							descriptor,
+							rec_number,
+							field_identifier,
+							value,
+							buffer_length,
+							string_length );
+				}
+			}
+		}
+#endif
         return SQL_INVALID_HANDLE;
     }
 
@@ -155,7 +193,8 @@ SQLRETURN SQLGetDescFieldW( SQLHDESC descriptor_handle,
         return function_return( SQL_HANDLE_DESC, descriptor, SQL_ERROR );
     }
 
-    if ( descriptor -> connection -> unicode_driver )
+    if ( descriptor -> connection -> unicode_driver ||
+		    CHECK_SQLGETDESCFIELDW( descriptor -> connection ))
     {
         if ( !CHECK_SQLGETDESCFIELDW( descriptor -> connection ))
         {

@@ -27,9 +27,15 @@
  *
  **********************************************************************
  *
- * $Id: SQLGetDescField.c,v 1.7 2004/11/22 17:02:49 lurcher Exp $
+ * $Id: SQLGetDescField.c,v 1.9 2008/09/29 14:02:45 lurcher Exp $
  *
  * $Log: SQLGetDescField.c,v $
+ * Revision 1.9  2008/09/29 14:02:45  lurcher
+ * Fix missing dlfcn group option
+ *
+ * Revision 1.8  2006/03/08 09:18:41  lurcher
+ * fix silly typo that was using sizeof( SQL_WCHAR ) instead of SQLWCHAR
+ *
  * Revision 1.7  2004/11/22 17:02:49  lurcher
  * Fix unicode/ansi conversion in the SQLGet functions
  *
@@ -126,7 +132,7 @@
 
 #include "drivermanager.h"
 
-static char const rcsid[]= "$RCSfile: SQLGetDescField.c,v $ $Revision: 1.7 $";
+static char const rcsid[]= "$RCSfile: SQLGetDescField.c,v $ $Revision: 1.9 $";
 
 SQLRETURN SQLGetDescFieldA( SQLHDESC descriptor_handle,
            SQLSMALLINT rec_number, 
@@ -280,11 +286,11 @@ SQLRETURN SQLGetDescField( SQLHDESC descriptor_handle,
           case SQL_DESC_TYPE_NAME:
             if ( SQL_SUCCEEDED( ret ) && value && s1 )
             {
-                unicode_to_ansi_copy( value, s1, SQL_NTS, descriptor -> connection );
+                unicode_to_ansi_copy( value, buffer_length, s1, SQL_NTS, descriptor -> connection );
             }
 			if ( SQL_SUCCEEDED( ret ) && string_length ) 
 			{
-				*string_length /= sizeof( SQL_WCHAR );	
+				*string_length /= sizeof( SQLWCHAR );	
 			}
             break;
         }

@@ -19,6 +19,19 @@
 #include <stdio.h>
 #include <ctype.h>
 
+#if defined(HAVE_STDARG_H)
+# include <stdarg.h>
+# define HAVE_STDARGS
+#else
+# if defined(HAVE_VARARGS_H)
+#  include <varargs.h>
+#  ifdef HAVE_STDARGS
+#   undef HAVE_STDARGS
+#  endif
+# endif
+#endif
+
+
 #include <lst.h>
 
 /*****************************************************************************
@@ -45,19 +58,19 @@
  *****************************************************************************/
 typedef struct	tLOGMSG
 {
-	char			*pszModuleName;							/* liblog will malloc, copy, and free	*/
-	char			*pszFunctionName;						/* liblog will malloc, copy, and free	*/
-	int				nLine;
-	int				nSeverity;
-	int				nCode;
-	char			*pszMessage;							/* liblog will malloc, copy, and free	*/
+	char *  pszModuleName;      /*!< file where message originated                                      */
+	char *  pszFunctionName;    /*!< function where message originated.                                 */
+	int     nLine;              /*!< File line where message originated.                                */
+	int     nSeverity;
+	int     nCode;
+	char *  pszMessage;
 
 } LOGMSG, *HLOGMSG;
 
 
 typedef struct	tLOG
 {
-	HLST		hMessages;								/* list of messages	( LOGMSG )			*/
+	HLST		hMessages;								/* list of messages	(we may want to switch to vector)   */
 
 	char		*pszProgramName;						/* liblog will malloc, copy, and free	*/
 	char		*pszLogFile;							/* NULL, or filename					*/
@@ -71,41 +84,14 @@ typedef struct	tLOG
  * API
  *****************************************************************************/
 
-/******************************
- * logOpen
- *
- ******************************/
 int logOpen( HLOG *phLog, char *pszProgramName, char *pszLogFile, long nMaxMsgs );
-
-/******************************
- * logClose
- *
- ******************************/
 int logClose( HLOG hLog );
-
-/******************************
- * logPushMsg
- *
- ******************************/
+int logClear( HLOG hLog );
 int logPushMsg( HLOG hLog, char *pszModule, char *pszFunctionName, int nLine, int nSeverity, int nCode, char *pszMsg );
-int logPushMsgv( HLOG hLog, char *pszModule, char *pszFunctionName, int nLine, int nSeverity, int nCode, ... );
-
-/******************************
- * logPopMsg
- *
- * 1. Pops last message from stack and deletes it.
- * 2. Message returned in pszMsg (make sure its large enough)
- ******************************/
-int logPopMsg( HLOG hLog, char *pszMsgHdr, int *pnCode, char *pszMsg );
-
-/******************************
- * logOn
- *
- * 1. if false then no storage on memory or file
- * 2. default is false
- * 3. you may want to turn logging on off for
- *    debugging purposes
- ******************************/
+int logPushMsgf( HLOG hLog, char *pszModule, char *pszFunctionName, int nLine, int nSeverity, int nCode, char *pszMessageFormat, ... );
+int logvPushMsgf( HLOG hLog, char *pszModule, char *pszFunctionName, int nLine, int nSeverity, int nCode, char *pszMessageFormat, va_list args );
+int logPeekMsg( HLOG hLog, long nMsg, HLOGMSG *phMsg );
+int logPopMsg( HLOG hLog );
 int logOn( HLOG hLog, int bOn );
 
 /*****************************************************************************

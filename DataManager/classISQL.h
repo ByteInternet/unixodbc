@@ -12,13 +12,28 @@
 #ifndef classISQL_included
 #define classISQL_included
 
+#ifdef QT_V4LAYOUT
+#include <Qt/qwidget.h>
+#include <Qt/qmenubar.h>
+#include <Qt/q3combobox.h>
+#include <Qt/qslider.h>
+#include <Qt/qtabbar.h>
+#include <Qt/qfile.h>
+#include <Qt/qevent.h>
+#include <Qt/qfiledialog.h>
+#include <Qt/q3textstream.h>
+#include <Qt/qpixmap.h>
+#include <Qt/qlayout.h>
+#include <Qt/qpushbutton.h>
+#include <Qt/qmessagebox.h>
+#include <Qt/qlabel.h>
+#include <Qt/q3valuelist.h>
+#include <Qt/q3multilineedit.h>
+#include <Qt/qstyle.h>
+#else
 #include <qwidget.h>
 #include <qmenubar.h>
-#if (QT_VERSION>=300)
-#include <qcombobox.h>
-#else
 #include <qcombo.h>
-#endif
 #include <qslider.h>
 #include <qtabbar.h>
 #if (QT_VERSION>=300)
@@ -30,16 +45,13 @@
 #include <qtextstream.h>
 #include <qpixmap.h>
 #include <qlayout.h>
-#if (QT_VERSION>=300)
-#include <qpushbutton.h>
-#else
 #include <qpushbt.h>
-#endif
 #include <qkeycode.h>
 #include <qmessagebox.h>
 #include <qlabel.h>
 #include <qvaluelist.h>
 #include <qmultilineedit.h>
+#endif
 
 #include <sqlext.h>
 
@@ -76,13 +88,22 @@ protected slots:
 protected:
     QTabBar *           pTabBar;
     QSlider *           pSliderRecentSQL;
+#ifdef QT_V4LAYOUT
+    Q3MultiLineEdit *    txtSQL;
+    Q3MultiLineEdit *    txtResults;
+#else
     QMultiLineEdit *    txtSQL;
     QMultiLineEdit *    txtResults;
+#endif
     SQLHDBC             hDbc;
     QString             qsDataSource;
     QString             qsResultsFileName;
     QString             qsSQLFileName;
+#ifdef QT_V4LAYOUT
+    Q3ValueList<QString> listSQL;
+#else
     QValueList<QString> listSQL;
+#endif
     int                 nSQL;
 
 private:

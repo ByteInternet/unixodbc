@@ -1,5 +1,6 @@
 $! vmsbuild.com -- DCL procedure to build unixODBC on OpenVMS
 $!
+$ say := "write sys$OUTPUT"
 $ whoami = f$parse(f$environment("PROCEDURE"),,,,"NO_CONCEAL")
 $ cwd = f$parse(whoami,,,"DEVICE") + f$parse(whoami,,,"DIRECTORY") - ".][000000]" - "][" - ".]" - "]" + "]"
 $ set default 'cwd'
@@ -23,6 +24,7 @@ $!
 $ if p1 .eqs. "CLEAN" 
 $ then
 $   set default 'cwd'
+$   d = f$parse(whoami,,,"DEVICE") + f$parse(whoami,,,"DIRECTORY") - ".][000000]" - "][" - ".]" - "]" + "]"
 $   say "Removing all object files and listings"
 $   delete/noconfirm [...]*.obj;*, *.lis;*
 $   say "Removing all object libraries and linker maps"
@@ -37,14 +39,14 @@ $   if f$search("ODBCSRC:[vms]libodbcinst.olb") .eqs. "" then library/create ODB
 $   if f$search("ODBCSRC:[vms]libodbc.olb") .eqs. "" then library/create ODBCSRC:[vms]libodbc.olb
 $   if f$search("ODBCSRC:[vms]libodbcpsql.olb") .eqs. "" then library/create ODBCSRC:[vms]libodbcpsql.olb
 $   call create_vmsconfig_h
-$   call compile "ODBCSRC:[extras]" "*.c" "ODBCSRC:[vms]libodbcinst.olb" "ODBCSRC:[vms]libodbc.olb"
-$   call compile "ODBCSRC:[ini]" "*.c" "ODBCSRC:[vms]libodbcinst.olb" "ODBCSRC:[vms]libodbc.olb"
-$   call compile "ODBCSRC:[log]" "*.c" "ODBCSRC:[vms]libodbcinst.olb"
-$   call compile "ODBCSRC:[lst]" "*.c" "ODBCSRC:[vms]libodbcinst.olb" "ODBCSRC:[vms]libodbc.olb"
-$   call compile "ODBCSRC:[odbcinst]" "*.c" "ODBCSRC:[vms]libodbcinst.olb"
-$   call compile "ODBCSRC:[drivermanager]" "*.c" "ODBCSRC:[vms]libodbc.olb"
-$   call compile "ODBCSRC:[exe]" "*.c"
-$   call compile "ODBCSRC:[drivers.postgresql]" "*.c" "ODBCSRC:[vms]libodbcpsql.olb"
+$   call compile "ODBCSRC:[extras]" "*.C" "ODBCSRC:[vms]libodbcinst.olb" "ODBCSRC:[vms]libodbc.olb"
+$   call compile "ODBCSRC:[ini]" "*.C" "ODBCSRC:[vms]libodbcinst.olb" "ODBCSRC:[vms]libodbc.olb"
+$   call compile "ODBCSRC:[log]" "*.C" "ODBCSRC:[vms]libodbcinst.olb"
+$   call compile "ODBCSRC:[lst]" "*.C" "ODBCSRC:[vms]libodbcinst.olb" "ODBCSRC:[vms]libodbc.olb"
+$   call compile "ODBCSRC:[odbcinst]" "*.C" "ODBCSRC:[vms]libodbcinst.olb"
+$   call compile "ODBCSRC:[drivermanager]" "*.C" "ODBCSRC:[vms]libodbc.olb"
+$   call compile "ODBCSRC:[exe]" "*.C"
+$   call compile "ODBCSRC:[drivers.postgresql]" "*.C" "ODBCSRC:[vms]libodbcpsql.olb"
 $   set default 'cwd'
 $!
 $ endif
@@ -90,12 +92,13 @@ $   say "Linking libodbcpsql.exe"
 $   link 'LFLAGS' libodbcpsql.olb/library/include="''module'",odbc2_axp.opt/opt/share=libodbcpsql.exe
 $!
 $   set default ODBCSRC:[exe]
-$   say "Linking isql.exe and dltest.exe"
+$   say "Linking isql.exe, dltest.exe and odbc-config.exe"
 $   link 'LFLAGS' isql.OBJ,SYS$INPUT/OPT
 ODBCSRC:[vms]libodbc.exe/SHARE
 $ eod
 $!
 $   link 'LFLAGS' dltest.OBJ,ODBCSRC:[vms]libodbcinst.olb/library
+$   link 'LFLAGS' odbc-config.OBJ
 $ endif
 $!
 $ if p1 .eqs. "INSTALL" .or. p1 .eqs. "ALL"
@@ -104,6 +107,8 @@ $!
 $   copy/log ODBCSRC:[vms]libodbc*.exe ODBC_LIBDIR:
 $   copy/log ODBCSRC:[vms]odbc_setup.com ODBC_LIBDIR:
 $   copy/log ODBCSRC:[exe]isql.exe ODBC_LIBDIR:
+$   copy/log ODBCSRC:[exe]dltest.exe ODBC_LIBDIR:
+$   copy/log ODBCSRC:[exe]odbc-config.exe ODBC_LIBDIR:
 $!
 $! check for odbc.ini and odbcinst.ini in ODBC_LIBDIR
 $! 
@@ -158,6 +163,7 @@ $ loop:
 $   file = f$search ("''p2'",1)
 $   if file .eqs. "" then goto complete
 $   filename = f$parse (file,,,"name")
+$   if f$edit(filename,"UPCASE") .eqs. "INIOS2PROFILE" then goto loop
 $   object = F$SEARCH ("''filename'.OBJ;*",2)
 $   if object .eqs. ""
 $   then
@@ -177,7 +183,7 @@ $
 $!
 $ create_vmsconfig_h : subroutine
 $!
-$ SEARCH/KEY=(POS:1,SIZE:8) ODBCSRC:[000000]Configure. "VERSION="/EXACT/OUTPUT=version.tmp
+$ SEARCH/KEY=(POS:2,SIZE:8) ODBCSRC:[000000]CONFIGURE. "VERSION="/EXACT/OUTPUT=version.tmp
 $ open/read version version.tmp
 $ read version versionline
 $ close version
@@ -192,14 +198,33 @@ $ write vmsconfig "#define HAVE_PWD_H 1"
 $ write vmsconfig "#if __VMS_VER >= 70000000"
 $ write vmsconfig "#define HAVE_STRCASECMP"
 $ write vmsconfig "#define HAVE_STRNCASECMP"
-$ write vmsconfig "#endif
+$ write vmsconfig "#define HAVE_STDARG_H"
+$ write vmsconfig "#endif"
+$ write vmsconfig "#define SIZEOF_LONG_INT 8"
+$ write vmsconfig "#define UNIXODBC_SOURCE"
 $ write vmsconfig "#define readonly __readonly"
-$ write vmsconfig "#define DEFLIB_PATH ""ODBC_LIBDIR"""
-$ write vmsconfig "#define SYSTEM_LIB_PATH ""ODBC_LIBDIR"""
+$ write vmsconfig "#define DEFLIB_PATH ""ODBC_LIBDIR:[LIB]"""
+$ write vmsconfig "#define SYSTEM_LIB_PATH ""ODBC_LIBDIR:[LIB]"""
 $ write vmsconfig "#define SHLIBEXT "".exe"""
 $ write vmsconfig "#define VERSION ""''versionstring'"""
+$ write vmsconfig "#define PREFIX ""ODBC_LIBDIR:"""
+$ write vmsconfig "#define EXEC_PREFIX ""ODBC_LIBDIR:[BIN]"""
+$ write vmsconfig "#define BIN_PREFIX ""ODBC_LIBDIR:[BIN]"""
+$ write vmsconfig "#define INCLUDE_PREFIX ""ODBC_LIBDIR:[INCLUDE]"""
+$ write vmsconfig "#define LIB_PREFIX ""ODBC_LIBDIR:[ETC]"""
+$ write vmsconfig "#define SYSTEM_FILE_PATH ""ODBC_LIBDIR:[ETC]"""
 $ write vmsconfig "char* getvmsenv (char* symbol);"
 $ close vmsconfig
+$!
+$ open/write unixodbcconfig ODBCSRC:[include]unixodbc_conf.h
+$ write unixodbcconfig "/* auto-generated definitions for VMS port */
+$ write unixodbcconfig "#ifndef HAVE_PWD_H"
+$ write unixodbcconfig " #define HAVE_PWD_H"
+$ write unixodbcconfig "#endif"
+$ write unixodbcconfig "#ifndef SIZEOF_LONG_INT"
+$ write unixodbcconfig " #define SIZEOF_LONG_INT 8"
+$ write unixodbcconfig "#endif"
+$ close unixodbcconfig
 $ exit
 $ endsubroutine ! create_vmsconfig_h
 $!

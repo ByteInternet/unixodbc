@@ -23,9 +23,12 @@
  *
  **********************************************************************
  *
- * $Id: SQLSetStmtAttr.c,v 1.5 2003/12/01 16:37:17 lurcher Exp $
+ * $Id: SQLSetStmtAttr.c,v 1.6 2005/10/27 17:54:49 lurcher Exp $
  *
  * $Log: SQLSetStmtAttr.c,v $
+ * Revision 1.6  2005/10/27 17:54:49  lurcher
+ * fix what I suspect is a typo in qt.m4
+ *
  * Revision 1.5  2003/12/01 16:37:17  lurcher
  *
  * Fix a bug in SQLWritePrivateProfileString
@@ -128,6 +131,10 @@ SQLRETURN CLSetStmtAttr( SQLHSTMT statement_handle,
 
       case SQL_ATTR_ROW_ARRAY_SIZE:
         cl_statement -> rowset_array_size = ( SQLULEN ) value;
+        break;
+
+      case SQL_ROWSET_SIZE:
+        cl_statement -> rowset_size = ( SQLULEN ) value;
         break;
 
       case SQL_ATTR_ROW_STATUS_PTR:

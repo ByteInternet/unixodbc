@@ -27,9 +27,12 @@
  *
  **********************************************************************
  *
- * $Id: SQLGetConnectAttrW.c,v 1.11 2004/11/22 17:02:48 lurcher Exp $
+ * $Id: SQLGetConnectAttrW.c,v 1.12 2008/08/29 08:01:38 lurcher Exp $
  *
  * $Log: SQLGetConnectAttrW.c,v $
+ * Revision 1.12  2008/08/29 08:01:38  lurcher
+ * Alter the way W functions are passed to the driver
+ *
  * Revision 1.11  2004/11/22 17:02:48  lurcher
  * Fix unicode/ansi conversion in the SQLGet functions
  *
@@ -505,7 +508,9 @@ SQLRETURN SQLGetConnectAttrW( SQLHDBC connection_handle,
         /*
          * call the driver
          */
-        if ( connection -> unicode_driver )
+        if ( connection -> unicode_driver ||
+			CHECK_SQLGETCONNECTATTRW( connection ) ||
+			CHECK_SQLGETCONNECTOPTIONW( connection ))
         {
             if ( !CHECK_SQLGETCONNECTATTRW( connection ))
             {

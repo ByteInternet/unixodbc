@@ -22,32 +22,63 @@ CDrivers::CDrivers( QWidget* parent, const char* name )
 
   QHBoxLayout *playoutMain  = new QHBoxLayout( playoutTop );
 
+#ifdef QT_V4LAYOUT
+  lvwDrivers = new Q3ListView( this, "lvwDrivers" );
+#else
   lvwDrivers = new QListView( this, "lvwDrivers" );
+#endif
   lvwDrivers->setGeometry( 10, 10, 270, 190 );
   lvwDrivers->setMinimumSize( 50, 50 );
   lvwDrivers->setMaximumSize( 32767, 32767 );
+#ifdef QT_V4LAYOUT
+  lvwDrivers->setFocusPolicy( Qt::TabFocus );
+  lvwDrivers->setBackgroundMode( Qt::PaletteBackground );
+#else
   lvwDrivers->setFocusPolicy( QWidget::TabFocus );
   lvwDrivers->setBackgroundMode( QWidget::PaletteBackground );
+#endif
   lvwDrivers->setFrameStyle( QFrame::Box | QFrame::Raised );
+#ifdef QT_V4LAYOUT
+  lvwDrivers->setResizePolicy( Q3ScrollView::Manual );
+  lvwDrivers->setVScrollBarMode( Q3ScrollView::Auto );
+  lvwDrivers->setHScrollBarMode( Q3ScrollView::Auto );
+#else
   lvwDrivers->setResizePolicy( QScrollView::Manual );
   lvwDrivers->setVScrollBarMode( QScrollView::Auto );
   lvwDrivers->setHScrollBarMode( QScrollView::Auto );
+#endif
   lvwDrivers->setTreeStepSize( 20 );
   lvwDrivers->setMultiSelection( FALSE );
   lvwDrivers->setAllColumnsShowFocus( FALSE );
   lvwDrivers->setItemMargin( 1 );
   lvwDrivers->setRootIsDecorated( FALSE );
   lvwDrivers->addColumn( "Name", -1 );
+#ifdef QT_V4LAYOUT
+  lvwDrivers->setColumnWidthMode( 0, Q3ListView::Maximum );
+#else
   lvwDrivers->setColumnWidthMode( 0, QListView::Maximum );
+#endif
   lvwDrivers->setColumnAlignment( 0, 1 );
   lvwDrivers->addColumn( "Description", -1 );
+#ifdef QT_V4LAYOUT
+  lvwDrivers->setColumnWidthMode( 1, Q3ListView::Maximum );
+#else
   lvwDrivers->setColumnWidthMode( 1, QListView::Maximum );
+#endif
   lvwDrivers->setColumnAlignment( 1, 1 );
   lvwDrivers->addColumn( "Driver Lib", -1 );
+#ifdef QT_V4LAYOUT
+  lvwDrivers->setColumnWidthMode( 2, Q3ListView::Maximum );
+#else
   lvwDrivers->setColumnWidthMode( 2, QListView::Maximum );
+#endif
   lvwDrivers->setColumnAlignment( 2, 1 );
   lvwDrivers->addColumn( "Setup Lib", -1 );
+#ifdef QT_V4LAYOUT
+  lvwDrivers->setColumnWidthMode( 3, Q3ListView::Maximum );
+#else
   lvwDrivers->setColumnWidthMode( 3, QListView::Maximum );
+#endif
   lvwDrivers->setColumnAlignment( 3, 1 );
 
   playoutMain->addWidget( lvwDrivers, 10 );
@@ -58,11 +89,18 @@ CDrivers::CDrivers( QWidget* parent, const char* name )
   pbAdd->setGeometry( 290, 10, 100, 30 );
   pbAdd->setMinimumSize( 0, 0 );
   pbAdd->setMaximumSize( 32767, 32767 );
+#ifdef QT_V4LAYOUT
+  pbAdd->setFocusPolicy( Qt::TabFocus );
+  pbAdd->setBackgroundMode( Qt::PaletteBackground );
+#else
   pbAdd->setFocusPolicy( QWidget::TabFocus );
   pbAdd->setBackgroundMode( QWidget::PaletteBackground );
+#endif
   pbAdd->setText( "A&dd..." );
   pbAdd->setAutoRepeat( FALSE );
+#ifndef QT_V4LAYOUT
   pbAdd->setAutoResize( FALSE );
+#endif
 
   playoutButtons->addWidget( pbAdd );
 
@@ -70,11 +108,18 @@ CDrivers::CDrivers( QWidget* parent, const char* name )
   pbRemove->setGeometry( 290, 50, 100, 30 );
   pbRemove->setMinimumSize( 0, 0 );
   pbRemove->setMaximumSize( 32767, 32767 );
+#ifdef QT_V4LAYOUT
+  pbRemove->setFocusPolicy( Qt::TabFocus );
+  pbRemove->setBackgroundMode( Qt::PaletteBackground );
+#else
   pbRemove->setFocusPolicy( QWidget::TabFocus );
   pbRemove->setBackgroundMode( QWidget::PaletteBackground );
+#endif
   pbRemove->setText( "&Remove" );
   pbRemove->setAutoRepeat( FALSE );
+#ifndef QT_V4LAYOUT
   pbRemove->setAutoResize( FALSE );
+#endif
 
   playoutButtons->addWidget( pbRemove );
 
@@ -82,11 +127,18 @@ CDrivers::CDrivers( QWidget* parent, const char* name )
   pbConfigure->setGeometry( 290, 90, 100, 30 );
   pbConfigure->setMinimumSize( 0, 0 );
   pbConfigure->setMaximumSize( 32767, 32767 );
+#ifdef QT_V4LAYOUT
+  pbConfigure->setFocusPolicy( Qt::TabFocus );
+  pbConfigure->setBackgroundMode( Qt::PaletteBackground );
+#else
   pbConfigure->setFocusPolicy( QWidget::TabFocus );
   pbConfigure->setBackgroundMode( QWidget::PaletteBackground );
+#endif
   pbConfigure->setText( "&Configure..." );
   pbConfigure->setAutoRepeat( FALSE );
+#ifndef QT_V4LAYOUT
   pbConfigure->setAutoResize( FALSE );
+#endif
 
   playoutButtons->addWidget( pbConfigure );
 
@@ -97,8 +149,13 @@ CDrivers::CDrivers( QWidget* parent, const char* name )
   pframe->setGeometry( 10, 204, 380, 90 );
   pframe->setMinimumSize( 0, 0 );
   pframe->setMaximumSize( 32767, 32767 );
+#ifdef QT_V4LAYOUT
+  pframe->setFocusPolicy( Qt::NoFocus );
+  pframe->setBackgroundMode( Qt::PaletteBackground );
+#else
   pframe->setFocusPolicy( QWidget::NoFocus );
   pframe->setBackgroundMode( QWidget::PaletteBackground );
+#endif
   pframe->setFrameStyle( QFrame::Box | QFrame::Raised );
 
   playoutTop->addWidget( pframe );
@@ -115,7 +172,12 @@ CDrivers::CDrivers( QWidget* parent, const char* name )
   plabel2->setMinimumSize( 0, 0 );
   plabel2->setMaximumSize( 32767, 32767 );
   plabel2->setText( "These drivers facilitate communication between the Driver Manager and the data server. Many ODBC drivers can be downloaded from the Internet while others are obtained from your database vendor. Typically; you must be a root/adminstrator user to add drivers." );
+#ifdef QT_V4LAYOUT
+  plabel2->setAlignment( Qt::AlignLeft | Qt::WordBreak );
+  plabel2->setWordWrap( true );
+#else
   plabel2->setAlignment( AlignLeft | WordBreak );
+#endif
 
   playoutHelp->addWidget( plabel1, 0, 0 );
   playoutHelp->addWidget( plabel2, 0, 1 );
@@ -142,6 +204,7 @@ CDrivers::~CDrivers()
 void CDrivers::Add()
 {
   QString       qsError         = "";
+  char			buffer[ 128 ];
 
   CPropertiesFrame    *pProperties;
   HODBCINSTPROPERTY hFirstProperty  = NULL;
@@ -149,7 +212,7 @@ void CDrivers::Add()
   HODBCINSTPROPERTY hLastProperty;
   char        szINI[FILENAME_MAX+1];
 
-  sprintf( szINI, "%s/odbcinst.ini", odbcinst_system_file_path() );
+  sprintf( szINI, "%s/odbcinst.ini", odbcinst_system_file_path( buffer ) );
 
   // SET UP PROPERTIES LIST
   hFirstProperty            = (HODBCINSTPROPERTY)malloc( sizeof(ODBCINSTPROPERTY) );
@@ -304,15 +367,20 @@ void CDrivers::Edit()
 {
   QString       qsName          = "";
   QString       qsError         = "";
+  char			buffer[ 128 ];
 
   CPropertiesFrame    *pProperties;
   HODBCINSTPROPERTY hFirstProperty  = NULL;
   HODBCINSTPROPERTY hCurProperty  = NULL;
   HODBCINSTPROPERTY hLastProperty;
   char        szINI[FILENAME_MAX+1];
+#ifdef QT_V4LAYOUT
+  Q3ListViewItem   *pListViewItem;
+#else
   QListViewItem   *pListViewItem;
+#endif
 
-  sprintf( szINI, "%s/odbcinst.ini", odbcinst_system_file_path() );
+  sprintf( szINI, "%s/odbcinst.ini", odbcinst_system_file_path( buffer ) );
 
   // HAS THE USER SELECTED SOMETHING
   pListViewItem = lvwDrivers->currentItem();
@@ -336,7 +404,7 @@ void CDrivers::Edit()
   hFirstProperty->pszHelp       = strdup( ODBC_HELP_DRIVER_NAME );
   hFirstProperty->aPromptData     = NULL;
   strncpy( hFirstProperty->szName, "Name", INI_MAX_PROPERTY_NAME );
-  strcpy( hFirstProperty->szValue, qsName.data() );
+  strcpy( hFirstProperty->szValue, qsName.ascii());
   hLastProperty = hFirstProperty;
 
   hLastProperty->pNext        = (HODBCINSTPROPERTY)malloc( sizeof(ODBCINSTPROPERTY) );
@@ -351,7 +419,7 @@ void CDrivers::Edit()
   hLastProperty->aPromptData        = NULL;
   strncpy( hLastProperty->szName, "Description", INI_MAX_PROPERTY_NAME );
   strcpy( hLastProperty->szValue, "" );
-  SQLGetPrivateProfileString((char*) qsName.data(), hLastProperty->szName, "", hLastProperty->szValue, sizeof(hLastProperty->szValue)-1, szINI );
+  SQLGetPrivateProfileString((char*) qsName.ascii(), hLastProperty->szName, "", hLastProperty->szValue, sizeof(hLastProperty->szValue)-1, szINI );
 
   hLastProperty->pNext        = (HODBCINSTPROPERTY)malloc( sizeof(ODBCINSTPROPERTY) );
   hLastProperty             = hLastProperty->pNext;
@@ -360,7 +428,7 @@ void CDrivers::Edit()
   hLastProperty->pszHelp        = strdup( ODBC_HELP_DRIVER_DRIVER );
   strncpy( hLastProperty->szName, "Driver", INI_MAX_PROPERTY_NAME );
   strncpy( hLastProperty->szValue, "", INI_MAX_PROPERTY_VALUE );
-  SQLGetPrivateProfileString((char*) qsName.data(), hLastProperty->szName, "", hLastProperty->szValue, sizeof(hLastProperty->szValue)-1, szINI );
+  SQLGetPrivateProfileString((char*) qsName.ascii(), hLastProperty->szName, "", hLastProperty->szValue, sizeof(hLastProperty->szValue)-1, szINI );
 
   hLastProperty->pNext        = (HODBCINSTPROPERTY)malloc( sizeof(ODBCINSTPROPERTY) );
   hLastProperty             = hLastProperty->pNext;
@@ -369,7 +437,7 @@ void CDrivers::Edit()
   hLastProperty->pszHelp        = strdup( ODBC_HELP_DRIVER_DRIVER64 );
   strncpy( hLastProperty->szName, "Driver64", INI_MAX_PROPERTY_NAME );
   strncpy( hLastProperty->szValue, "", INI_MAX_PROPERTY_VALUE );
-  SQLGetPrivateProfileString((char*) qsName.data(), hLastProperty->szName, "", hLastProperty->szValue, sizeof(hLastProperty->szValue)-1, szINI );
+  SQLGetPrivateProfileString((char*) qsName.ascii(), hLastProperty->szName, "", hLastProperty->szValue, sizeof(hLastProperty->szValue)-1, szINI );
 
   hLastProperty->pNext        = (HODBCINSTPROPERTY)malloc( sizeof(ODBCINSTPROPERTY) );
   hLastProperty             = hLastProperty->pNext;
@@ -378,7 +446,7 @@ void CDrivers::Edit()
   hLastProperty->pszHelp        = strdup( ODBC_HELP_DRIVER_SETUP );
   strncpy( hLastProperty->szName, "Setup", INI_MAX_PROPERTY_NAME );
   strncpy( hLastProperty->szValue, "", INI_MAX_PROPERTY_VALUE );
-  SQLGetPrivateProfileString((char*) qsName.data(), hLastProperty->szName, "", hLastProperty->szValue, sizeof(hLastProperty->szValue)-1, szINI );
+  SQLGetPrivateProfileString((char*) qsName.ascii(), hLastProperty->szName, "", hLastProperty->szValue, sizeof(hLastProperty->szValue)-1, szINI );
 
   hLastProperty->pNext        = (HODBCINSTPROPERTY)malloc( sizeof(ODBCINSTPROPERTY) );
   hLastProperty             = hLastProperty->pNext;
@@ -387,7 +455,7 @@ void CDrivers::Edit()
   hLastProperty->pszHelp        = strdup( ODBC_HELP_DRIVER_SETUP64 );
   strncpy( hLastProperty->szName, "Setup64", INI_MAX_PROPERTY_NAME );
   strncpy( hLastProperty->szValue, "", INI_MAX_PROPERTY_VALUE );
-  SQLGetPrivateProfileString((char*) qsName.data(), hLastProperty->szName, "", hLastProperty->szValue, sizeof(hLastProperty->szValue)-1, szINI );
+  SQLGetPrivateProfileString((char*) qsName.ascii(), hLastProperty->szName, "", hLastProperty->szValue, sizeof(hLastProperty->szValue)-1, szINI );
 
   hLastProperty->pNext        = (HODBCINSTPROPERTY)malloc( sizeof(ODBCINSTPROPERTY) );
   hLastProperty             = hLastProperty->pNext;
@@ -401,7 +469,7 @@ void CDrivers::Edit()
   hLastProperty->pszHelp          = strdup( ODBC_HELP_DRIVER_USAGECOUNT );
   strncpy( hLastProperty->szName, "UsageCount", INI_MAX_PROPERTY_NAME );
   strcpy( hLastProperty->szValue, "1" );
-  SQLGetPrivateProfileString((char*) qsName.data(), hLastProperty->szName, "", hLastProperty->szValue, sizeof(hLastProperty->szValue)-1, szINI );
+  SQLGetPrivateProfileString((char*) qsName.ascii(), hLastProperty->szName, "", hLastProperty->szValue, sizeof(hLastProperty->szValue)-1, szINI );
 
   hLastProperty->pNext        = (HODBCINSTPROPERTY)malloc( sizeof(ODBCINSTPROPERTY) );
   hLastProperty             = hLastProperty->pNext;
@@ -415,7 +483,7 @@ void CDrivers::Edit()
   hLastProperty->aPromptData        = NULL;
   strncpy( hLastProperty->szName, "CPTimeout", INI_MAX_PROPERTY_NAME );
   strcpy( hLastProperty->szValue, "0" );
-  SQLGetPrivateProfileString((char*) qsName.data(), hLastProperty->szName, "", hLastProperty->szValue, sizeof(hLastProperty->szValue)-1, szINI );
+  SQLGetPrivateProfileString((char*) qsName.ascii(), hLastProperty->szName, "", hLastProperty->szValue, sizeof(hLastProperty->szValue)-1, szINI );
 
   hLastProperty->pNext        = (HODBCINSTPROPERTY)malloc( sizeof(ODBCINSTPROPERTY) );
   hLastProperty             = hLastProperty->pNext;
@@ -429,7 +497,7 @@ void CDrivers::Edit()
   hLastProperty->aPromptData        = NULL;
   strncpy( hLastProperty->szName, "CPReuse", INI_MAX_PROPERTY_NAME );
   strcpy( hLastProperty->szValue, "0" );
-  SQLGetPrivateProfileString((char*) qsName.data(), hLastProperty->szName, "", hLastProperty->szValue, sizeof(hLastProperty->szValue)-1, szINI );
+  SQLGetPrivateProfileString((char*) qsName.ascii(), hLastProperty->szName, "", hLastProperty->szValue, sizeof(hLastProperty->szValue)-1, szINI );
 
   // ACCEPT ANY DRIVER SPECIFIC PROPERTIES THAT HAVE BEEN TYPED IN MANUALLY OR INSTALLED 
   // NOTE: This is a quick enhancement. Much room to optimize this func.
@@ -439,7 +507,7 @@ void CDrivers::Edit()
     char  szPropertyNameUpper[INI_MAX_PROPERTY_NAME+1];
     char  szPropertyValue[INI_MAX_PROPERTY_VALUE+1];
 
-    strcpy( szDriverName, qsName.data() );
+    strcpy( szDriverName, qsName.ascii() );
     if ( iniOpen( &hIni, szINI, "#;", '[', ']', '=', TRUE ) != INI_ERROR )
     {
       if ( iniObjectSeek( hIni, szDriverName ) == INI_SUCCESS )
@@ -512,14 +580,19 @@ void CDrivers::Edit()
 
 void CDrivers::Delete()
 {
+#ifdef QT_V4LAYOUT
+  Q3ListViewItem   *pListViewItem;
+#else
   QListViewItem   *pListViewItem;
+#endif
   char        szINI[FILENAME_MAX+1];
   char        *pszName;
   QString       qsError;
   DWORD       nErrorCode;
   char        szErrorMsg[FILENAME_MAX+1];
+  char     		buffer[ 128 ];
 
-  sprintf( szINI, "%s/odbcinst.ini", odbcinst_system_file_path() );
+  sprintf( szINI, "%s/odbcinst.ini", odbcinst_system_file_path( buffer ) );
 
   // GET SELECT DATA SOURCE NAME
   pListViewItem = lvwDrivers->currentItem();
@@ -613,10 +686,15 @@ void CDrivers::Load()
   char      szDriver64[INI_MAX_PROPERTY_VALUE+1];
   char      szSetup[INI_MAX_PROPERTY_VALUE+1];
   char      szSetup64[INI_MAX_PROPERTY_VALUE+1];
+#ifdef QT_V4LAYOUT
+  Q3ListViewItem *pListViewItem;
+#else
   QListViewItem *pListViewItem;
+#endif
   QString     qsError;
+  char 		buffer[ 128 ];
 
-  sprintf( szINI, "%s/odbcinst.ini", odbcinst_system_file_path());
+  sprintf( szINI, "%s/odbcinst.ini", odbcinst_system_file_path( buffer ));
 
   if ( iniOpen( &hIni, szINI, "#;", '[', ']', '=', TRUE ) != INI_ERROR )
   {
@@ -676,7 +754,11 @@ void CDrivers::Load()
       }
 #endif
 
+#ifdef QT_V4LAYOUT
+      pListViewItem = new Q3ListViewItem( lvwDrivers, szDriverName, szDescription, szDriver, szSetup );
+#else
       pListViewItem = new QListViewItem( lvwDrivers, szDriverName, szDescription, szDriver, szSetup );
+#endif
       iniObjectNext( hIni );
     }
   }

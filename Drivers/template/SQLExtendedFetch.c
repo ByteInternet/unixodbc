@@ -14,8 +14,8 @@
 
 SQLRETURN SQLExtendedFetch(   SQLHSTMT        hDrvStmt,
                                     SQLUSMALLINT    nOrientation,
-                                    SQLROWOFFSET    nOffset,
-                                    SQLROWSETSIZE   *pnRowCount,
+                                    SQLLEN          nOffset,
+                                    SQLULEN         *pnRowCount,
                                     SQLUSMALLINT    *pRowStatusArray )
 {
     HDRVSTMT hStmt	= (HDRVSTMT)hDrvStmt;

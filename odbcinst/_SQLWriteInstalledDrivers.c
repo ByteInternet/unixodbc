@@ -24,6 +24,7 @@ BOOL _SQLWriteInstalledDrivers(
 {
 	HINI	hIni;
     char    szIniName[ INI_MAX_OBJECT_NAME + 1 ];
+	char	b1[ 256 ], b2[ 256 ];
 
 	/* SANITY CHECKS */
 	if ( pszSection == NULL )
@@ -40,9 +41,9 @@ BOOL _SQLWriteInstalledDrivers(
 	/* OK */
 
 #ifdef VMS
-    sprintf( szIniName, "%sODBCINST.INI", odbcinst_system_file_path() );
+    sprintf( szIniName, "%s:%s", odbcinst_system_file_path( b1 ), odbcinst_system_file_name( b2 ) );
 #else
-    sprintf( szIniName, "%s/odbcinst.ini", odbcinst_system_file_path() );
+    sprintf( szIniName, "%s/%s", odbcinst_system_file_path( b1 ), odbcinst_system_file_name( b2 ) );
 #endif
 
 #ifdef __OS2__

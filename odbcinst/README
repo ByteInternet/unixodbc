@@ -15,15 +15,13 @@ options. It is modelled after MS'isms and should, therefore,
 allow for an easy transition from MS'isms to other platforms
 (ie Linux).
 
-This share library, and some related share libs, also address
-the issue of GUI plugability on platforms such as Linux. GUI
-plugability being the fact that on Linux (and UNIX in general)
-the OS; may not be running a GUI or may be supporting any number
-of GUI's (X, KDE, GNOME etc).
+A complicating factor for unixODBC is that the GUI may not be
+present - or if it is - it may be any number of types (X, KDE, 
+GNOME etc). So the GUI bits of odbcinst must be plugable. This 
+library handles this. See SQLManageDataSources() and the 
+odbcinstQ library.
 
-This lib also has a command line tool called odbcinst (see
-the cmd subdir).
-
+This lib also has a command line tool called odbcinst.
 
 +-------------------------------------------------------------+
 | Peter Harvey                                                |

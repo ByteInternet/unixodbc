@@ -21,9 +21,15 @@
  *
  **********************************************************************
  *
- * $Id: __attribute.c,v 1.5 2004/10/27 08:57:57 lurcher Exp $
+ * $Id: __attribute.c,v 1.7 2007/07/13 09:01:08 lurcher Exp $
  *
  * $Log: __attribute.c,v $
+ * Revision 1.7  2007/07/13 09:01:08  lurcher
+ * Add isql option to quote field data
+ *
+ * Revision 1.6  2006/04/18 10:24:47  lurcher
+ * Add a couple of changes from Mark Vanderwiel
+ *
  * Revision 1.5  2004/10/27 08:57:57  lurcher
  * Remove -module from cur Makefile.am, it seems to stop the lib building on HPUX...
  *
@@ -934,7 +940,7 @@ void __release_attr_str( struct attr_struct *attr_str )
 
 static void __set_local_attribute( void *handle, int type, struct attr_set *as )
 {
-    SQLRETURN ret = SQL_ERROR;
+    SQLRETURN ret = SQL_SUCCESS;
 
     if ( type == SQL_HANDLE_ENV )
     {
@@ -1254,6 +1260,77 @@ void *__attr_override( void *handle, int type, int attribute, void *value, SQLIN
                 *string_length = strlen( as -> value );
             }
             return as -> value;
+        }
+    }
+    else
+    {
+        return value;
+    }
+}
+
+void *__attr_override_wide( void *handle, int type, int attribute, void *value, SQLINTEGER *string_length, 
+		SQLWCHAR *buffer )
+{
+    struct attr_set *as;
+    char *msg;
+
+    switch( type )
+    {
+      case SQL_HANDLE_DBC:
+        as = ((DMHDBC) handle ) -> dbc_attribute.list;
+        msg = ((DMHDBC) handle ) -> msg;
+        break;
+
+      case SQL_HANDLE_STMT:
+        as = ((DMHSTMT) handle ) -> connection -> stmt_attribute.list;
+        msg = ((DMHSTMT) handle ) -> msg;
+        break;
+
+      default:
+        as = NULL;
+        break;
+    }
+
+    while( as )
+    {
+        if ( as -> override && as -> attribute == attribute )
+        {
+            break;
+        }
+        as = as -> next;
+    }
+
+    if ( as )
+    {
+        if ( log_info.log_flag )
+        {
+            sprintf( msg, "\t\tATTR OVERRIDE [%s=%s]",
+                    as -> keyword + 1, as -> value );
+
+            dm_log_write_diag( msg );
+        }
+
+        if ( as -> is_int_type )
+        {
+            return (void*)(long) as -> int_value;
+        }
+        else
+        {
+            if ( string_length )
+            {
+                *string_length = strlen( as -> value ) * sizeof( SQLWCHAR );
+            }
+			switch( type ) 
+			{
+      			case SQL_HANDLE_DBC:
+					ansi_to_unicode_copy( buffer, as->value, SQL_NTS, (DMHDBC) handle );
+					break;
+
+      			case SQL_HANDLE_STMT:
+					ansi_to_unicode_copy( buffer, as->value, SQL_NTS, ((DMHSTMT) handle ) -> connection );
+					break;
+			}
+            return buffer;
         }
     }
     else

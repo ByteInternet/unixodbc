@@ -27,9 +27,12 @@
  *
  **********************************************************************
  *
- * $Id: SQLGetEnvAttr.c,v 1.4 2003/10/30 18:20:46 lurcher Exp $
+ * $Id: SQLGetEnvAttr.c,v 1.5 2008/09/29 14:02:45 lurcher Exp $
  *
  * $Log: SQLGetEnvAttr.c,v $
+ * Revision 1.5  2008/09/29 14:02:45  lurcher
+ * Fix missing dlfcn group option
+ *
  * Revision 1.4  2003/10/30 18:20:46  lurcher
  *
  * Fix broken thread protection
@@ -104,7 +107,7 @@
 
 #include "drivermanager.h"
 
-static char const rcsid[]= "$RCSfile: SQLGetEnvAttr.c,v $ $Revision: 1.4 $";
+static char const rcsid[]= "$RCSfile: SQLGetEnvAttr.c,v $ $Revision: 1.5 $";
 
 SQLRETURN SQLGetEnvAttr( SQLHENV environment_handle,
            SQLINTEGER attribute,
@@ -215,18 +218,20 @@ SQLRETURN SQLGetEnvAttr( SQLHENV environment_handle,
       case SQL_ATTR_UNIXODBC_SYSPATH:
         if ( value )
         {
-            if ( buffer_length >= strlen( odbcinst_system_file_path())) 
+			char b1[ 512 ];
+
+            if ( buffer_length >= strlen( odbcinst_system_file_path( b1 ))) 
             {
-                strcpy( value, odbcinst_system_file_path());
+                strcpy( value, odbcinst_system_file_path( b1 ));
             }
             else
             {
-                memcpy( value, odbcinst_system_file_path(), buffer_length );
+                memcpy( value, odbcinst_system_file_path( b1 ), buffer_length );
                 ((char*)value)[ buffer_length ] = '\0';
             }
             if ( string_length )
             {
-                *string_length = strlen( odbcinst_system_file_path());
+                *string_length = strlen( odbcinst_system_file_path( b1 ));
             }
         }
         break;

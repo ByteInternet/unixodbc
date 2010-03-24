@@ -7,6 +7,7 @@ EXTRA_DIST = \
 	gtrtst.exp
 
 libgtrtst_la_LDFLAGS = \
+	-no-undefined \
 	-version-info @LIB_VERSION@ \
 	-export-dynamic \
 	-export-symbols @srcdir@/gtrtst.exp 

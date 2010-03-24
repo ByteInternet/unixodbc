@@ -301,6 +301,7 @@ SC_Destructor(StatementClass *self)
 		free(self->fi);
 	}
 
+	SC_set_errormsg(self, NULL);
 
 	free(self);
 
@@ -385,6 +386,7 @@ mylog("recycle statement: self= %u\n", self);
 		return FALSE;
 	}
 
+	SC_set_errormsg(self, NULL);
 	SC_clear_error(self);
 
 	switch (self->status) {
@@ -458,6 +460,7 @@ mylog("recycle statement: self= %u\n", self);
 	self->bind_row = 0;
 	self->last_fetch_count = 0;
 
+	SC_set_errormsg(self, NULL);
 	SC_clear_error(self);
 
 	self->lobj_fd = -1;

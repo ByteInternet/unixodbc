@@ -21,9 +21,15 @@
  *
  **********************************************************************
  *
- * $Id: results.cpp,v 1.7 2005/02/01 10:24:24 lurcher Exp $
+ * $Id: results.cpp,v 1.9 2007/04/17 15:16:17 lurcher Exp $
  *
  * $Log: results.cpp,v $
+ * Revision 1.9  2007/04/17 15:16:17  lurcher
+ * SQLLEN change in C++ code
+ *
+ * Revision 1.8  2007/02/12 11:49:37  lurcher
+ * Add QT4 support to existing GUI parts
+ *
  * Revision 1.7  2005/02/01 10:24:24  lurcher
  * Cope if SHLIBEXT is not set
  *
@@ -119,6 +125,15 @@
  **********************************************************************/
 
 #include <stdlib.h>
+#ifdef QT_V4LAYOUT
+#include <Qt/qapplication.h>
+#include <Qt/qmessagebox.h>
+#include <Qt/qpushbutton.h>
+#include <Qt/qcombobox.h>
+#include <Qt/qcheckbox.h>
+#include <Qt/qlabel.h>
+#include <Qt/qlineedit.h>
+#else
 #include <qapplication.h>
 #include <qmessagebox.h>
 #include <qpushbutton.h>
@@ -126,6 +141,7 @@
 #include <qcheckbox.h>
 #include <qlabel.h>
 #include <qlineedit.h>
+#endif
 #include <sql.h>
 #include <sqlext.h>
 #include <sqlucode.h>
@@ -1901,7 +1917,7 @@ void dColAttribute::Ok()
     SQLUSMALLINT field_identifier;
     SQLPOINTER buf;
     SQLSMALLINT b_len, *b_len_ptr, b_len_value;
-    SQLINTEGER *numeric_ptr, numeric_value;
+    SQLLEN *numeric_ptr, numeric_value;
 
 	if ( hand )
 		in_handle = hand -> getHandle();
@@ -2538,7 +2554,7 @@ void dExtendedFetch::Ok()
 	SQLHANDLE in_handle = SQL_NULL_HANDLE;
 	SQLSMALLINT fetch_orentation;
     SQLINTEGER fetch_offset;
-    SQLUINTEGER row_count, *row_count_ptr;
+    SQLULEN row_count, *row_count_ptr;
     SQLUSMALLINT *row_status_array;
 	int index;
 

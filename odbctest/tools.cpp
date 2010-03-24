@@ -21,9 +21,15 @@
  *
  **********************************************************************
  *
- * $Id: tools.cpp,v 1.6 2003/12/01 16:37:17 lurcher Exp $
+ * $Id: tools.cpp,v 1.8 2007/02/12 11:49:37 lurcher Exp $
  *
  * $Log: tools.cpp,v $
+ * Revision 1.8  2007/02/12 11:49:37  lurcher
+ * Add QT4 support to existing GUI parts
+ *
+ * Revision 1.7  2005/04/05 09:11:32  lurcher
+ * The config string being passed into ConfigDsn was wrong, removed semicolon, and added terminating double null
+ *
  * Revision 1.6  2003/12/01 16:37:17  lurcher
  *
  * Fix a bug in SQLWritePrivateProfileString
@@ -113,19 +119,29 @@
 #include <stdlib.h>
 #include <ltdl.h>
 #include <autotest.h>
+#ifdef QT_V4LAYOUT
+#include <Qt/qapplication.h>
+#include <Qt/qmessagebox.h>
+#include <Qt/q3ptrlist.h>
+#include <Qt/q3listview.h>
+#include <Qt/q3filedialog.h>
+#include <Qt/qlineedit.h>
+#include <Qt/q3header.h>
+#else
 #include <qapplication.h>
 #include <qmessagebox.h>
-#if (QT_VERSION>=300)
-#include <qptrlist.h>
-#else
 #include <qlist.h>
-#endif
 #include <qlistview.h>
 #include <qfiledialog.h>
 #include <qlineedit.h>
 #include <qheader.h>
+#endif
 #include "autotest.h"
+#ifdef QT_V4LAYOUT
+#include "tools4.h"
+#else
 #include "tools.h"
+#endif
 #include "odbctest.h"
 #include "ini.h"
 
@@ -208,10 +224,18 @@ class section
 
   private:
     QString name;
+#ifdef QT_V4LAYOUT
+    Q3PtrList <prop> entries;
+#else
     QList <prop> entries;
+#endif
 };
 
+#ifdef QT_V4LAYOUT
+Q3PtrList<section> ini_list;
+#else
 QList<section> ini_list;
+#endif
 
 //
 // time func
@@ -750,7 +774,7 @@ void dManageTest::Ok()
     // 
     QString driver = test_source -> currentText();
 
-	if ( !driver )
+	if ( driver.isNull() )
 	{
 		return;
 	}
@@ -917,7 +941,11 @@ dManageTest::dManageTest( OdbcTest *parent, QString name )
 	l_ts = new QLabel( "Test Source:", this );
     l_ts -> setGeometry( 10, 20, 80, 20 );
 
+#ifdef QT_V4LAYOUT
+	param = new Q3ButtonGroup( "Connect Parameters", this );
+#else
 	param = new QButtonGroup( "Connect Parameters", this );
+#endif
     param -> setGeometry( 10, 60, 240, 125 );
 
 	dsn = new QComboBox( FALSE, this, "dsn" );
@@ -1039,7 +1067,11 @@ void dManageAutoTest::Add()
 
     if ( index >= 0 )
     {
+#ifdef QT_V4LAYOUT
+        Q3ListBoxItem *lbi = lib_list -> item( index );
+#else
         QListBoxItem *lbi = lib_list -> item( index );
+#endif
         const char *name = lbi -> text();
 
         QDir q_d( s_from->text());
@@ -1072,7 +1104,6 @@ void dManageAutoTest::Add()
             pfAutoTestName = (BOOL(*)(LPSTR,UINT*))lt_dlsym( handle, "AutoTestName" );
             pfAutoTestDesc = lt_dlsym( handle, "AutoTestDesc" );
             pfAutoTestFunc = lt_dlsym( handle, "AutoTestFunc" );
-
 
             if ( !pfAutoTestName &&
                     !pfAutoTestDesc && 
@@ -1173,9 +1204,15 @@ void dManageAutoTest::Add()
 
 void dManageAutoTest::From()
 {
+#ifdef QT_V4LAYOUT
+	Q3FileDialog *dlg = new Q3FileDialog( this, "fred", TRUE );
+
+    dlg -> setMode( Q3FileDialog::Directory );
+#else
 	QFileDialog *dlg = new QFileDialog( this, "fred", TRUE );
 
     dlg -> setMode( QFileDialog::Directory );
+#endif
 
     if ( dlg -> exec() == QDialog::Accepted )
     {
@@ -1307,10 +1344,18 @@ dManageAutoTest::dManageAutoTest( OdbcTest *parent, QString name )
     close = new QPushButton( "Close", this );
     close->setGeometry( 180,200, 70,25 );
 
+#ifdef QT_V4LAYOUT
+	lib_list = new Q3ListBox( this, "Lib List" );
+#else
 	lib_list = new QListBox( this, "Lib List" );
+#endif
     lib_list -> setGeometry( 10, 80, 150, 160 );
 
+#ifdef QT_V4LAYOUT
+	test_list = new Q3ListBox( this, "Test List" );
+#else
 	test_list = new QListBox( this, "Test List" );
+#endif
     test_list -> setGeometry( 270, 80, 250, 160 );
 
 	l_avail = new QLabel( "Available Test Libs:", this );
@@ -1525,7 +1570,11 @@ void dManageTestGroup::Add()
 
     if ( index >= 0 )
     {
+#ifdef QT_V4LAYOUT
+        Q3ListBoxItem *lbi = auto_list -> item( index );
+#else
         QListBoxItem *lbi = auto_list -> item( index );
+#endif
 
         section *s = find_section( current_text );
         prop *p = new prop( lbi -> text(), "Installed" );
@@ -1542,7 +1591,11 @@ void dManageTestGroup::Remove()
 
     if ( index >= 0 )
     {
+#ifdef QT_V4LAYOUT
+        Q3ListBoxItem *lbi = sauto_list -> item( index );
+#else
         QListBoxItem *lbi = sauto_list -> item( index );
+#endif
         section *s = find_section( current_group );
         prop *p;
 
@@ -1679,10 +1732,18 @@ dManageTestGroup::dManageTestGroup( OdbcTest *parent, QString name )
 	l_sauto = new QLabel( "Selected Auto Tests:", this );
     l_sauto -> setGeometry( 370, 60, 160, 20 );
 
+#ifdef QT_V4LAYOUT
+	auto_list = new Q3ListBox( this, "Auto List" );
+#else
 	auto_list = new QListBox( this, "Auto List" );
+#endif
     auto_list -> setGeometry( 10, 80, 250, 160 );
 
+#ifdef QT_V4LAYOUT
+	sauto_list = new Q3ListBox( this, "Selected Auto List" );
+#else
 	sauto_list = new QListBox( this, "Selected Auto List" );
+#endif
     sauto_list -> setGeometry( 370, 80, 250, 160 );
 
     connect( close, SIGNAL(clicked()), SLOT(Ok()) );
@@ -1731,9 +1792,15 @@ dManageTestGroup::~dManageTestGroup()
     delete sauto_list;
 }
 
+#ifdef QT_V4LAYOUT
+MYQListViewItem::MYQListViewItem( Q3ListView * parent, MYQListViewItem *after,
+        QString label1, QString label2 )
+    :Q3ListViewItem( parent, after, label1, label2 )
+#else
 MYQListViewItem::MYQListViewItem( QListView * parent, MYQListViewItem *after,
         QString label1, QString label2 )
     :QListViewItem( parent, after, label1, label2 )
+#endif
 {
     test_index = 0;
     test_group = label1;
@@ -1741,18 +1808,30 @@ MYQListViewItem::MYQListViewItem( QListView * parent, MYQListViewItem *after,
     test_name = QString::null;
 }
 
+#ifdef QT_V4LAYOUT
+MYQListViewItem::MYQListViewItem( MYQListViewItem * parent, QString label1, QString label2,
+         int index, QString _test_name )
+    :Q3ListViewItem( parent, label1, label2 )
+#else
 MYQListViewItem::MYQListViewItem( MYQListViewItem * parent, QString label1, QString label2,
          int index, QString _test_name )
     :QListViewItem( parent, label1, label2 )
+#endif
 {
     test_index = index;
     test_source = _test_name;
     test_name = label1;
 }
 
+#ifdef QT_V4LAYOUT
+MYQListViewItem::MYQListViewItem( MYQListViewItem * parent, MYQListViewItem *after,
+            QString label1, QString label2, int index, QString _test_name )
+    :Q3ListViewItem( parent, after, label1, label2 )
+#else
 MYQListViewItem::MYQListViewItem( MYQListViewItem * parent, MYQListViewItem *after,
             QString label1, QString label2, int index, QString _test_name )
     :QListViewItem( parent, after, label1, label2 )
+#endif
 {
     test_index = index;
     test_source = _test_name;
@@ -1763,17 +1842,29 @@ MYQListViewItem::MYQListViewItem( MYQListViewItem * parent, MYQListViewItem *aft
 
 MYQListViewItem* MYQListViewItem::firstChild()
 {
+#ifdef QT_V4LAYOUT
+    return (MYQListViewItem*) Q3ListViewItem::firstChild();
+#else
     return (MYQListViewItem*) QListViewItem::firstChild();
+#endif
 }
 
 MYQListViewItem * MYQListViewItem::parent()
 {
+#ifdef QT_V4LAYOUT
+    return (MYQListViewItem*) Q3ListViewItem::parent();
+#else
     return (MYQListViewItem*) QListViewItem::parent();
+#endif
 }
 
 MYQListViewItem * MYQListViewItem::nextSibling()
 {
+#ifdef QT_V4LAYOUT
+    return (MYQListViewItem*) Q3ListViewItem::nextSibling();
+#else
     return (MYQListViewItem*) QListViewItem::nextSibling();
+#endif
 }
 
 void MYQListViewItem::set_down( BOOL state )
@@ -1996,7 +2087,7 @@ void dRunAutoTests::Ok()
                                                 else
                                                 {
                                                     int size;
-                                                    
+
                                                     size = count / (sizeof(unsigned int)*8);
                                                     size ++;
 
@@ -2065,9 +2156,15 @@ void dRunAutoTests::Ok()
 
 void dRunAutoTests::Log()
 {
+#ifdef QT_V4LAYOUT
+	Q3FileDialog *dlg = new Q3FileDialog( this, "fred", TRUE );
+
+    dlg -> setMode( Q3FileDialog::AnyFile );
+#else
 	QFileDialog *dlg = new QFileDialog( this, "fred", TRUE );
 
     dlg -> setMode( QFileDialog::AnyFile );
+#endif
     dlg -> setSelection( l_log -> text());
 
     if ( dlg -> exec() == QDialog::Accepted )
@@ -2122,7 +2219,6 @@ void dRunAutoTests::add_auto_test( const char * test_name, MYQListViewItem *top,
                 /*
                  * initialize libtool
                  */
-
                 lt_dlinit();
 
                 //
@@ -2163,11 +2259,11 @@ void dRunAutoTests::add_auto_test( const char * test_name, MYQListViewItem *top,
                     }
 
                     *item = new MYQListViewItem( top, *item, test_name );  
+
                     MYQListViewItem *after = NULL;
 
                     for ( int i = 1; i <= count; i ++ )
                     {
-
                         if( pfAutoTestDesc( i, func_name, test_desc ))
                         {
                             if ( after )
@@ -2239,7 +2335,11 @@ dRunAutoTests::dRunAutoTests( OdbcTest *parent, QString name )
 	l_tests = new QLabel( "Auto Tests:", this );
     l_tests -> setGeometry( 10, 15, 60, 20 );
 
+#ifdef QT_V4LAYOUT
+    tests = new Q3ListView( this, "auto tests" );
+#else
     tests = new QListView( this, "auto tests" );
+#endif
     tests -> setGeometry( 10, 40, 300, 150 );
     tests -> addColumn( "Tests", -1 );
     tests -> setRootIsDecorated( TRUE );
@@ -2250,11 +2350,20 @@ dRunAutoTests::dRunAutoTests( OdbcTest *parent, QString name )
 	l_sources = new QLabel( "Test Sources:", this );
     l_sources -> setGeometry( 320, 15, 80, 20 );
 
+#ifdef QT_V4LAYOUT
+	sources = new Q3ListBox( this, "Test Sources" );
+    sources -> setSelectionMode( Q3ListBox::Multi );
+#else
 	sources = new QListBox( this, "Test Sources" );
-    sources -> setGeometry( 320, 40, 150, 220 );
     sources -> setSelectionMode( QListBox::Multi );
+#endif
+    sources -> setGeometry( 320, 40, 150, 220 );
 
+#ifdef QT_V4LAYOUT
+	output = new Q3ButtonGroup( "Output", this );
+#else
 	output = new QButtonGroup( "Output", this );
+#endif
     output -> setGeometry( 10, 200, 90, 80 );
 
 	b_log_file = new QCheckBox( "Log File", output, "Log File" );
@@ -2264,7 +2373,11 @@ dRunAutoTests::dRunAutoTests( OdbcTest *parent, QString name )
 	b_screen -> setGeometry( 10, 50, 70, 20 );
     b_screen -> setChecked( TRUE );
 
+#ifdef QT_V4LAYOUT
+	options = new Q3ButtonGroup( "Options", this );
+#else
 	options = new QButtonGroup( "Options", this );
+#endif
     options -> setGeometry( 110, 200, 200, 80 );
 
 	b_debug = new QCheckBox( "Debug", options, "Debug" );
@@ -2348,7 +2461,7 @@ dRunAutoTests::dRunAutoTests( OdbcTest *parent, QString name )
         prop *p;
 
         top = new MYQListViewItem( tests, top, "All" );  
-        
+	last_test = NULL ;
         for ( p = s -> first(); 
                 p != 0; 
                 p = s -> next())

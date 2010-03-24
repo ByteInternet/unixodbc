@@ -27,9 +27,17 @@
  *
  **********************************************************************
  *
- * $Id: SQLParamOptions.c,v 1.3 2003/10/30 18:20:46 lurcher Exp $
+ * $Id: SQLParamOptions.c,v 1.5 2005/11/23 08:29:16 lurcher Exp $
  *
  * $Log: SQLParamOptions.c,v $
+ * Revision 1.5  2005/11/23 08:29:16  lurcher
+ * Add cleanup in postgres driver
+ *
+ * Revision 1.4  2005/07/08 12:11:23  lurcher
+ *
+ * Fix a cursor lib problem (it was broken if you did metadata calls)
+ * Alter the params to SQLParamOptions to use SQLULEN
+ *
  * Revision 1.3  2003/10/30 18:20:46  lurcher
  *
  * Fix broken thread protection
@@ -110,7 +118,7 @@
 
 #include "drivermanager.h"
 
-static char const rcsid[]= "$RCSfile: SQLParamOptions.c,v $ $Revision: 1.3 $";
+static char const rcsid[]= "$RCSfile: SQLParamOptions.c,v $ $Revision: 1.5 $";
 
 /*
  * This one is strictly ODBC 2
@@ -216,6 +224,22 @@ SQLRETURN SQLParamOptions(
         if ( SQL_SUCCEEDED( ret ))
         {
             ret = SQLSETSTMTATTR( statement -> connection,
+                    statement -> driver_stmt,
+                    SQL_ATTR_PARAMS_PROCESSED_PTR, 
+                    pirow, 
+                    0 );
+        }
+    }
+    else if ( CHECK_SQLSETSTMTATTRW( statement -> connection ))
+    {
+        ret = SQLSETSTMTATTRW( statement -> connection,
+                statement -> driver_stmt,
+                SQL_ATTR_PARAMSET_SIZE, 
+                crow, 
+                0 );
+        if ( SQL_SUCCEEDED( ret ))
+        {
+            ret = SQLSETSTMTATTRW( statement -> connection,
                     statement -> driver_stmt,
                     SQL_ATTR_PARAMS_PROCESSED_PTR, 
                     pirow, 

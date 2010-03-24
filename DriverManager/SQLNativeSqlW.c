@@ -27,9 +27,15 @@
  *
  **********************************************************************
  *
- * $Id: SQLNativeSqlW.c,v 1.6 2003/10/30 18:20:46 lurcher Exp $
+ * $Id: SQLNativeSqlW.c,v 1.8 2008/08/29 08:01:39 lurcher Exp $
  *
  * $Log: SQLNativeSqlW.c,v $
+ * Revision 1.8  2008/08/29 08:01:39  lurcher
+ * Alter the way W functions are passed to the driver
+ *
+ * Revision 1.7  2007/02/28 15:37:48  lurcher
+ * deal with drivers that call internal W functions and end up in the driver manager. controlled by the --enable-handlemap configure arg
+ *
  * Revision 1.6  2003/10/30 18:20:46  lurcher
  *
  * Fix broken thread protection
@@ -105,6 +111,38 @@ SQLRETURN SQLNativeSqlW(
                     LOG_INFO, 
                     "Error: SQL_INVALID_HANDLE" );
 
+#ifdef WITH_HANDLE_REDIRECT
+		{
+			DMHDBC parent_connection;
+
+			parent_connection = find_parent_handle( connection, SQL_HANDLE_DBC );
+
+			if ( parent_connection ) {
+        		dm_log_write( __FILE__, 
+                	__LINE__, 
+                    	LOG_INFO, 
+                    	LOG_INFO, 
+                    	"Info: found parent handle" );
+
+				if ( CHECK_SQLNATIVESQLW( parent_connection ))
+				{
+        			dm_log_write( __FILE__, 
+                		__LINE__, 
+                   		 	LOG_INFO, 
+                   		 	LOG_INFO, 
+                   		 	"Info: calling redirected driver function" );
+
+					return SQLNATIVESQLW( parent_connection, 
+							connection, 
+							sz_sql_str_in,
+							cb_sql_str_in,
+							sz_sql_str,
+							cb_sql_str_max,
+							pcb_sql_str );
+				}
+			}
+		}
+#endif
         return SQL_INVALID_HANDLE;
     }
 
@@ -209,7 +247,8 @@ SQLRETURN SQLNativeSqlW(
         return function_return( SQL_HANDLE_DBC, connection, SQL_ERROR );
     }
 
-    if ( connection -> unicode_driver )
+    if ( connection -> unicode_driver ||
+		    CHECK_SQLNATIVESQLW( connection ))
     {
         if ( !CHECK_SQLNATIVESQLW( connection ))
         {

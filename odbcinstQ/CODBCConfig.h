@@ -12,6 +12,19 @@
 #ifndef CODBCConfig_included
 #define CODBCConfig_included
 
+#ifdef QT_V4LAYOUT
+#define QT3_SUPPORT
+#include <Qt/qwidget.h>
+#include <Qt/qmessagebox.h>
+#include <Qt/qpixmap.h>
+#include <Qt/qdialog.h>
+#include <Qt/qtabbar.h>
+#include <Qt/qframe.h>
+#include <Qt/qpixmap.h>
+#include <Qt/qlayout.h>
+#include <Qt/q3tabdialog.h>
+#include <Qt/qsettings.h>
+#else
 #include <qwidget.h>
 #include <qmessagebox.h>
 #include <qpixmap.h>
@@ -24,6 +37,7 @@
 #if QT_VERSION>=300
 #include <qsettings.h>
 #endif
+#endif
 
 #include "CUserDSN.h"
 #include "CSystemDSN.h"
@@ -33,12 +47,22 @@
 #include "CTracing.h"
 #include "CStats.h"
 
-class CODBCConfig : public QTabDialog
+#ifdef QT_V4LAYOUT
+#define TDialog			Q3TabDialog
+#else
+#define TDialog			QTabDialog
+#endif
+
+class CODBCConfig : public TDialog
 {
     Q_OBJECT
 
 public:
+#ifdef QT_V4LAYOUT
+    CODBCConfig( QWidget* parent = 0, const char* name = 0, Qt::WFlags nFlags = 0 );
+#else
     CODBCConfig( QWidget* parent = 0, const char* name = 0, WFlags nFlags = 0 );
+#endif
     virtual ~CODBCConfig();
 
 protected:
@@ -54,5 +78,4 @@ protected:
     virtual void SaveState();
 };
 #endif 
-
 

@@ -27,9 +27,12 @@
  *
  **********************************************************************
  *
- * $Id: SQLColumns.c,v 1.6 2004/01/12 09:54:39 lurcher Exp $
+ * $Id: SQLColumns.c,v 1.7 2008/08/29 08:01:38 lurcher Exp $
  *
  * $Log: SQLColumns.c,v $
+ * Revision 1.7  2008/08/29 08:01:38  lurcher
+ * Alter the way W functions are passed to the driver
+ *
  * Revision 1.6  2004/01/12 09:54:39  lurcher
  *
  * Fix problem where STATE_S5 stops metadata calls
@@ -137,7 +140,7 @@
 
 #include "drivermanager.h"
 
-static char const rcsid[]= "$RCSfile: SQLColumns.c,v $ $Revision: 1.6 $";
+static char const rcsid[]= "$RCSfile: SQLColumns.c,v $ $Revision: 1.7 $";
 
 SQLRETURN SQLColumnsA( SQLHSTMT statement_handle,
            SQLCHAR *catalog_name,
@@ -197,7 +200,7 @@ SQLRETURN SQLColumns( SQLHSTMT statement_handle,
             \n\t\t\tCatalog Name = %s\
             \n\t\t\tSchema Name = %s\
             \n\t\t\tTable Name = %s\
-            \n\t\t\tColumn Type = %s",
+            \n\t\t\tColumn Name = %s",
                 statement,
                 __string_with_length( s1, catalog_name, name_length1 ),
                 __string_with_length( s2, schema_name, name_length2 ),

@@ -12,18 +12,28 @@
 #ifndef CUserDSN_included
 #define CUserDSN_included
 
-#include <qwidget.h>
-#if (QT_VERSION>=300)
-#include <qpushbutton.h>
+#ifdef QT_V4LAYOUT
+#define QT3_SUPPORT
+#include <Qt/qwidget.h>
+#include <Qt/q3button.h>
+#include <Qt/qpixmap.h>
+#include <Qt/qlayout.h>
+#include <Qt/qlabel.h>
+#include <Qt/qframe.h>
 #else
+#include <qwidget.h>
 #include <qpushbt.h>
-#endif
 #include <qpixmap.h>
 #include <qlayout.h>
 #include <qlabel.h>
 #include <qframe.h>
+#endif
 
+#ifdef QT_V4LAYOUT
+#include "CDSNList4.h"
+#else
 #include "CDSNList.h"
+#endif
 
 class CUserDSN : public QWidget
 {

@@ -27,9 +27,15 @@
  *
  **********************************************************************
  *
- * $Id: SQLDriversW.c,v 1.8 2004/07/25 00:42:02 peteralexharvey Exp $
+ * $Id: SQLDriversW.c,v 1.10 2008/09/29 14:02:45 lurcher Exp $
  *
  * $Log: SQLDriversW.c,v $
+ * Revision 1.10  2008/09/29 14:02:45  lurcher
+ * Fix missing dlfcn group option
+ *
+ * Revision 1.9  2005/07/17 09:11:23  lurcher
+ * Fix bug in SQLDrivers that was stopping the return of the attribute length
+ *
  * Revision 1.8  2004/07/25 00:42:02  peteralexharvey
  * for OS2 port
  *
@@ -286,12 +292,13 @@ try_again:
             char szIniName[ INI_MAX_OBJECT_NAME + 1 ];
             char buffer[ 1024 ];
             int total_len = 0;
+			char b1[ 512 ], b2[ 512 ];
 
             /*
              * enumerate the driver attributes
              */
 
-            sprintf( szIniName, "%s/odbcinst.ini", odbcinst_system_file_path());
+            sprintf( szIniName, "%s/odbcinst.ini", odbcinst_system_file_path( b1 ), odbcinst_system_file_name( b2 ));
 
 			memset( buffer, '\0', sizeof( buffer ));
 #ifdef __OS2__
@@ -345,7 +352,7 @@ try_again:
                 if ( sz_driver_attributes )
                     *sz_driver_attributes = '\0';
 
-                if ( *pcb_drvr_attr )
+                if ( pcb_drvr_attr )
                 {
                     *pcb_drvr_attr = total_len;
                 }

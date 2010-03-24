@@ -11,13 +11,21 @@
  **************************************************/
 
 #include "classDataSources.h"
+#ifdef QT_V4LAYOUT
+#include "Qt/qpixmap.h"
+#else
 #include "qpixmap.h"
+#endif
 #include <ini.h>
 #include <odbcinst.h>
 #include "datasourcesuser.xpm"
 #include "datasourcessystem.xpm"
 
+#ifdef QT_V4LAYOUT
+classDataSources::classDataSources( Q3ListViewItem *pParent, Q3ListViewItem *pAfter, classCanvas *pCanvas, classODBC::DSType dataSourceType )
+#else
 classDataSources::classDataSources( QListViewItem *pParent, QListViewItem *pAfter, classCanvas *pCanvas, classODBC::DSType dataSourceType )
+#endif
     : classNode( pParent, pAfter, pCanvas ), dataSourceType( dataSourceType )
 {
   switch ( dataSourceType )
@@ -63,10 +71,18 @@ void classDataSources::setOpen( bool bOpen )
     SQLSetConfigMode( ODBC_BOTH_DSN );
   }
 
+#ifdef QT_V4LAYOUT
+  Q3ListViewItem::setOpen( bOpen );
+#else
   QListViewItem::setOpen( bOpen );
+#endif
 }
 
+#ifdef QT_V4LAYOUT
+void classDataSources::selectionChanged( Q3ListViewItem *p )
+#else
 void classDataSources::selectionChanged( QListViewItem *p )
+#endif
 {
   classDataSource *pDataSource;
 

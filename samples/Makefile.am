@@ -3,6 +3,7 @@ lib_LTLIBRARIES = libboundparam.la
 INCLUDES = -I@top_srcdir@/include 
 
 libboundparam_la_LDFLAGS = \
+	-no-undefined \
     -version-info @LIB_VERSION@ \
     -export-dynamic \
 	-module

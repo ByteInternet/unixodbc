@@ -12,6 +12,29 @@
 
 #include "driver.h"
 
+/*! 
+ * \brief   Get oldest error for the given handle.
+ *
+ *          This is deprecated - use SQLGetDiagRec instead. This is mapped
+ *          to SQLGetDiagRec. The main difference between this and 
+ *          SQLGetDiagRec is that this call will delete the error message to
+ *          allow multiple calls here to work their way through all of the
+ *          errors even with the lack of an ability to pass a specific message
+ *          number to be returned.
+ * 
+ * \param   hDrvEnv
+ * \param   hDrvDbc
+ * \param   hDrvStmt
+ * \param   szSqlState
+ * \param   pfNativeError
+ * \param   szErrorMsg
+ * \param   nErrorMsgMax
+ * \param   pcbErrorMsg
+ * 
+ * \return  SQLRETURN
+ *
+ * \sa      SQLGetDiagRec
+ */
 SQLRETURN SQLError( SQLHENV     hDrvEnv,
 					SQLHDBC     hDrvDbc,
 					SQLHSTMT    hDrvStmt,
@@ -21,55 +44,40 @@ SQLRETURN SQLError( SQLHENV     hDrvEnv,
 					SQLSMALLINT nErrorMsgMax,
 					SQLSMALLINT	*pcbErrorMsg )
 {
-	HDRVENV		hEnv	= (HDRVENV)hDrvEnv;
-	HDRVDBC		hDbc	= (HDRVDBC)hDrvDbc;
-    HDRVSTMT	hStmt	= (HDRVSTMT)hDrvStmt;
-	char    *pszState       = NULL;			 /* pointer to status code   */
-	char    *pszErrMsg      = NULL;			 /* pointer to error message */
-	char	szMsgHdr[1024];
-	int		nCode;
+    SQLSMALLINT nHandleType;
+    SQLHANDLE   hHandle;
+    SQLRETURN   nReturn;
+    HLOG        hLog;
 
-	/* SANITY CHECKS */
-    if( hEnv == SQL_NULL_HENV && hDbc == SQL_NULL_HDBC && hStmt == SQL_NULL_HSTMT )
+    /* map call to SQLGetDiagRec */
+    if ( hDrvEnv )
+    {
+        nHandleType = SQL_HANDLE_ENV;
+        hHandle     = hDrvEnv;
+        hLog        = ((HDRVENV)hDrvEnv)->hLog;
+    }
+    else if ( hDrvDbc )
+    {
+        nHandleType = SQL_HANDLE_DBC;
+        hHandle     = hDrvDbc;
+        hLog        = ((HDRVDBC)hDrvDbc)->hLog;
+    }
+    else if ( hDrvStmt )
+    {
+        nHandleType = SQL_HANDLE_STMT;
+        hHandle     = hDrvStmt;
+        hLog        = ((HDRVSTMT)hDrvStmt)->hLog;
+    }
+    else
         return SQL_INVALID_HANDLE;
 
-	/* DEFAULTS */
-	szSqlState[0]	= '\0';
-	*pfNativeError	= 0;
-	szErrorMsg[0]	= '\0';
-	*pcbErrorMsg	= 0;
+    nReturn = SQLGetDiagRec_( nHandleType, hHandle, 1, szSqlState, pfNativeError, szErrorMsg, nErrorMsgMax, pcbErrorMsg ); 
 
-	/* STATEMENT */
-    if( hStmt != SQL_NULL_HENV )
-	{
-		if ( logPopMsg( hStmt->hLog, szMsgHdr, &nCode,(char*) hStmt->szSqlMsg ) != LOG_SUCCESS )
-			return SQL_NO_DATA;
-		sprintf((char*) szErrorMsg, "%s%s", szMsgHdr, hStmt->szSqlMsg );
-		*pcbErrorMsg = strlen((char*) szErrorMsg );
-		return SQL_SUCCESS;
-	}
+    /* unlike SQLGetDiagRec - we delete the message returned */
+    if ( SQL_SUCCEEDED( nReturn ) )
+        logPopMsg( hLog );
 
-	/* CONNECTION */
-    if( hDbc != SQL_NULL_HDBC )
-	{
-		if ( logPopMsg( hDbc->hLog, szMsgHdr, &nCode,(char*) hDbc->szSqlMsg ) != LOG_SUCCESS )
-			return SQL_NO_DATA;
-		sprintf((char*) szErrorMsg, "%s%s", szMsgHdr, hDbc->szSqlMsg );
-		*pcbErrorMsg = strlen((char*) szErrorMsg );
-		return SQL_SUCCESS;
-	}
-
-	/* ENVIRONMENT */
-    if( hEnv != SQL_NULL_HSTMT )
-	{
-		if ( logPopMsg( hEnv->hLog, szMsgHdr, &nCode,(char*) hEnv->szSqlMsg ) != LOG_SUCCESS )
-			return SQL_NO_DATA;
-		sprintf((char*) szErrorMsg, "%s%s", szMsgHdr, hEnv->szSqlMsg );
-		*pcbErrorMsg = strlen((char*) szErrorMsg );
-		return SQL_SUCCESS;
-	}
-
-	return SQL_NO_DATA;
+    return nReturn;
 }
 
 

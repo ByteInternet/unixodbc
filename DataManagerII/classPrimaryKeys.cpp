@@ -12,10 +12,18 @@
 
 #include "classPrimaryKeys.h"
 #include "classODBC.h"
+#ifdef QT_V4LAYOUT
+#include <Qt/qpixmap.h>
+#else
 #include <qpixmap.h>
+#endif
 #include "keyred.xpm"
 
+#ifdef QT_V4LAYOUT
+classPrimaryKeys::classPrimaryKeys( Q3ListViewItem *pParent, Q3ListViewItem *pAfter, classCanvas *pCanvas, SQLHENV hDbc, const char *pszTable, const char *pszLibrary )
+#else
 classPrimaryKeys::classPrimaryKeys( QListViewItem *pParent, QListViewItem *pAfter, classCanvas *pCanvas, SQLHENV hDbc, const char *pszTable, const char *pszLibrary )
+#endif
     : classNode( pParent, pAfter, pCanvas ) , hDbc( hDbc ), qsTable( pszTable ), qsLibrary( pszLibrary )
 {
   setText( 0, "PrimaryKeys" );
@@ -33,7 +41,11 @@ void classPrimaryKeys::setOpen( bool bOpen )
   else
     listColumns.clear() ;
 
+#ifdef QT_V4LAYOUT
+  Q3ListViewItem::setOpen( bOpen );
+#else
   QListViewItem::setOpen( bOpen );
+#endif
 }
 
 void classPrimaryKeys::LoadColumns()
@@ -49,7 +61,7 @@ void classPrimaryKeys::LoadColumns()
   StatementScoper stmt( hDbc ) ; if ( !stmt() ) return ;
 
   // EXECUTE OUR SQL/CALL
-  if (!SQL_SUCCEEDED(nReturn=SQLPrimaryKeys( stmt(), 0, 0, (SQLCHAR*)qsLibrary.data(), SQL_NTS, (SQLCHAR*)qsTable.data(), SQL_NTS ) ) )
+  if (!SQL_SUCCEEDED(nReturn=SQLPrimaryKeys( stmt(), 0, 0, (SQLCHAR*)qsLibrary.ascii(), SQL_NTS, (SQLCHAR*)qsTable.ascii(), SQL_NTS ) ) )
     return my_msgBox( "classPrimaryKeys", "SQLPrimaryKeys", nReturn, NULL, NULL, stmt() ) ;
 
   // GET RESULTS
@@ -61,7 +73,7 @@ void classPrimaryKeys::LoadColumns()
     if (!SQL_SUCCEEDED(SQLGetData( stmt(), 6, SQL_C_CHAR, &szKeyName[0], sizeof(szKeyName), 0 ) ) )
       strcpy( (char *)szKeyName, "Unknown" );
 
-    qsDesc.sprintf("Desc=%s", QString((char*)szKeyName).stripWhiteSpace().data() ) ;
+    qsDesc.sprintf("Desc=%s", QString((char*)szKeyName).stripWhiteSpace().ascii() ) ;
     listColumns.append( pColumn = new classColumn( this, pColumn, pCanvas, hDbc, QString((char*)szColumnName).stripWhiteSpace(), "KEY", qsDesc ) );
   }
 }

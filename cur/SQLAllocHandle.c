@@ -23,9 +23,14 @@
  *
  **********************************************************************
  *
- * $Id: SQLAllocHandle.c,v 1.3 2004/07/24 17:55:38 lurcher Exp $
+ * $Id: SQLAllocHandle.c,v 1.4 2005/07/08 12:11:23 lurcher Exp $
  *
  * $Log: SQLAllocHandle.c,v $
+ * Revision 1.4  2005/07/08 12:11:23  lurcher
+ *
+ * Fix a cursor lib problem (it was broken if you did metadata calls)
+ * Alter the params to SQLParamOptions to use SQLULEN
+ *
  * Revision 1.3  2004/07/24 17:55:38  lurcher
  * Sync up CVS
  *
@@ -111,7 +116,7 @@ SQLRETURN CLAllocHandle( SQLSMALLINT handle_type,
             cl_statement -> cl_connection = cl_connection;
             cl_statement -> dm_statement = ( DMHSTMT ) dm_handle; 
             cl_statement -> error_count = 0;
-			cl_statement -> fetch_statement = SQL_NULL_HSTMT;
+	    cl_statement -> fetch_statement = SQL_NULL_HSTMT;
 
             ret = SQLALLOCHANDLE( cl_connection, 
                     handle_type,
