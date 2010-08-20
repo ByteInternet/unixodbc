@@ -1,3 +1,12 @@
+unixodbc (2.2.14p2-2) unstable; urgency=low
+
+  * Apply patch from
+    http://cvs.fedoraproject.org/viewvc/devel/unixODBC/odbcint64-config.patch
+    to ensure we get the necessary (U)ODBCINST64 defines.  Thanks to
+    Matthias Klose for the pointer.  Closes: #582591, LP: #620428.
+
+ -- Steve Langasek <vorlon@debian.org>  Fri, 20 Aug 2010 14:51:31 -0700
+
 unixodbc (2.2.14p2-1) unstable; urgency=low
 
   * New upstream release (closes: #433312).
