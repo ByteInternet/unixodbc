@@ -1,8 +1,8 @@
-libgtrtst.so.1 unixodbc #MINVER#
+libgtrtst.so.1 libodbc1 #MINVER# | unixodbc #MINVER#
  GetRCString@Base 2.2.4-11
  szLogPrintf@Base 2.2.4-11
  szMessageBox@Base 2.2.4-11
-libodbc.so.1 unixodbc #MINVER#
+libodbc.so.1 libodbc1 #MINVER# | unixodbc #MINVER#
  ODBCGetTryWaitValue@Base 2.2.14p2
  ODBCSetTryWaitValue@Base 2.2.14p2
  ODBCSharedTraceFlag@Base 2.2.11
@@ -164,5 +164,5 @@ libodbc.so.1 unixodbc #MINVER#
  uodbc_get_stats@Base 2.2.11
  uodbc_open_stats@Base 2.2.11
  uodbc_stats_error@Base 2.2.11
-libodbccr.so.1 unixodbc #MINVER#
+libodbccr.so.1 libodbc1 #MINVER# | unixodbc #MINVER#
  CLConnect@Base 2.2.4-11

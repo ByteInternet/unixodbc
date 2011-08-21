@@ -243,9 +243,6 @@ int main( int argc, char *argv[] )
         }
         else
         {
-            char *line;
-            int malloced;
-
             line = fgets( line_buffer, line_buffer_size, stdin );
             if ( !line )        /* EOF - ctrl D */
             {

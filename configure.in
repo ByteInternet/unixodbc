@@ -213,6 +213,10 @@ SHLIBEXT="$shrext_cmds"
 AC_MSG_RESULT($shrext_cmds)
 AC_SUBST(SHLIBEXT)
 
+dnl export the libdir, so we can have a multiarch-friendly search path
+dnl for ODBC drivers.
+AC_DEFINE_UNQUOTED([MODULEDIR], ["`eval echo $libdir/odbc`"])
+
 if test "x$iconv" = "xtrue"; 
 then
 

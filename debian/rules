@@ -6,6 +6,8 @@ export DPKG_GENSYMBOLS_CHECK_LEVEL=4
 # always force the check for undefined symbols
 export LDFLAGS=-Wl,-z,defs
 
+DEB_HOST_MULTIARCH ?= $(shell dpkg-architecture -qDEB_HOST_MULTIARCH)
+
 %:
 	dh $@
 
@@ -20,9 +22,8 @@ override_dh_auto_clean:
 
 override_dh_auto_install:
 	dh_auto_install
-	sed -i "/^dependency_libs=/ s/'.*'/''/" debian/tmp/usr/lib/*.la
-	mkdir -p $(CURDIR)/debian/tmp/usr/lib/odbc
-	cp -L $(CURDIR)/debian/tmp/usr/lib/lib*S.so $(CURDIR)/debian/tmp/usr/lib/libnn.so $(CURDIR)/debian/tmp/usr/lib/odbc
+	mkdir -p $(CURDIR)/debian/tmp/usr/lib/$(DEB_HOST_MULTIARCH)/odbc
+	cp -L $(CURDIR)/debian/tmp/usr/lib/$(DEB_HOST_MULTIARCH)/lib*S.so $(CURDIR)/debian/tmp/usr/lib/$(DEB_HOST_MULTIARCH)/libnn.so $(CURDIR)/debian/tmp/usr/lib/$(DEB_HOST_MULTIARCH)/odbc
 
 # The autotools target adds a forced build-time dependency on
 # autotools-dev (for /usr/share/misc/config.*)
@@ -32,7 +33,8 @@ autotools:
 	if [ -z "$$OLDDATESUB" ] || [ "$$OLDDATESUB" -lt "$$NEWDATESUB" ]; \
 	then \
 	   cp -f /usr/share/misc/config.sub config.sub; \
+	   cp -f /usr/share/misc/config.sub libltdl/config.sub; \
 	fi
 
 override_dh_makeshlibs:
-	dh_makeshlibs -X lib/odbc/lib
+	dh_makeshlibs -X lib/$(DEB_HOST_MULTIARCH)/odbc/lib

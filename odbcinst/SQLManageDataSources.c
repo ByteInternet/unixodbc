@@ -142,6 +142,7 @@ BOOL SQLManageDataSources( HWND hWnd )
         inst_logPushMsg( __FILE__, __FILE__, __LINE__, LOG_CRITICAL, ODBC_ERROR_GENERAL_ERR, "lt_dlinit() failed" );
 		return FALSE;
     }
+    lt_dlsetsearchpath(MODULEDIR);
 
     /* get plugin name */
     _appendUIPluginExtension( szNameAndExtension, _getUIPluginName( szName, hODBCInstWnd->szUI ) );

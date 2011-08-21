@@ -1,3 +1,30 @@
+unixodbc (2.2.14p2-3) unstable; urgency=low
+
+  * Add Vcs-Bzr field.
+  * Build for multiarch.
+  * Split unixodbc into a libodbc1 package and a unixodbc package,
+    the latter now containing just isql and with a versioned dependency on
+    libodbc1 for compatibility with existing dependencies.  This is better
+    that moving isql into a new 'isql' package and having unixodbc depend
+    on it because 'unixodbc' is a wrong name for a library package.
+  * exe/isql.c: patch from upstream to fix isql segfault with the -b option.
+    Thanks to Tim Gokcen <hexetic@gmail.com> for reporting.  Closes: #607895.
+  * Call lt_dlsetsearchpath() so that we can use relative paths for ODBC
+    modules in a multiarch-clean manner
+  * Document the availability of multiarch driver support in debian/NEWS.
+  * DriverManager/SQLDriverConnect.c: fix a potential buffer overflow.
+    Closes: #617655
+  * debian/rules: update libltdl/config.sub, not just config.sub, when out
+    of date.  Closes: #576980.
+  * odbcinst1debian2 Breaks the old drivers that reference driver setup
+    modules in /usr/lib that are shipped in this package, so declare this.
+  * Standards-Version to 3.9.2.
+  * Drop .la files from unixodbc-dev, now that there are no shared libraries
+    left that depend on them.
+  * Pull patch from Ubuntu to fix FTBFS on ppc64.
+
+ -- Steve Langasek <vorlon@debian.org>  Sun, 21 Aug 2011 06:24:07 +0000
+
 unixodbc (2.2.14p2-2) unstable; urgency=low
 
   * Apply patch from
