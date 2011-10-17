@@ -1,3 +1,14 @@
+unixodbc (2.2.14p2-4) unstable; urgency=low
+
+  * Add libltdl/config.sub to debian/clean
+  * exe/isql.c, exec/odbcinst.c, exe/iusql.c: fix passing of usage
+    information to printf, so that we don't fail the checks for unsafe
+    format string handling.
+  * Drop the Qt library and unixodbc-bin, now split into a separate source
+     upstream.  Closes: #604387.
+
+ -- Steve Langasek <vorlon@debian.org>  Mon, 17 Oct 2011 17:34:33 +0000
+
 unixodbc (2.2.14p2-3) unstable; urgency=low
 
   * Add Vcs-Bzr field.
@@ -22,8 +33,9 @@ unixodbc (2.2.14p2-3) unstable; urgency=low
   * Drop .la files from unixodbc-dev, now that there are no shared libraries
     left that depend on them.
   * Pull patch from Ubuntu to fix FTBFS on ppc64.
+  * Clean up the odbcinst1debian2 package description.
 
- -- Steve Langasek <vorlon@debian.org>  Sun, 21 Aug 2011 06:24:07 +0000
+ -- Steve Langasek <vorlon@debian.org>  Sun, 21 Aug 2011 06:35:23 +0000
 
 unixodbc (2.2.14p2-2) unstable; urgency=low
 

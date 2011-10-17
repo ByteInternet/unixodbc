@@ -14,8 +14,8 @@ DEB_HOST_MULTIARCH ?= $(shell dpkg-architecture -qDEB_HOST_MULTIARCH)
 override_dh_auto_configure: autotools
 	# Add here commands to configure the package.
 	CXXFLAGS="-g -O2 -pipe" \
-	dh_auto_configure -- --with-qt-includes=/usr/include/qt3 \
-		--enable-static --enable-ltdllib --without-pth
+	dh_auto_configure -- --enable-static --enable-ltdllib --without-pth \
+		--disable-gui
 
 override_dh_auto_clean:
 	dh_auto_clean
