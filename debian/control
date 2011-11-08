@@ -12,6 +12,7 @@ Vcs-Browser: http://anonscm.debian.org/loggerhead/users/vorlon/unixodbc/trunk/
 
 Package: unixodbc
 Architecture: any
+Multi-Arch: foreign
 Section: database
 Depends: ${shlibs:Depends}, ${misc:Depends}, libodbc1 (>= 2.2.14p2-3)
 Conflicts: unixodbc-bin (<< 2.2.4-1)
