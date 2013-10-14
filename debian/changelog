@@ -1,3 +1,27 @@
+unixodbc (2.3.1-1) unstable; urgency=low
+
+  * New upstream release.  Closes: #650267.
+    - Drop changes to exe/isql.c, exe/odbcinst.c, exe/iusql.c, fixed
+      differently upstream.
+    - Drop libgtrtst library from libodbc1; this is technically an ABI
+      change, but nothing has ever used this library so we're not changing
+      the package name.
+    - Since the library ABI has not changed in Debian (ever), keep the
+      package names the same and provide backwards-compatible symlinks to
+      avoid an unnecessary library transition; and update the symbols/shlibs
+      to make it clear the old versions of the library don't satisfy these
+      dependencies any longer.
+  * Bump the build dependency on debhelper to 9.
+  * Fix LDFLAGS handling so that we pick up hardening flags properly.
+    Closes: #717257.
+  * Fix debian/copyright to comply with copyright-format 1.0.
+  * Update to Standards-Version 3.9.4.
+  * Fix the section of the odbcinst package.  Closes: #663077.
+  * Update the odbcinst manpage to document all the current options.
+    Closes: #709968
+
+ -- Steve Langasek <vorlon@debian.org>  Mon, 14 Oct 2013 06:10:57 +0000
+
 unixodbc (2.2.14p2-5) unstable; urgency=low
 
   * Mark unixodbc Multi-Arch: foreign.
