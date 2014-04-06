@@ -1,3 +1,11 @@
+unixodbc (2.3.1-2) unstable; urgency=medium
+
+  * Use dh-autoreconf instead of a homegrown autotools target; this fixes
+    problems caused by config.sub having the wrong permissions in the upstream
+    tarball.  Closes: #738516.
+
+ -- Steve Langasek <vorlon@debian.org>  Sun, 06 Apr 2014 09:58:18 +0000
+
 unixodbc (2.3.1-1) unstable; urgency=low
 
   * New upstream release.  Closes: #650267.
