@@ -1090,7 +1090,9 @@ int __connect_part_one( DMHDBC connection, char *driver_lib, char *driver_name, 
      */
 
     lt_dlinit();
+    mutex_lib_entry();
     lt_dlsetsearchpath(MODULEDIR);
+    mutex_lib_exit();
 
     /*
      * open the lib
