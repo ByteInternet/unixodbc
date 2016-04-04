@@ -1,5 +1,3 @@
-ACLOCAL_AMFLAGS=-I libltdl/m4
-
 SUBDIRS = \
 	extras \
 	log \
