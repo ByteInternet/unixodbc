@@ -15,7 +15,8 @@ override_dh_auto_configure:
 	# Add here commands to configure the package.
 	CXXFLAGS="-g -O2 -pipe" \
 	dh_auto_configure -- --enable-static --enable-ltdllib --without-pth \
-		--enable-drivers --enable-driverc
+		--enable-drivers --enable-driverc \
+		--sysconfdir=/data/web/.unixodbc
 
 override_dh_auto_clean:
 	dh_auto_clean
