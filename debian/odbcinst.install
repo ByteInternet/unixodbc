@@ -1,2 +1,2 @@
 usr/bin/odbcinst		usr/bin
-etc/odbc.ini			etc
+data/web/.unixodbc/odbc.ini	data/web/.unixodbc
